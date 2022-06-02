@@ -25,10 +25,6 @@ def set_TCP_flags(packet, flags):
 def set_TCP_ack(packet, ack):
     packet['TCP'].ack = int(ack)
 
-def increase_TCP_seq(packet, increase):
-    packet['TCP'].seq += int(increase)
-
-###################################################################
 def set_TCP_automatic_packet_seq(packet):
 	increase = 0
 	if packet['TCP'].flags in ['S','F','SA','FA']:
@@ -44,9 +40,6 @@ def set_TCP_automatic_packet_ack(ack_packet, original_packet):
 	elif original_packet['TCP'].flags in ['P','PA']:
 		increase = len(original_packet['TCP'].payload)
 	ack_packet['TCP'].ack = original_packet['TCP'].seq + increase
-
-###################################################################
-
 
 def set_TCP_payload(packet, payload):
 	packet['TCP'].remove_payload()

@@ -69,21 +69,19 @@ class Machine:
         elif parsed[0] == 'create_TCP_packet':
             self.__variables[parsed[1]] = create_TCP_packet()
         elif parsed[0] == 'set_IP_dst':
-            set_IP_dst(self.__variables[parsed[1]], parsed[2])
+            set_IP_dst(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'set_IP_src':
-            set_IP_src(self.__variables[parsed[1]], parsed[2])
+            set_IP_src(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'set_TCP_sport':
-            set_TCP_sport(self.__variables[parsed[1]], parsed[2])
+            set_TCP_sport(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'set_TCP_dport':
-            set_TCP_dport(self.__variables[parsed[1]], parsed[2])
+            set_TCP_dport(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'set_TCP_seq':
-            set_TCP_seq(self.__variables[parsed[1]], parsed[2])
+            set_TCP_seq(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'set_TCP_flags':
-            set_TCP_flags(self.__variables[parsed[1]], parsed[2])
+            set_TCP_flags(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'set_TCP_ack':
-            set_TCP_ack(self.__variables[parsed[1]], parsed[2])
-        elif parsed[0] == 'increase_TCP_seq':
-            increase_TCP_seq(self.__variables[parsed[1]], parsed[2])
+            set_TCP_ack(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'set_TCP_payload':
             set_TCP_payload(self.__variables[parsed[1]], self.__variables[parsed[2]])
         elif parsed[0] == 'remove_TCP_payload':

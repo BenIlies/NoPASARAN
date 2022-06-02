@@ -50,6 +50,9 @@ def remove_TCP_payload(packet):
 	packet['TCP'].remove_payload()
 
 
+def not_(boolean):
+	boolean = not(boolean)
+
 
 def get_safe_array(key):
     if isinstance(key, str):

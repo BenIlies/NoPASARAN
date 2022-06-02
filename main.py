@@ -17,8 +17,5 @@ if __name__ == '__main__':
     machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables_file)))
   else:
     machine = Machine(xstate_json=xstate_json)
-  machine.trigger('INITIALIZATION')
-  time.sleep(4)
-  machine.trigger('CLOSING_TCP')
-  time.sleep(2)
+  machine.trigger('INITIALIZED')
   print(machine.current_state)

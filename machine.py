@@ -1,7 +1,6 @@
+import time
 from utils import *
 from scapy.all import send, sr, sr1, AsyncSniffer, Ether
-from threading import Timer
-
 class Machine:
     def __init__(self, xstate_json, variables = {}):
         self.__id = xstate_json['id']
@@ -10,27 +9,14 @@ class Machine:
         self.current_state = self.__initial
         self.__variables = variables
         self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: pkt[Ether].src != Ether().src)
-        self.__sniffer_last_packet = 'ans'
+        self.__sniffer_stack = 'ans'
+        self.__variables[self.__sniffer_stack] = []
 
 
     def __handle_sniffer(self):
         def pkt_callback(packet):
             if 'TCP' in packet:
-                self.__variables[self.__sniffer_last_packet] = packet
-                if packet['TCP'].flags == 'S':
-                    self.trigger('SYN_RECEIVED')
-                elif packet['TCP'].flags == 'SA':
-                    self.trigger('SYN_ACK_RECEIVED')
-                elif packet['TCP'].flags == 'P':
-                    self.trigger('PSH_RECEIVED')
-                elif packet['TCP'].flags == 'PA':
-                    self.trigger('PSH_ACK_RECEIVED')
-                elif packet['TCP'].flags == 'F':
-                    self.trigger('FIN_RECEIVED')
-                elif packet['TCP'].flags == 'FA':
-                    self.trigger('FIN_ACK_RECEIVED')
-                elif packet['TCP'].flags == 'A':
-                    self.trigger('ACK_RECEIVED')
+                self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback
 
     def get_id(self):
@@ -57,15 +43,45 @@ class Machine:
         parsed = action.split()
         if parsed[0] == 'listen':
             self.__sniffer.start()
-            self.__sniffer_last_packet = parsed[1]
+            self.__sniffer_stack = parsed[1]
         elif parsed[0] == 'close':
             self.__sniffer.stop()
             self.trigger('LISTENER_STOPPED')
         elif parsed[0] == 'send':
             send(self.__variables[parsed[1]])
-        elif parsed[0] == 'send_delayed':
-            t = Timer(float(parsed[2]), send, [self.__variables[parsed[1]]])
-            t.start()
+            self.trigger('PACKET_SENT')
+        elif parsed[0] == 'handle_packets':
+            timeout = False
+            start_time = time.time()
+            while (True):
+                if len(self.__variables[self.__sniffer_stack]) >= 1:
+                    if self.__variables[self.__sniffer_stack][0]['TCP'].flags in ['S', 'SA', 'P', 'PA', 'F', 'FA', 'A']:
+                        if self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'S':
+                            self.trigger('SYN_RECEIVED')
+                        elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'SA':
+                            self.trigger('SYN_ACK_RECEIVED')
+                        elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'P':
+                            self.trigger('PSH_RECEIVED')
+                        elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'PA':
+                            self.trigger('PSH_ACK_RECEIVED')
+                        elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'F':
+                            self.trigger('FIN_RECEIVED')
+                        elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'FA':
+                            self.trigger('FIN_ACK_RECEIVED')
+                        elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'A':
+                            self.__variables[self.__sniffer_stack].pop(0)
+                            self.trigger('ACK_RECEIVED')
+                            continue
+                        break
+                    else:
+                        self.__variables[self.__sniffer_stack].pop(0)
+                if (time.time() - start_time > float(self.__variables[parsed[1]])):
+                    timeout = True
+                    break
+            if (timeout):
+                self.trigger('TIMEOUT')
+        elif parsed[0] == 'pop':
+            self.__variables[parsed[1]].pop(0)
         elif parsed[0] == 'create_TCP_packet':
             self.__variables[parsed[1]] = create_TCP_packet()
         elif parsed[0] == 'set_IP_dst':
@@ -89,9 +105,9 @@ class Machine:
         elif parsed[0] == 'set_TCP_automatic_packet_seq':
             set_TCP_automatic_packet_seq(self.__variables[parsed[1]])
         elif parsed[0] == 'set_TCP_automatic_packet_ack':
-            set_TCP_automatic_packet_ack(self.__variables[parsed[1]], self.__variables[parsed[2]])
+            set_TCP_automatic_packet_ack(self.__variables[parsed[1]], self.__variables[parsed[2]][0])
         elif parsed[0] == 'print_TCP_payload':
-            print(self.__variables[parsed[1]]['TCP'].payload)
+            print(self.__variables[parsed[1]][0]['TCP'].payload)
         elif parsed[0] == 'done':
             self.trigger('DONE')
         elif parsed[0] == 'completed':

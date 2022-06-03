@@ -1,16 +1,23 @@
 import time
 from utils import *
-from scapy.all import send, sr, sr1, AsyncSniffer, Ether
+from scapy.all import send, AsyncSniffer, Ether
+import hashlib
+
 class Machine:
     def __init__(self, xstate_json, variables = {}):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
-        self.current_state = self.__initial
+        self.__current_state = self.__initial
         self.__variables = variables
         self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: pkt[Ether].src != Ether().src)
         self.__sniffer_stack = 'ans'
         self.__variables[self.__sniffer_stack] = []
+        self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
+        self.__chain_states = [self.__complete_chain_states[0]]
+
+    def start(self):
+        self.__trigger('STARTED')
 
 
     def __handle_sniffer(self):
@@ -22,21 +29,49 @@ class Machine:
     def get_id(self):
         return self.__id
 
+    def get_chain(self):
+        return self.__chain_states
+
+    def get_full_chain(self):
+        return self.__complete_chain_states
+    
+    def get_state(self):
+        return self.__current_state
+
     def __transition(self, state):
         if state in self.__states:
-            if 'exit' in self.__states[self.current_state]:
-                for action in get_safe_array(self.__states[self.current_state]['exit']):
-                    self.__handle_action(action)
-            self.current_state = state
-            if 'entry' in self.__states[self.current_state]:
-                for action in get_safe_array(self.__states[self.current_state]['entry']):
-                    self.__handle_action(action)
+            self.__exit_current_state()
+            self.__current_state = state
+            self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
+            self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
+            self.__enter_current_state()
 
-    def trigger(self, event):
-        if event in self.__states[self.current_state]['on']:
-            self.__transition(self.__states[self.current_state]['on'][event]['target'])
+
+    def __enter_current_state(self):
+        if 'entry' in self.__states[self.__current_state]:
+            for action in get_safe_array(self.__states[self.__current_state]['entry']):
+                self.__handle_action(action)
+
+    def __exit_current_state(self):
+        if 'exit' in self.__states[self.__current_state]:
+            for action in get_safe_array(self.__states[self.__current_state]['exit']):
+                self.__handle_action(action)
+
+    def __return_to_previous_state(self):
+        if len(self.__chain_states) > 1:
+            self.__chain_states.pop(len(self.__chain_states) - 1)
+            self.__complete_chain_states.append(self.__chain_states[len(self.__chain_states) - 1])
+            self.__current_state = list(self.__chain_states[len(self.__chain_states) - 1].keys())[0]
+            self.__enter_current_state()
         else:
-            print('SKIPPED: ' + event + ' triggered in state: ' + self.current_state + '. No matching event.')
+            print('DEBUG: Cannot go back from initial state ' + self.__initial + '.')
+
+
+    def __trigger(self, event):
+        if event in self.__states[self.__current_state]['on']:
+            self.__transition(self.__states[self.__current_state]['on'][event]['target'])
+        else:
+            print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
 
 
     def __handle_action(self, action):
@@ -46,10 +81,10 @@ class Machine:
             self.__sniffer_stack = parsed[1]
         elif parsed[0] == 'close':
             self.__sniffer.stop()
-            self.trigger('LISTENER_STOPPED')
+            self.__trigger('LISTENER_STOPPED')
         elif parsed[0] == 'send':
             send(self.__variables[parsed[1]])
-            self.trigger('PACKET_SENT')
+            self.__trigger('PACKET_SENT')
         elif parsed[0] == 'handle_packets':
             timeout = False
             start_time = time.time()
@@ -57,21 +92,19 @@ class Machine:
                 if len(self.__variables[self.__sniffer_stack]) >= 1:
                     if self.__variables[self.__sniffer_stack][0]['TCP'].flags in ['S', 'SA', 'P', 'PA', 'F', 'FA', 'A']:
                         if self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'S':
-                            self.trigger('SYN_RECEIVED')
+                            self.__trigger('SYN_RECEIVED')
                         elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'SA':
-                            self.trigger('SYN_ACK_RECEIVED')
+                            self.__trigger('SYN_ACK_RECEIVED')
                         elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'P':
-                            self.trigger('PSH_RECEIVED')
+                            self.__trigger('PSH_RECEIVED')
                         elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'PA':
-                            self.trigger('PSH_ACK_RECEIVED')
+                            self.__trigger('PSH_ACK_RECEIVED')
                         elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'F':
-                            self.trigger('FIN_RECEIVED')
+                            self.__trigger('FIN_RECEIVED')
                         elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'FA':
-                            self.trigger('FIN_ACK_RECEIVED')
+                            self.__trigger('FIN_ACK_RECEIVED')
                         elif self.__variables[self.__sniffer_stack][0]['TCP'].flags == 'A':
-                            self.__variables[self.__sniffer_stack].pop(0)
-                            self.trigger('ACK_RECEIVED')
-                            continue
+                            self.__trigger('ACK_RECEIVED')
                         break
                     else:
                         self.__variables[self.__sniffer_stack].pop(0)
@@ -79,7 +112,7 @@ class Machine:
                     timeout = True
                     break
             if (timeout):
-                self.trigger('TIMEOUT')
+                self.__trigger('TIMEOUT')
         elif parsed[0] == 'pop':
             self.__variables[parsed[1]].pop(0)
         elif parsed[0] == 'create_TCP_packet':
@@ -108,9 +141,11 @@ class Machine:
             set_TCP_automatic_packet_ack(self.__variables[parsed[1]], self.__variables[parsed[2]][0])
         elif parsed[0] == 'print_TCP_payload':
             print(self.__variables[parsed[1]][0]['TCP'].payload)
-        elif parsed[0] == 'done':
-            self.trigger('DONE')
-        elif parsed[0] == 'completed':
-            self.trigger('COMPLETED')
+        elif parsed[0] == 'set_random_int':
+            self.__variables[parsed[1]] = set_random_int(parsed[2], parsed[3])
+        elif parsed [0] == 'set_random_float':
+            self.__variables[parsed[1]] = set_random_float(parsed[2], parsed[3])
+        elif parsed[0] == 'return':
+            self.__return_to_previous_state()
         else:
             raise Exception('Parsing error: argument "' + parsed[0] + '" is unknown.')

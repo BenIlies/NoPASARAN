@@ -7,6 +7,16 @@ from machine import Machine
 
 #iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP 
 
+
+'''
+  NEW FEATURES TO ADD:
+  - If statements
+  - Check sniffer
+  - Better parser
+  - Logger
+  - Server/Side
+'''
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument("scenario_file", help="JSON scenario file for the finite state machine", type=str)
@@ -17,5 +27,5 @@ if __name__ == '__main__':
     machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables_file)))
   else:
     machine = Machine(xstate_json=xstate_json)
-  machine.trigger('INITIALIZED')
-  print(machine.current_state)
+  machine.start()
+  print(machine.get_full_chain())

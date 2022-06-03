@@ -1,5 +1,5 @@
 from scapy.all import IP, TCP
-
+import random
 
 def create_TCP_packet():
 	return IP()/TCP()
@@ -59,3 +59,9 @@ def get_safe_array(key):
         return [key]
     else:
         return key
+
+def set_random_int(min, max):
+	return random.randint(int(min), int(max))
+
+def set_random_float(min, max):
+	return random.uniform(int(min), int(max))

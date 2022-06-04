@@ -13,6 +13,7 @@ from machine import Machine
   - If statements
   - Check sniffer filter/loop
   - Logger
+  - Exceptions
   - Server/Side
 '''
 

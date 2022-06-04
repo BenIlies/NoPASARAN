@@ -1,8 +1,9 @@
 import time
+import hashlib
+
 from action_interpreter import ActionInterpreter
 from utils import *
-from scapy.all import send, AsyncSniffer, Ether
-import hashlib
+from scapy.all import AsyncSniffer, Ether
 
 class Machine:
     def __init__(self, xstate_json, variables = {}):
@@ -88,9 +89,9 @@ class Machine:
     def __enter_current_state(self):
         if 'entry' in self.__states[self.__current_state]:
             for action in get_safe_array(self.__states[self.__current_state]['entry']):
-                ActionInterpreter(self).onecmd(action)
+                ActionInterpreter().onecmd(action, self)
 
     def __exit_current_state(self):
         if 'exit' in self.__states[self.__current_state]:
             for action in get_safe_array(self.__states[self.__current_state]['exit']):
-                ActionInterpreter(self).onecmd(action)
+                ActionInterpreter().onecmd(action, self)

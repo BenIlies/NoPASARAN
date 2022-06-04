@@ -11,8 +11,7 @@ from machine import Machine
 '''
   NEW FEATURES TO ADD:
   - If statements
-  - Check sniffer
-  - Better parser
+  - Check sniffer filter/loop
   - Logger
   - Server/Side
 '''

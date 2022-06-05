@@ -17,7 +17,7 @@ class ConditionInterpreter(cmd.Cmd):
             return self.default(line)
         else:
             try:
-                func = getattr(self, 'do_' + cmd)
+                func = getattr(self, 'if_' + cmd)
             except AttributeError:
                 return self.default(line)
             return func(arg, variables)
@@ -25,42 +25,42 @@ class ConditionInterpreter(cmd.Cmd):
     def default(self, line, variables):
         raise Exception('Parsing error: argument "' + line + '" is unknown.')
 
-    def do_equal(self, line, variables):
+    def if_equal(self, line, variables):
         parsed = InterpreterParser.parse(line, 2)
         if variables[parsed[0]] == parsed[1]:
             return True
         else:
             return False
 
-    def do_gt(self, line, variables):
+    def if_gt(self, line, variables):
         parsed = InterpreterParser.parse(line, 2)
         if variables[parsed[0]] > parsed[1]:
             return True
         else:
             return False
 
-    def do_gte(self, line, variables):
+    def if_gte(self, line, variables):
         parsed = InterpreterParser.parse(line, 2)
         if variables[parsed[0]] >= parsed[1]:
             return True
         else:
             return False
 
-    def do_it(self, line, variables):
+    def if_it(self, line, variables):
         parsed = InterpreterParser.parse(line, 2)
         if variables[parsed[0]] < parsed[1]:
             return True
         else:
             return False
 
-    def do_ite(self, line, variables):
+    def if_ite(self, line, variables):
         parsed = InterpreterParser.parse(line, 2)
         if variables[parsed[0]] <= parsed[1]:
             return True
         else:
             return False
 
-    def do_equal(self, line, variables):
+    def if_equal(self, line, variables):
         parsed = InterpreterParser.parse(line, 2)
         if variables[parsed[0]] == parsed[1]:
             return True

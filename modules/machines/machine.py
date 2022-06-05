@@ -69,7 +69,7 @@ class Machine:
 
     def trigger(self, event):
         if event in self.__states[self.__current_state]['on']:
-            self.__transition(self.__states[self.__current_state]['on'][event])
+            self.__transition(get_safe_array(self.__states[self.__current_state]['on'][event]))
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
 

@@ -2,6 +2,7 @@ import time
 import hashlib
 
 from modules.interpreters.action_interpreter import ActionInterpreter
+from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.utils import *
 from scapy.all import AsyncSniffer, Ether
 
@@ -68,7 +69,7 @@ class Machine:
 
     def trigger(self, event):
         if event in self.__states[self.__current_state]['on']:
-            self.__transition(self.__states[self.__current_state]['on'][event]['target'])
+            self.__transition(self.__states[self.__current_state]['on'][event])
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
 
@@ -78,13 +79,23 @@ class Machine:
                 self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback
 
-    def __transition(self, state):
-        if state in self.__states:
-            self.__exit_current_state()
-            self.__current_state = state
-            self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
-            self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
-            self.__enter_current_state()
+    def __transition(self, possible_states):
+        def check_conditions(possible_state):
+            if 'cond' in possible_state:
+                return ConditionInterpreter().onecmd(possible_state['cond'], self.__variables)
+            else:
+                return True
+
+            
+        for state in possible_states:
+            if state['target'] in self.__states:
+                if check_conditions(state):
+                    self.__exit_current_state()
+                    self.__current_state = state['target']
+                    self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
+                    self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
+                    self.__enter_current_state()
+                    break
 
     def __enter_current_state(self):
         if 'entry' in self.__states[self.__current_state]:

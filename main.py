@@ -10,7 +10,6 @@ from modules.machines.machine import Machine
 
 '''
   NEW FEATURES TO ADD:
-  - If statements
   - Check sniffer filter/loop
   - Logger
   - Exceptions

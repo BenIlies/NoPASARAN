@@ -55,10 +55,12 @@ def not_(boolean):
 
 
 def get_safe_array(key):
-    if isinstance(key, str):
-        return [key]
-    else:
-        return key
+	if isinstance(key, str):
+		return [key]
+	elif isinstance(key, dict):
+		return [key]
+	else:
+		return key
 
 def set_random_int(min, max):
 	return random.randint(int(min), int(max))

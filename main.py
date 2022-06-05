@@ -3,7 +3,7 @@ import json
 
 from scapy.all import *
 
-from machine import Machine
+from modules.machines.machine import Machine
 
 #iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP 
 

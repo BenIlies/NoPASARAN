@@ -130,6 +130,10 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 2)
         machine.set_variable(parsed[0], get_IP_src(machine.get_variable(parsed[1])[0]))
 
+    def do_get_packet_port(self, line, machine):
+        parsed = InterpreterParser.parse(line, 2)
+        machine.set_variable(parsed[0], get_TCP_sport(machine.get_variable(parsed[1])[0]))
+
     def do_print_TCP_payload(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         print(machine.get_variable(parsed[0])[0]['TCP'].payload)

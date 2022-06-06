@@ -6,6 +6,18 @@ from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.utils import *
 from scapy.all import AsyncSniffer, Ether
 
+
+### TO MODIFY
+def test(packet):
+    if 'Ether' in packet:
+        if packet[Ether].src != Ether().src:
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
 class Machine:
     def __init__(self, xstate_json, variables = {}):
         self.__id = xstate_json['id']
@@ -13,7 +25,8 @@ class Machine:
         self.__states = xstate_json['states']
         self.__current_state = self.__initial
         self.__variables = variables
-        self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: pkt[Ether].src != Ether().src)
+        #self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: pkt[Ether].src != Ether().src)
+        self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: test(pkt))
         self.__sniffer_stack = 'ans'
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]

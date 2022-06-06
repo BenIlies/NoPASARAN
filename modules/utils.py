@@ -22,6 +22,12 @@ def set_TCP_sport(packet, sport):
 def set_TCP_dport(packet, dport):
 	packet['TCP'].dport = int(dport)
 
+def get_TCP_sport(packet):
+	return packet['TCP'].sport
+
+def get_TCP_dport(packet):
+	return packet['TCP'].sport
+
 def set_TCP_seq(packet, seq):
 	packet['TCP'].seq = int(seq)
 

@@ -126,6 +126,10 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 2)
         set_TCP_automatic_packet_ack(machine.get_variable(parsed[0]), machine.get_variable(parsed[1])[0])
 
+    def do_get_packet_IP(self, line, machine):
+        parsed = InterpreterParser.parse(line, 2)
+        machine.set_variable(parsed[0], get_IP_src(machine.get_variable(parsed[1])[0]))
+
     def do_print_TCP_payload(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         print(machine.get_variable(parsed[0])[0]['TCP'].payload)
@@ -141,6 +145,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_set_variable(self, line, machine):
         parsed = InterpreterParser.parse(line, 2)
         machine.set_variable(parsed[0], parsed[1])
+
 
     def do_return(self, line, machine):
         parsed = InterpreterParser.parse(line, 0)

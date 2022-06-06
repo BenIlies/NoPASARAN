@@ -10,6 +10,12 @@ def set_IP_dst(packet, dst):
 def set_IP_src(packet, src):
 	packet['IP'].src = src
 
+def get_IP_dst(packet):
+	return packet['IP'].dst
+
+def get_IP_src(packet):
+	return packet['IP'].src
+
 def set_TCP_sport(packet, sport):
 	packet['TCP'].sport = int(sport)
 

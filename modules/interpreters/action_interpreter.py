@@ -39,6 +39,10 @@ class ActionInterpreter(cmd.Cmd):
         send(machine.get_variable(parsed[0]))
         machine.trigger('PACKET_SENT')
 
+    def do_done(self, line, machine):
+        parsed = InterpreterParser.parse(line, 0)
+        machine.trigger('DONE')
+
     def do_handle_packets(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         timeout = False
@@ -133,6 +137,10 @@ class ActionInterpreter(cmd.Cmd):
     def do_set_random_float(self, line, machine):
         parsed = InterpreterParser.parse(line, 3)
         machine.set_variable(parsed[0], set_random_float(parsed[1], parsed[2]))
+
+    def do_set_variable(self, line, machine):
+        parsed = InterpreterParser.parse(line, 2)
+        machine.set_variable(parsed[0], parsed[1])
 
     def do_return(self, line, machine):
         parsed = InterpreterParser.parse(line, 0)

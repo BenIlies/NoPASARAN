@@ -11,6 +11,7 @@ from modules.machines.machine import Machine
 '''
   NEW FEATURES TO ADD:
   - Check sniffer filter/loop
+  - RST and kernel
   - Logger
   - Exceptions
   - Server/Side

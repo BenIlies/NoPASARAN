@@ -16,7 +16,7 @@ class Controller():
 class NodeController(Controller):
     def __init__(self, state_machine, root_certificate_file, client_private_certificate_file, link_id):
         super().__init__(root_certificate_file, client_private_certificate_file)
-        self._factory = NodeFactory(link_id)
+        self._factory = NodeFactory(state_machine, link_id)
 
     def configure(self, dst_ip, dst_port):
         self.__dst_ip = dst_ip

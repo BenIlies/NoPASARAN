@@ -6,7 +6,8 @@ from modules.controllers.protocol import NodeProtocol, ProxyProtocol
 class NodeFactory(ClientFactory):
     protocol = NodeProtocol
 
-    def __init__(self, link_id):
+    def __init__(self, state_machine, link_id):
+        self.state_machine = state_machine
         self.link_id = link_id
         self.deferred = Deferred()
 

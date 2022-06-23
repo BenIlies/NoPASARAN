@@ -70,8 +70,7 @@ if __name__ == '__main__':
     controller = NodeController(machine, args.root_certificate, args.private_certificate, args.link_id)
 
     controller.configure(args.destination_host, int(args.destination_port))
-    machine.start()
-    #task.react(controller.start)
+    task.react(controller.start)
   elif args.role == 'PROXY':
     controller = ProxyController(args.root_certificate, args.private_certificate)
     controller.configure(int(args.listening_port))

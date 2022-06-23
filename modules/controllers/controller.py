@@ -14,7 +14,7 @@ class Controller():
         self._own_private_certificate = PrivateCertificate.loadPEM(own_private_certificate)
 
 class NodeController(Controller):
-    def __init__(self, root_certificate_file, client_private_certificate_file, link_id):
+    def __init__(self, state_machine, root_certificate_file, client_private_certificate_file, link_id):
         super().__init__(root_certificate_file, client_private_certificate_file)
         self._factory = NodeFactory(link_id)
 

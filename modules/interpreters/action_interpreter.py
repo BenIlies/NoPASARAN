@@ -1,4 +1,6 @@
 import cmd
+import codecs
+import pickle
 import time
 import json
 
@@ -39,7 +41,8 @@ class ActionInterpreter(cmd.Cmd):
     def do_send(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         send(machine.get_variable(parsed[0]))
-        machine.controller_protocol.transport.write(json.dumps({ JSONMessage.LOG.name:  json.dumps(machine.get_variable(parsed[0]), default=lambda o: o.__dict__)  }).encode())
+        packet_data = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
+        machine.controller_protocol.transport.write(json.dumps({ JSONMessage.LOG.name: packet_data }).encode())
         machine.trigger('PACKET_SENT')
 
     def do_done(self, line, machine):

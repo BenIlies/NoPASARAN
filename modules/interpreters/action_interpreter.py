@@ -1,8 +1,10 @@
 import cmd
 import time
+import json
 
 from scapy.all import send
 
+from modules.controllers.messages import JSONMessage
 from modules.parsers.interpreter_parser import InterpreterParser
 from modules.utils import *
 
@@ -37,6 +39,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_send(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         send(machine.get_variable(parsed[0]))
+        machine.transport.write(json.dumps({ JSONMessage.LOG.name: machine.get_variable(parsed[0]) }).encode())
         machine.trigger('PACKET_SENT')
 
     def do_done(self, line, machine):
@@ -89,7 +92,6 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 2)
         set_IP_src(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
         
-
     def do_set_TCP_sport(self, line, machine):
         parsed = InterpreterParser.parse(line, 2)
         set_TCP_sport(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))

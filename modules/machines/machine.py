@@ -31,9 +31,12 @@ class Machine:
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
+        self.controller_protocol = None
 
-    def start(self):
+    def start(self, controller_protocol):
+        self.controller_protocol = controller_protocol
         self.trigger('STARTED')
+        self.controller_protocol.transport.loseConnection()
 
     def get_id(self):
         return self.__id

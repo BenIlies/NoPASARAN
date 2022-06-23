@@ -39,7 +39,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_send(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         send(machine.get_variable(parsed[0]))
-        machine.controller_protocol.transport.write(json.dumps({ JSONMessage.LOG.name: str(machine.get_variable(parsed[0])) }).encode())
+        machine.controller_protocol.transport.write(json.dumps({ JSONMessage.LOG.name: machine.get_variable(parsed[0]).__dict__ }).encode())
         machine.trigger('PACKET_SENT')
 
     def do_done(self, line, machine):

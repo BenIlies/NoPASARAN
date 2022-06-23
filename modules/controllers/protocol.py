@@ -5,17 +5,6 @@ from twisted.internet.threads import deferToThread
 
 from modules.controllers.messages import NodeReplyStatus, ProxyReplyStatus, JSONMessage
 
-
-def send_data(node_protocol):
-    #while True:
-    #    text_input = input(">>> ")
-    #    if not text_input:
-    #        node_protocol.transport.loseConnection()
-    #        break
-    #    node_protocol.transport.write(json.dumps({JSONMessage.LOG.name: text_input}).encode())
-    node_protocol.transport.write(json.dumps({JSONMessage.LOG.name: "HOLLA"}).encode())
-
-
 class NodeProtocol(Protocol):
     connected_to_peer = False
 

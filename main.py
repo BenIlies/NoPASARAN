@@ -23,6 +23,10 @@ from modules.controllers.controller import NodeController, ProxyController
 gérer les erreurs / exception handler avec evenement --> ex: interface down donc pas de packet sent
 rechercher pour le control channel
 dans les controleur --> bytes a lire pour séparation des données
+
+machine état finie rajouter les controles sur les différents états 
+garder un lien pour cas ou pas de serveur dans la machine a état fini 
+
 '''
 
 if __name__ == '__main__':

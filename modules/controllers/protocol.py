@@ -43,7 +43,7 @@ class NodeProtocol(Protocol):
         if self.status == ProxyReplyStatus.PEER_CONNECTED.name:
             if not self.connected_to_peer:
                 self.connected_to_peer = True
-                self.state_machine = deferToThread(self.state_machine.start)
+                deferred_state_machine = deferToThread(self.factory.state_machine.start)
         print("Status: ", self.status)
         print("Received:", data)
 

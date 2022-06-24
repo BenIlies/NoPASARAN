@@ -6,7 +6,7 @@ import json
 
 from scapy.all import send
 
-from modules.controllers.messages import JSONMessage
+from modules.controllers.messages import JSONLOGMessage, JSONMessage
 from modules.parsers.interpreter_parser import InterpreterParser
 from modules.utils import *
 
@@ -41,8 +41,9 @@ class ActionInterpreter(cmd.Cmd):
     def do_send(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         send(machine.get_variable(parsed[0]))
-        packet_data = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
-        machine.controller_protocol.transport.write(json.dumps({ JSONMessage.LOG.name: packet_data }).encode())
+        serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
+        machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS: serializable_packet}).encode())
+        #pickle.loads(codecs.decode('encoded_string'.encode(), "base64")) 
         machine.trigger('PACKET_SENT')
 
     def do_done(self, line, machine):

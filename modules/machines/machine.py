@@ -1,11 +1,17 @@
+import codecs
+import json
+import pickle
 import time
 import hashlib
 
-from modules.interpreters.action_interpreter import ActionInterpreter
-from modules.interpreters.condition_interpreter import ConditionInterpreter
-from modules.utils import *
 from scapy.all import AsyncSniffer, Ether
 
+
+
+from modules.utils import *
+from modules.interpreters.action_interpreter import ActionInterpreter
+from modules.interpreters.condition_interpreter import ConditionInterpreter
+from modules.controllers.messages import JSONLOGMessage, JSONMessage
 
 ### TO MODIFY
 def test(packet):
@@ -92,6 +98,8 @@ class Machine:
     def __handle_sniffer(self):
         def pkt_callback(packet):
             if 'TCP' in packet:
+                serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
+                self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS: serializable_packet}).encode())
                 self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback
 

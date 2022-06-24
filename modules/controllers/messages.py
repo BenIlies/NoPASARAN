@@ -16,3 +16,7 @@ class JSONMessage(Enum):
     STATUS = 0
     LOG = 1
     PARAMETERS = 2
+
+class JSONLOGMessage(Enum):
+    RECEIVED = 0
+    SENT = 1

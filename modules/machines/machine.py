@@ -99,7 +99,7 @@ class Machine:
         def pkt_callback(packet):
             if 'TCP' in packet:
                 serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-                self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS: serializable_packet}).encode())
+                self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
                 self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback
 

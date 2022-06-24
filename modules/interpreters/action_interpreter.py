@@ -42,7 +42,7 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 1)
         send(machine.get_variable(parsed[0]))
         serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
-        machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS: serializable_packet}).encode())
+        machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
         #pickle.loads(codecs.decode('encoded_string'.encode(), "base64")) 
         machine.trigger('PACKET_SENT')
 

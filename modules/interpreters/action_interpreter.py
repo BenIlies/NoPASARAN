@@ -156,6 +156,21 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 2)
         machine.set_variable(parsed[0], parsed[1])
 
+    def do_add_sport_filter(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        machine.filter_sport.append(machine.get_variable(parsed[1]))
+
+    def do_add_dport_filter(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        machine.filter_dport.append(machine.get_variable(parsed[1]))
+
+    def do_remove_sport_filter(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        machine.filter_sport.remove(machine.get_variable(parsed[1]))
+
+    def do_remove_dport_filter(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        machine.filter_dport.remove(machine.get_variable(parsed[1]))
 
     def do_return(self, line, machine):
         parsed = InterpreterParser.parse(line, 0)

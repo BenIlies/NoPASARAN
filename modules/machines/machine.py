@@ -38,6 +38,8 @@ class Machine:
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.controller_protocol = None
+        self.filter_sport = []
+        self.filter_dport = []
 
     def start(self, controller_protocol):
         self.controller_protocol = controller_protocol
@@ -98,9 +100,10 @@ class Machine:
     def __handle_sniffer(self):
         def pkt_callback(packet):
             if 'TCP' in packet:
-                serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-                self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
-                self.__variables[self.__sniffer_stack].append(packet)
+                if packet['TCP'].sport in self.filter_sport or packet['TCP'].dport in self.filter_dport:
+                    serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
+                    self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+                    self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback
 
     def __transition(self, possible_states):

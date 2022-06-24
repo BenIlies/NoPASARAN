@@ -14,10 +14,13 @@ from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.controllers.messages import JSONLOGMessage, JSONMessage
 
 ### TO MODIFY
-def test(packet):
+def test(packet, filter_sport, filter_dport):
     if 'Ether' in packet:
-        if packet[Ether].src != Ether().src:
-            return True
+        if packet[Ether].src != Ether().src and 'TCP' in packet:
+            if packet['TCP'].sport in filter_sport or packet['TCP'].dport in filter_dport:
+                return True
+            else:
+                return False
         else:
             return False
     else:
@@ -31,15 +34,15 @@ class Machine:
         self.__states = xstate_json['states']
         self.__current_state = self.__initial
         self.__variables = variables
+        self.filter_sport = []
+        self.filter_dport = []
         #self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: pkt[Ether].src != Ether().src)
-        self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: test(pkt))
+        self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: test(pkt, self.filter_sport, self.filter_dport))
         self.__sniffer_stack = 'ans'
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.controller_protocol = None
-        self.filter_sport = []
-        self.filter_dport = []
 
     def start(self, controller_protocol):
         self.controller_protocol = controller_protocol

@@ -16,8 +16,8 @@ from modules.controllers.messages import JSONLOGMessage, JSONMessage
 ### TO MODIFY
 def test(packet, filter_sport, filter_dport):
     if 'Ether' in packet:
-        if packet[Ether].src != Ether().src and 'TCP' in packet:
-            if packet['TCP'].sport in filter_sport or packet['TCP'].dport in filter_dport:
+        if (packet[Ether].src != Ether().src) and ('TCP' in packet):
+            if (packet['TCP'].sport in filter_sport) or (packet['TCP'].dport in filter_dport):
                 return True
             else:
                 return False
@@ -102,11 +102,9 @@ class Machine:
 
     def __handle_sniffer(self):
         def pkt_callback(packet):
-            if 'TCP' in packet:
-                if packet['TCP'].sport in self.filter_sport or packet['TCP'].dport in self.filter_dport:
-                    serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-                    self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
-                    self.__variables[self.__sniffer_stack].append(packet)
+            serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
+            self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+            self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback
 
     def __transition(self, possible_states):

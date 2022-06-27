@@ -45,7 +45,7 @@ class ActionInterpreter(cmd.Cmd):
         serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
         machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
         #pickle.loads(codecs.decode('encoded_string'.encode(), "base64"))
-        logging.info('SENT ' + get_packet_info(machine.get_variable(parsed[0])))
+        logging.info('LOCAL SENT ' + get_packet_info(machine.get_variable(parsed[0])))
         machine.trigger('PACKET_SENT')
 
     def do_done(self, line, machine):

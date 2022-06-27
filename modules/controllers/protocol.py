@@ -1,5 +1,7 @@
+import codecs
 import json
 import logging
+import pickle
 
 from twisted.internet.protocol import Protocol
 from twisted.internet.threads import deferToThread
@@ -36,9 +38,10 @@ class NodeProtocol(Protocol):
                 self.connected_to_peer = True
                 deferred_state_machine = deferToThread(self.factory.state_machine.start, self)
         if JSONMessage.LOG.name in data:
-            if JSONLOGMessage.SENT.name in data:
-                print(data)
-                #logging.info('CONTROL LINK SENT', get_packet_info(machine.get_variable(parsed[0])))
+            if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
+                logging.info('REMOTE SENT ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+            elif data[JSONMessage.LOG.name] == JSONLOGMessage.RECEIVED.name:
+                logging.info('REMOTE RECEIVED ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
         print("Status: ", self.status)
         print("Received:", data)
 

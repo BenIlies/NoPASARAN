@@ -1,9 +1,11 @@
 import json
+import logging
 
 from twisted.internet.protocol import Protocol
 from twisted.internet.threads import deferToThread
 
-from modules.controllers.messages import NodeReplyStatus, ProxyReplyStatus, JSONMessage
+from modules.controllers.messages import JSONLOGMessage, NodeReplyStatus, ProxyReplyStatus, JSONMessage
+from modules.utils import get_packet_info
 
 class NodeProtocol(Protocol):
     connected_to_peer = False
@@ -33,6 +35,10 @@ class NodeProtocol(Protocol):
             if not self.connected_to_peer:
                 self.connected_to_peer = True
                 deferred_state_machine = deferToThread(self.factory.state_machine.start, self)
+        if JSONMessage.LOG.name in data:
+            if JSONLOGMessage.SENT.name in data:
+                print(data)
+                #logging.info('CONTROL LINK SENT', get_packet_info(machine.get_variable(parsed[0])))
         print("Status: ", self.status)
         print("Received:", data)
 

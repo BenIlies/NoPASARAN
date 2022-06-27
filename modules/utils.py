@@ -1,6 +1,30 @@
 from scapy.all import IP, TCP
 import random
 
+def get_packet_info(packet):
+    result = []
+    if 'IP' in packet:
+        if hasattr(packet['IP'], "src"):
+            result.append("src|" + packet['IP'].src)
+        if hasattr(packet['IP'], "dst"):
+            result.append("dst|" + packet['IP'].dst)
+        if hasattr(packet['IP'], "ttl"):
+            result.append("ttl|" + str(packet['IP'].ttl))
+    if 'TCP' in packet:
+        if hasattr(packet['TCP'], "sport"):
+            result.append("sport|" + str(packet['TCP'].sport))
+        if hasattr(packet['TCP'], "dport"):
+            result.append("dport|" + str(packet['TCP'].dport))
+        if hasattr(packet['TCP'], "flags"):
+            result.append("flags|" + str(packet['TCP'].flags))
+        if hasattr(packet['TCP'], "ack"):
+            result.append("ack|" + str(packet['TCP'].ack))
+        if hasattr(packet['TCP'], "seq"):
+            result.append("seq|" + str(packet['TCP'].seq))
+        if hasattr(packet['TCP'], "payload"):
+            result.append("payload|" + bytes(packet['TCP'].payload).decode())
+    return ' '.join(result)
+
 def create_TCP_packet():
 	return IP()/TCP()
 

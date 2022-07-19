@@ -87,3 +87,44 @@ class ProxyProtocol(Protocol):
         for connected_peer in [key for key, value in self.clients.items() if value == self.clients[self] and key != self and value != None]:
             connected_peer.transport.write(json.dumps({JSONMessage.STATUS.name: ProxyReplyStatus.PEER_DISCONNECTED.name}).encode())
         self.clients.pop(self)
+
+
+
+
+
+##########################################################################################
+class NodeClientProtocol(Protocol):
+
+    def connectionMade(self):
+        deferred_state_machine = deferToThread(self.factory.state_machine.start, self)
+        
+    def dataReceived(self, encoded_json_data):
+        data = json.loads(encoded_json_data.decode())
+        if JSONMessage.LOG.name in data:
+            if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
+                logging.info('REMOTE SENT ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+            elif data[JSONMessage.LOG.name] == JSONLOGMessage.RECEIVED.name:
+                logging.info('REMOTE RECEIVED ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+        print("Status: ", self.status)
+        print("Received:", data)
+
+    def connectionLost(self, reason):
+        self.factory.connectionLost(reason)
+
+class NodeServerProtocol(Protocol):
+
+    def connectionMade(self):
+        deferred_state_machine = deferToThread(self.factory.state_machine.start, self)
+        
+    def dataReceived(self, encoded_json_data):
+        data = json.loads(encoded_json_data.decode())
+        if JSONMessage.LOG.name in data:
+            if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
+                logging.info('REMOTE SENT ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+            elif data[JSONMessage.LOG.name] == JSONLOGMessage.RECEIVED.name:
+                logging.info('REMOTE RECEIVED ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+        print("Status: ", self.status)
+        print("Received:", data)
+
+    def connectionLost(self, reason):
+        self.factory.connectionLost(reason)

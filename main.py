@@ -102,7 +102,7 @@ if __name__ == '__main__':
       machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables)))
     else:
       machine = Machine(xstate_json=xstate_json)
-    ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'] , leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
+    #ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'] , leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
     #ipsec.run()
     print(controller_configuration['role'])
     if controller_configuration['role'] == 'client':
@@ -115,5 +115,5 @@ if __name__ == '__main__':
       task.react(controller.start)
   elif args.role == 'PROXY':
     print(controller_configuration)
-    ipsec = ProxyIpsecConf(leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'])
+    #ipsec = ProxyIpsecConf(leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'])
     #ipsec.run()

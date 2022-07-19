@@ -1,4 +1,4 @@
-from modules.controllers.factory import NodeClientFactory, NodeFactory, NodeServerFactory, ProxyFactory
+from modules.controllers.factory import NodeClientFactory, NodeServerFactory
 from twisted.internet.ssl import Certificate, PrivateCertificate
 
 
@@ -13,34 +13,6 @@ class Controller():
         self._trusted_authority_certificate = Certificate.loadPEM(root_certificate)
         self._own_private_certificate = PrivateCertificate.loadPEM(own_private_certificate)
 
-class NodeController(Controller):
-    def __init__(self, state_machine, root_certificate_file, client_private_certificate_file, link_id):
-        super().__init__(root_certificate_file, client_private_certificate_file)
-        self._factory = NodeFactory(state_machine, link_id)
-
-    def configure(self, dst_ip, dst_port):
-        self.__dst_ip = dst_ip
-        self.__dst_port = dst_port
-    
-    def start(self, reactor):
-        reactor.connectSSL(self.__dst_ip, self.__dst_port, self._factory, self._own_private_certificate.options(self._trusted_authority_certificate))
-        return self._factory.deferred
-
-class ProxyController(Controller):
-    def __init__(self, root_certificate_file, server_private_certificate_file):
-        super().__init__(root_certificate_file, server_private_certificate_file)
-        self._factory = ProxyFactory()
-
-    def configure(self, src_port):
-        self.__src_port = src_port
-
-    def start(self, reactor):
-        reactor.listenSSL(self.__src_port, self._factory, self._own_private_certificate.options(self._trusted_authority_certificate))
-        return self._factory.deferred
-
-
-
-#######################################
 class ClientController(Controller):
     def __init__(self, state_machine, root_certificate_file, client_private_certificate_file):
         super().__init__(root_certificate_file, client_private_certificate_file)

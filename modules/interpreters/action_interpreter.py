@@ -7,7 +7,7 @@ import json
 
 from scapy.all import send
 
-from modules.controllers.messages import JSONLOGMessage, JSONMessage
+from modules.controllers.messages import JSONLOGMessage, JSONMessage, Status
 from modules.parsers.interpreter_parser import InterpreterParser
 from modules.utils import *
 
@@ -176,3 +176,18 @@ class ActionInterpreter(cmd.Cmd):
     def do_return(self, line, machine):
         parsed = InterpreterParser.parse(line, 0)
         machine.return_to_previous_state()
+
+    def do_wait_for_ready_control_link(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        timeout = False
+        start_time = time.time()
+        while (True):
+            if machine.controller_protocol.remote_status == Status.DISCONNECTED.name and machine.controller_protocol.local_status == Status.DISCONNECTED.name:
+                break
+            if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
+                timeout = True
+                break
+        if (timeout):
+            machine.trigger('TIMEOUT')
+        else:
+            machine.trigger('CONTROL_LINK_READY')

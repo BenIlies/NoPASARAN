@@ -5,7 +5,7 @@ from scapy.all import *
 from twisted.internet import task
 
 from modules.machines.machine import Machine
-from modules.controllers.controller import ClientController, NodeController, ProxyController, ServerController
+from modules.controllers.controller import ClientController, ServerController
 from modules.ipsec_tunnels.ipsec_conf import NodeIpsecConf, ProxyIpsecConf
 
 #iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP 
@@ -30,7 +30,8 @@ garder un lien pour cas ou pas de serveur dans la machine a état fini
 DOCUMENTATION PAR FONCTIONS doctest
 https://docs.python.org/3/library/doctest.html
 
-supprimer l'ancienne partie sur le controlleur
+PARTIE SUR LE SWITCH
+-> ADAPTER LES CONNEXION TCP/ UTILISATION ADRESSE IP PRIVEE POUR LE TUNNEL IPSEC ?
 '''
 
 '''

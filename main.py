@@ -79,6 +79,8 @@ conn tunnel-to-node
   #NodeIpsecConf(right='11.11.11.3',leftcert='c1Cert.pem', leftid='C=CH, O=c1, CN=c1', rightid='C=CH, O=proxy, CN=proxy')
 '''
 
+##IPSEC PORT AND DESTINATION
+
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
     prog='ROLE', 
@@ -103,16 +105,16 @@ if __name__ == '__main__':
       machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables)))
     else:
       machine = Machine(xstate_json=xstate_json)
-    #ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'] , leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
+    #ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'], rightsubnet=controller_configuration['ipsec_destination_ip_subnet'], leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
     #ipsec.run()
     print(controller_configuration['role'])
     if controller_configuration['role'] == 'client':
       controller = ClientController(machine, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-      controller.configure(controller_configuration['destination_ip'], int(controller_configuration['destination_port']))
+      controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
       task.react(controller.start)
     elif controller_configuration['role'] == 'server':
       controller = ServerController(machine, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-      controller.configure(int(controller_configuration['listening_port']))
+      controller.configure(int(controller_configuration['server_port']))
       task.react(controller.start)
   elif args.role == 'PROXY':
     print(controller_configuration)

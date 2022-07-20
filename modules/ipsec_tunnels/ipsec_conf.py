@@ -47,5 +47,5 @@ class ProxyIpsecConf(IpsecConf):
         self.configure_ipsec(controller_section='tunnel-to-node', leftsubnet='192.0.0.0/24', right='%any', rightsubnet='192.0.0.0/24', leftcert=leftcert, leftid=leftid)
 
 class NodeIpsecConf(IpsecConf):
-    def __init__(self, right, leftcert, leftid, rightid):
-        self.configure_ipsec(controller_section='tunnel-to-proxy', left='%any', leftsubnet='192.0.0.0/24', right=right, rightsubnet='192.0.0.0/24', leftcert=leftcert, leftid=leftid, rightid=rightid)
+    def __init__(self, right, rightsubnet, leftcert, leftid, rightid):
+        self.configure_ipsec(controller_section='tunnel-to-proxy', left='%any', leftsubnet='192.0.0.0/24', right=right, rightsubnet=rightsubnet, leftcert=leftcert, leftid=leftid, rightid=rightid)

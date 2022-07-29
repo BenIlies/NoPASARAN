@@ -77,6 +77,12 @@ conn tunnel-to-node
 
   #ProxyIpsecConf(leftcert='proxyCert.pem', leftid='C=CH, O=proxy, CN=proxy')
   #NodeIpsecConf(right='11.11.11.3',leftcert='c1Cert.pem', leftid='C=CH, O=c1, CN=c1', rightid='C=CH, O=proxy, CN=proxy')
+
+--> Fix le bug
+--> Client en premier
+--> Corriger le 3way-hs + timeout
+--> Invoquer une machine à état finie différente de manière modulaire
+
 '''
 
 ##IPSEC PORT AND DESTINATION

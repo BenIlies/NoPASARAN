@@ -65,6 +65,9 @@ class Machine:
     def discard_stack_packet(self, stack):
         stack.pop(0)
 
+    def get_variables(self):
+        return self.__variables
+
     def get_variable(self, name):
         return self.__variables[name]
 

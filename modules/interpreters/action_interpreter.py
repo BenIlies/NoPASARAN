@@ -10,6 +10,7 @@ from scapy.all import send
 from modules.controllers.messages import JSONLOGMessage, JSONMessage, Status
 from modules.parsers.interpreter_parser import InterpreterParser
 from modules.utils import *
+import modules.machines.machine
 
 
 class ActionInterpreter(cmd.Cmd):
@@ -33,6 +34,12 @@ class ActionInterpreter(cmd.Cmd):
 
     def default(self, line, machine):
         raise Exception('Parsing error: argument "' + line + '" is unknown.')
+
+    def do_launch(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))
+        nested_machine = machine.Machine(xstate_json=nested_xstate_json, variables=machine.get_variables())
+        nested_machine.start(machine.controller_protocol)
 
     def do_listen(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)

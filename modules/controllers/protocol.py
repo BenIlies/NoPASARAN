@@ -17,6 +17,7 @@ class NodeClientProtocol(Protocol):
         return json.dumps({JSONMessage.STATUS.name: self.local_status}).encode()
 
     def connectionMade(self):
+        self.factory.stopTrying()
         deferred_state_machine = deferToThread(self.factory.state_machine.start, self)
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())

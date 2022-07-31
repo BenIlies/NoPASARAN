@@ -1,9 +1,9 @@
-from twisted.internet.protocol import ClientFactory, ServerFactory
+from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 from twisted.internet.defer import Deferred
 
 from modules.controllers.protocol import NodeClientProtocol, NodeServerProtocol
 
-class NodeClientFactory(ClientFactory):
+class NodeClientFactory(ReconnectingClientFactory):
     protocol = NodeClientProtocol
 
     def __init__(self, state_machine):

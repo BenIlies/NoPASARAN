@@ -29,11 +29,13 @@ class Machine:
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.controller_protocol = None
+        self.finishing_event = "FINISHED"
 
     def start(self, controller_protocol):
         self.controller_protocol = controller_protocol
         self.trigger('STARTED')
         self.controller_protocol.transport.loseConnection()
+        return self.finishing_event
 
     def get_id(self):
         return self.__id

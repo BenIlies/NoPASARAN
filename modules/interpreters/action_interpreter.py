@@ -39,7 +39,7 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 1)
         nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))
         nested_machine = modules.machines.machine.Machine(xstate_json=nested_xstate_json, variables=machine.get_variables())
-        nested_machine.start(machine.controller_protocol)
+        machine.trigger(nested_machine.start(machine.controller_protocol))
 
     def do_listen(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
@@ -179,6 +179,10 @@ class ActionInterpreter(cmd.Cmd):
     def do_remove_dport_filter(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         machine.filter_dport.remove(int(machine.get_variable(parsed[0])))
+
+    def do_set_finishing_event(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        machine.finishing_event == parsed[0]
 
     def do_return(self, line, machine):
         parsed = InterpreterParser.parse(line, 0)

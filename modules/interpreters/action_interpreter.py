@@ -38,7 +38,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_call(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))
-        nested_machine = modules.machines.machine.Machine(xstate_json=nested_xstate_json, variables=machine.get_variables())
+        nested_machine = modules.machines.machine.Machine(xstate_json=nested_xstate_json, variables=machine.get_variables(), , main_state=False)
         machine.trigger(nested_machine.start(machine.controller_protocol))
 
     def do_listen(self, line, machine):

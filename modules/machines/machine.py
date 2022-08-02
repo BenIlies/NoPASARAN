@@ -15,7 +15,7 @@ from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.controllers.messages import JSONLOGMessage, JSONMessage
 
 class Machine:
-    def __init__(self, xstate_json, variables = {}):
+    def __init__(self, xstate_json, variables = {}, main_state=True):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
@@ -30,11 +30,13 @@ class Machine:
         self.__chain_states = [self.__complete_chain_states[0]]
         self.controller_protocol = None
         self.finishing_event = "FINISHED"
+        self.__main_state=main_state
 
     def start(self, controller_protocol):
         self.controller_protocol = controller_protocol
         self.trigger('STARTED')
-        self.controller_protocol.transport.loseConnection()
+        if self.__main_state:
+            self.controller_protocol.transport.loseConnection()
         return self.finishing_event
 
     def get_id(self):

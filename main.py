@@ -97,7 +97,8 @@ if __name__ == '__main__':
 
   base_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest='role', help='role for testing the end to end connection')
-  base_parser.add_argument("-c", "--controller-configuration", required=False, help="JSON controller configuration file for the parameters of the control link")
+  base_parser.add_argument("-c", "--controller-configuration", required=True, help="JSON controller configuration file for the parameters of the control link")
+  base_parser.add_argument("-ri", "--reload-ipsec", required=False, help="reload the ipsec configuration file")
 
   node_parser = subparsers.add_parser("NODE", help="set the role of the node as an endpoint for testing the end to end connection", parents=[base_parser])
   node_parser.add_argument("-s", "--scenario", required=True, help="JSON scenario file for the finite state machine")
@@ -106,14 +107,14 @@ if __name__ == '__main__':
   proxy_parser = subparsers.add_parser("PROXY", help="set the role of the node as a proxy for control link", parents=[base_parser])
 
   args = parser.parse_args()
+  controller_configuration = json.load(open(args.controller_configuration))
   if args.role == 'NODE':
     xstate_json = json.load(open(args.scenario))
     if args.variables:
       machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables)))
     else:
       machine = Machine(xstate_json=xstate_json)
-    if args.controller_configuration:
-      controller_configuration = json.load(open(args.controller_configuration))
+    if args.reload_ipsec:
       ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'], rightsubnet=controller_configuration['ipsec_destination_ip_subnet'], leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
       ipsec.run()
     print(controller_configuration['role'])
@@ -126,7 +127,6 @@ if __name__ == '__main__':
       controller.configure(int(controller_configuration['server_port']))
       task.react(controller.start)
   elif args.role == 'PROXY':
-    if args.controller_configuration:
-      controller_configuration = json.load(open(args.controller_configuration))
+    if args.reload_ipsec:
       ipsec = ProxyIpsecConf(leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'])
       ipsec.run()

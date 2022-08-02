@@ -35,7 +35,7 @@ class ActionInterpreter(cmd.Cmd):
     def default(self, line, machine):
         raise Exception('Parsing error: argument "' + line + '" is unknown.')
 
-    def do_launch(self, line, machine):
+    def do_call(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))
         nested_machine = modules.machines.machine.Machine(xstate_json=nested_xstate_json, variables=machine.get_variables())

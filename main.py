@@ -98,7 +98,7 @@ if __name__ == '__main__':
   base_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest='role', help='role for testing the end to end connection')
   base_parser.add_argument("-c", "--controller-configuration", required=True, help="JSON controller configuration file for the parameters of the control link")
-  base_parser.add_argument("-ri", "--reload-ipsec", required=False, help="reload the ipsec configuration file")
+  base_parser.add_argument("-ri", "--reload-ipsec", required=False, help="reload the ipsec configuration file", action='store_true')
 
   node_parser = subparsers.add_parser("NODE", help="set the role of the node as an endpoint for testing the end to end connection", parents=[base_parser])
   node_parser.add_argument("-s", "--scenario", required=True, help="JSON scenario file for the finite state machine")

@@ -106,7 +106,6 @@ if __name__ == '__main__':
   proxy_parser = subparsers.add_parser("PROXY", help="set the role of the node as a proxy for control link", parents=[base_parser])
 
   args = parser.parse_args()
-  controller_configuration = json.load(open(args.controller_configuration))
   if args.role == 'NODE':
     xstate_json = json.load(open(args.scenario))
     if args.variables:

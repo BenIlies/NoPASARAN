@@ -182,7 +182,7 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_set_finishing_event(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
-        machine.finishing_event == parsed[0]
+        machine.finishing_event = parsed[0]
 
     def do_return(self, line, machine):
         parsed = InterpreterParser.parse(line, 0)

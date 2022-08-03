@@ -36,6 +36,10 @@ class Machine:
         self.__chain_states = [self.__complete_chain_states[0]]
         self.protocol = None
         self.__main_state = main_state
+        if self.__main_state:
+            self.root_machine = self
+        else:
+            self.root_machin = None     
         if controller_configuration and self.__main_state:
             if controller_configuration['role'] == 'client':
                 self.controller = ClientController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
@@ -51,14 +55,13 @@ class Machine:
         if self.__main_state:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
-        if self.__main_state and self.protocol:
-            self.protocol.transport.loseConnection()
+        if self.__main_state and self.root_machine.protocol:
+            self.root_machine.protocol.transport.loseConnection()
         return self.finishing_event
     
     def get_child_machine(self, nested_xstate_json):
         nested_machine = Machine(xstate_json=nested_xstate_json, variables=self.__variables, main_state=False)
-        nested_machine.protocol = self.protocol
-        nested_machine.controller = self.controller
+        nested_machine.root_machine = self.root_machine
         return nested_machine
 
     def get_id(self):
@@ -117,9 +120,9 @@ class Machine:
 
     def __handle_sniffer(self):
         def pkt_callback(packet):
-            if self.protocol:
+            if self.root_machine.protocol:
                 serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-                self.protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+                self.root_machine.protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
             logging.info('LOCAL RECEIVED ' + get_packet_info(packet))
             self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback

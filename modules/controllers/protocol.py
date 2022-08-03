@@ -4,7 +4,6 @@ import logging
 import pickle
 
 from twisted.internet.protocol import Protocol
-from twisted.internet.threads import deferToThread
 
 from modules.controllers.messages import JSONLOGMessage, JSONMessage, Status
 from modules.utils import get_packet_info

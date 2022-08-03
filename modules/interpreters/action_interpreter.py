@@ -39,7 +39,7 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 1)
         nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))
         nested_machine = modules.machines.machine.Machine(xstate_json=nested_xstate_json, variables=machine.get_variables(), main_state=False)
-        machine.trigger(nested_machine.start(machine.controller_protocol))
+        machine.trigger(nested_machine.start(machine.protocol))
 
     def do_listen(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
@@ -50,7 +50,8 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 1)
         send(machine.get_variable(parsed[0]))
         serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
-        machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+        if machine.protocol:
+            machine.protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
         logging.info('LOCAL SENT ' + get_packet_info(machine.get_variable(parsed[0])))
         machine.trigger('PACKET_SENT')
 
@@ -188,13 +189,15 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 0)
         machine.return_to_previous_state()
 
+
     def do_wait_for_ready_control_link(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         timeout = False
         start_time = time.time()
         while (True):
-            if machine.controller_protocol.local_status == Status.READY.name and machine.controller_protocol.remote_status == Status.READY.name:
-                break
+            if machine.protocol:
+                if machine.protocol.local_status == Status.READY.name and machine.protocol.remote_status == Status.READY.name:
+                    break
             if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
                 timeout = True
                 break

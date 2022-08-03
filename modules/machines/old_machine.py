@@ -6,17 +6,16 @@ import time
 import hashlib
 
 from scapy.all import AsyncSniffer, Ether
-from twisted.internet.defer import Deferred
+
+
 
 from modules.utils import *
 from modules.interpreters.action_interpreter import ActionInterpreter
 from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.controllers.messages import JSONLOGMessage, JSONMessage
-from modules.controllers.controller import ClientController, ServerController
-from twisted.internet.threads import deferToThread
 
 class Machine:
-    def __init__(self, xstate_json, variables = {}, controller_configuration=None, main_state=True):
+    def __init__(self, xstate_json, variables = {}, main_state=True):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
@@ -29,30 +28,16 @@ class Machine:
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
-        self.protocol = None
-        if controller_configuration:
-            if controller_configuration['role'] == 'client':
-                self.controller = ClientController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-                self.controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
-            elif controller_configuration['role'] == 'server':
-                self.controller = ServerController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-                self.controller.configure(int(controller_configuration['server_port']))
-            deferToThread(self.controller.start, self)
-        else:
-            self.controller = None
+        self.controller_protocol = None
         self.finishing_event = "FINISHED"
-        self.__main_state = main_state
-        self.deferred = Deferred()
+        self.__main_state=main_state
 
-    def start(self, reactor):
+    def start(self, controller_protocol):
+        self.controller_protocol = controller_protocol
         self.trigger('STARTED')
         if self.__main_state:
-            if self.protocol:
-                self.protocol.transport.loseConnection()
-            self.deferred.callback("done")
-            return self.deferred
-        else:
-            return self.finishing_event
+            self.controller_protocol.transport.loseConnection()
+        return self.finishing_event
 
     def get_id(self):
         return self.__id
@@ -110,9 +95,8 @@ class Machine:
 
     def __handle_sniffer(self):
         def pkt_callback(packet):
-            if self.protocol:
-                serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-                self.protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+            serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
+            self.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
             logging.info('LOCAL RECEIVED ' + get_packet_info(packet))
             self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback

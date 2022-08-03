@@ -8,6 +8,8 @@ from modules.machines.machine import Machine
 from modules.controllers.controller import ClientController, ServerController
 from modules.ipsec_tunnels.ipsec_conf import NodeIpsecConf, ProxyIpsecConf
 
+
+
 #iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP 
 #iptables -L "chain" --line-numbers
 
@@ -88,6 +90,7 @@ conn tunnel-to-node
 '''
 
 ##IPSEC PORT AND DESTINATION
+  
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
@@ -97,7 +100,7 @@ if __name__ == '__main__':
 
   base_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest='role', help='role for testing the end to end connection')
-  base_parser.add_argument("-c", "--controller-configuration", required=True, help="JSON controller configuration file for the parameters of the control link")
+  base_parser.add_argument("-c", "--controller-configuration", required=False, help="JSON controller configuration file for the parameters of the control link")
   base_parser.add_argument("-ri", "--reload-ipsec", required=False, help="reload the ipsec configuration file", action='store_true')
 
   node_parser = subparsers.add_parser("NODE", help="set the role of the node as an endpoint for testing the end to end connection", parents=[base_parser])
@@ -106,6 +109,7 @@ if __name__ == '__main__':
 
   proxy_parser = subparsers.add_parser("PROXY", help="set the role of the node as a proxy for control link", parents=[base_parser])
 
+  '''  
   args = parser.parse_args()
   controller_configuration = json.load(open(args.controller_configuration))
   if args.role == 'NODE':
@@ -117,7 +121,6 @@ if __name__ == '__main__':
     if args.reload_ipsec:
       ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'], rightsubnet=controller_configuration['ipsec_destination_ip_subnet'], leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
       ipsec.run()
-    print(controller_configuration['role'])
     if controller_configuration['role'] == 'client':
       controller = ClientController(machine, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
       controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
@@ -130,3 +133,26 @@ if __name__ == '__main__':
     if args.reload_ipsec:
       ipsec = ProxyIpsecConf(leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'])
       ipsec.run()
+  '''
+  controller_configuration = None
+
+  args = parser.parse_args()
+  if args.controller_configuration:
+    controller_configuration = json.load(open(args.controller_configuration))
+    if args.reload_ipsec:
+      if args.role == 'NODE':
+        ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'], rightsubnet=controller_configuration['ipsec_destination_ip_subnet'], leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
+      elif args.role == 'PROXY':
+        ipsec = ProxyIpsecConf(leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'])
+      ipsec.run()
+  elif args.reload_ipsec:
+    print('Missing the configuration file so no ipsec reload')
+
+  if args.role == 'NODE':
+    xstate_json = json.load(open(args.scenario))
+    if args.variables:
+      machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables)), controller_configuration=controller_configuration)
+    else:
+      machine = Machine(xstate_json=xstate_json, controller_configuration=controller_configuration)
+    task.react(machine.start)
+    

@@ -14,14 +14,8 @@ from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.controllers.messages import JSONLOGMessage, JSONMessage
 from modules.controllers.controller import ClientController, ServerController
 
-
-
-def test(max):
-  for i in range(0, max):
-    print(i)
-
 class Machine:
-    def __init__(self, xstate_json, variables = {}, controller_configuration=None, main_state=True):
+    def __init__(self, xstate_json, variables = {}, main_state=True, controller_configuration=None):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
@@ -34,12 +28,11 @@ class Machine:
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
-        self.protocol = None
         self.__main_state = main_state
         if self.__main_state:
             self.root_machine = self
         else:
-            self.root_machin = None     
+            self.root_machine = None     
         if controller_configuration and self.__main_state:
             if controller_configuration['role'] == 'client':
                 self.controller = ClientController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
@@ -49,14 +42,15 @@ class Machine:
                 self.controller.configure(int(controller_configuration['server_port']))
         else:
             self.controller = None
+        self.controller_protocol = None
         self.finishing_event = "FINISHED"
         
     def start(self):
         if self.__main_state:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
-        if self.__main_state and self.root_machine.protocol:
-            self.root_machine.protocol.transport.loseConnection()
+        if self.__main_state and self.root_machine.controller_protocol:
+            self.root_machine.controller_protocol.transport.loseConnection()
         return self.finishing_event
     
     def get_child_machine(self, nested_xstate_json):
@@ -120,9 +114,9 @@ class Machine:
 
     def __handle_sniffer(self):
         def pkt_callback(packet):
-            if self.root_machine.protocol:
+            if self.root_machine.controller_protocol:
                 serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-                self.root_machine.protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+                self.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
             logging.info('LOCAL RECEIVED ' + get_packet_info(packet))
             self.__variables[self.__sniffer_stack].append(packet)
         return pkt_callback

@@ -49,8 +49,8 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 1)
         send(machine.get_variable(parsed[0]))
         serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
-        if machine.root_machine.protocol:
-            machine.root_machine.protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+        if machine.root_machine.controller_protocol:
+            machine.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
         logging.info('LOCAL SENT ' + get_packet_info(machine.get_variable(parsed[0])))
         machine.trigger('PACKET_SENT')
 
@@ -194,8 +194,8 @@ class ActionInterpreter(cmd.Cmd):
         timeout = False
         start_time = time.time()
         while (True):
-            if machine.root_machine.protocol:
-                if machine.root_machine.protocol.local_status == Status.READY.name and machine.root_machine.protocol.remote_status == Status.READY.name:
+            if machine.root_machine.controller_protocol:
+                if machine.root_machine.controller_protocol.local_status == Status.READY.name and machine.root_machine.controller_protocol.remote_status == Status.READY.name:
                     break
             if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
                 timeout = True

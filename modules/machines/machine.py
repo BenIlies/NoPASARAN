@@ -15,6 +15,11 @@ from modules.controllers.messages import JSONLOGMessage, JSONMessage
 from modules.controllers.controller import ClientController, ServerController
 from twisted.internet.threads import deferToThread
 
+
+def test(max):
+  for i in range(0, max):
+    print(i)
+
 class Machine:
     def __init__(self, xstate_json, variables = {}, controller_configuration=None, main_state=True):
         self.__id = xstate_json['id']
@@ -37,22 +42,17 @@ class Machine:
             elif controller_configuration['role'] == 'server':
                 self.controller = ServerController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
                 self.controller.configure(int(controller_configuration['server_port']))
-            deferToThread(self.controller.start, self)
         else:
             self.controller = None
         self.finishing_event = "FINISHED"
         self.__main_state = main_state
-        self.deferred = Deferred()
 
-    def start(self, reactor):
+    def start(self):
+        deferToThread(self.controller.start)
         self.trigger('STARTED')
-        if self.__main_state:
-            if self.protocol:
-                self.protocol.transport.loseConnection()
-            self.deferred.callback("done")
-            return self.deferred
-        else:
-            return self.finishing_event
+        if self.__main_state and self.protocol:
+            self.protocol.transport.loseConnection()
+        return self.finishing_event
 
     def get_id(self):
         return self.__id

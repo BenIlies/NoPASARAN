@@ -7,6 +7,8 @@ from twisted.internet import task
 from modules.machines.machine import Machine
 from modules.controllers.controller import ClientController, ServerController
 from modules.ipsec_tunnels.ipsec_conf import NodeIpsecConf, ProxyIpsecConf
+from twisted.internet.threads import deferToThread
+from twisted.internet import reactor
 
 
 
@@ -88,9 +90,11 @@ conn tunnel-to-node
 --> Invoquer une machine à état finie différente de manière modulaire
 
 '''
-
-##IPSEC PORT AND DESTINATION
   
+  
+def test(max):
+  for i in range(0, max):
+    print(i)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
@@ -154,5 +158,9 @@ if __name__ == '__main__':
       machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables)), controller_configuration=controller_configuration)
     else:
       machine = Machine(xstate_json=xstate_json, controller_configuration=controller_configuration)
-    task.react(machine.start)
-    
+    main_thread = deferToThread(machine.start)
+    main_thread.addCallback(lambda _: reactor.stop())
+
+    reactor.run()
+
+  

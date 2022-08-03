@@ -1,6 +1,8 @@
 from modules.controllers.factory import NodeClientFactory, NodeServerFactory
 from twisted.internet.ssl import Certificate, PrivateCertificate
 
+from twisted.internet import reactor
+
 
 class Controller():
     def __init__(self, root_certificate_file, own_private_certificate_file):        
@@ -22,9 +24,8 @@ class ClientController(Controller):
         self.__dst_ip = dst_ip
         self.__dst_port = dst_port
     
-    def start(self, reactor):
+    def start(self):
         reactor.connectSSL(self.__dst_ip, self.__dst_port, self._factory, self._own_private_certificate.options(self._trusted_authority_certificate))
-        return self._factory.deferred
 
 class ServerController(Controller):
     def __init__(self, state_machine, root_certificate_file, server_private_certificate_file):
@@ -34,6 +35,5 @@ class ServerController(Controller):
     def configure(self, src_port):
         self.__src_port = src_port
 
-    def start(self, reactor):
+    def start(self):
         reactor.listenSSL(self.__src_port, self._factory, self._own_private_certificate.options(self._trusted_authority_certificate))
-        return self._factory.deferred

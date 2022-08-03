@@ -49,7 +49,8 @@ class Machine:
         
 
     def start(self):
-        deferToThread(self.controller.start)
+        if self.__main_state:
+            deferToThread(self.controller.start)
         self.trigger('STARTED')
         if self.__main_state and self.protocol:
             self.protocol.transport.loseConnection()

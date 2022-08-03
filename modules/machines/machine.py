@@ -21,7 +21,7 @@ def test(max):
     print(i)
 
 class Machine:
-    def __init__(self, xstate_json, variables = {}, controller_configuration=None, main_state=True):
+    def __init__(self, xstate_json, variables = {}, controller_configuration=None, main_state=True, protocol=None):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
@@ -34,7 +34,7 @@ class Machine:
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
-        self.protocol = None
+        self.protocol = protocol
         self.__main_state = main_state
         if controller_configuration and self.__main_state:
             if controller_configuration['role'] == 'client':

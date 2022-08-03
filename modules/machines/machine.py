@@ -35,7 +35,8 @@ class Machine:
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.protocol = None
-        if controller_configuration:
+        self.__main_state = main_state
+        if controller_configuration and self.__main_state:
             if controller_configuration['role'] == 'client':
                 self.controller = ClientController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
                 self.controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
@@ -45,7 +46,7 @@ class Machine:
         else:
             self.controller = None
         self.finishing_event = "FINISHED"
-        self.__main_state = main_state
+        
 
     def start(self):
         deferToThread(self.controller.start)

@@ -156,7 +156,6 @@ if __name__ == '__main__':
       machine = Machine(xstate_json=xstate_json, controller_configuration=controller_configuration)
     main_thread = deferToThread(machine.start)
     main_thread.addCallback(lambda _: reactor.stop())
-
     reactor.run()
 
   

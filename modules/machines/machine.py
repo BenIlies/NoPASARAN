@@ -6,14 +6,14 @@ import time
 import hashlib
 
 from scapy.all import AsyncSniffer, Ether
-from twisted.internet.defer import Deferred
+from twisted.internet.threads import deferToThread
 
 from modules.utils import *
 from modules.interpreters.action_interpreter import ActionInterpreter
 from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.controllers.messages import JSONLOGMessage, JSONMessage
 from modules.controllers.controller import ClientController, ServerController
-from twisted.internet.threads import deferToThread
+
 
 
 def test(max):

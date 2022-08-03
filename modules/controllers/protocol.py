@@ -63,8 +63,3 @@ class NodeServerProtocol(Protocol):
                 logging.info('REMOTE RECEIVED ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
         print("Status: ", self.local_status, self.remote_status)
         print("Received:", data)
-
-    def connectionLost(self, reason):
-        self.remote_status = Status.DISCONNECTED.name
-        self.local_status = Status.DISCONNECTED.name
-        self.factory.connectionLost(reason)

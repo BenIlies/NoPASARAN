@@ -2,15 +2,11 @@ import argparse
 import json
 
 from scapy.all import *
-from twisted.internet import task
-
-from modules.machines.machine import Machine
-from modules.controllers.controller import ClientController, ServerController
-from modules.ipsec_tunnels.ipsec_conf import NodeIpsecConf, ProxyIpsecConf
 from twisted.internet.threads import deferToThread
 from twisted.internet import reactor
 
-
+from modules.machines.machine import Machine
+from modules.ipsec_tunnels.ipsec_conf import NodeIpsecConf, ProxyIpsecConf
 
 #iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP 
 #iptables -L "chain" --line-numbers

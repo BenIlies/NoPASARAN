@@ -1,8 +1,7 @@
-from modules.controllers.factory import NodeClientFactory, NodeServerFactory
-from twisted.internet.ssl import Certificate, PrivateCertificate
-
 from twisted.internet import reactor
 
+from modules.controllers.factory import NodeClientFactory, NodeServerFactory
+from twisted.internet.ssl import Certificate, PrivateCertificate
 
 class Controller():
     def __init__(self, root_certificate_file, own_private_certificate_file):        

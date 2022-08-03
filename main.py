@@ -108,32 +108,6 @@ if __name__ == '__main__':
   node_parser.add_argument("-v", "--variables", required=False, help="JSON variables file for the scenario")
 
   proxy_parser = subparsers.add_parser("PROXY", help="set the role of the node as a proxy for control link", parents=[base_parser])
-
-  '''  
-  args = parser.parse_args()
-  controller_configuration = json.load(open(args.controller_configuration))
-  if args.role == 'NODE':
-    xstate_json = json.load(open(args.scenario))
-    if args.variables:
-      machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables)))
-    else:
-      machine = Machine(xstate_json=xstate_json)
-    if args.reload_ipsec:
-      ipsec = NodeIpsecConf(right=controller_configuration['ipsec_proxy_ip'], rightsubnet=controller_configuration['ipsec_destination_ip_subnet'], leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'], rightid=controller_configuration['ipsec_remote_id'])
-      ipsec.run()
-    if controller_configuration['role'] == 'client':
-      controller = ClientController(machine, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-      controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
-      task.react(controller.start)
-    elif controller_configuration['role'] == 'server':
-      controller = ServerController(machine, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-      controller.configure(int(controller_configuration['server_port']))
-      task.react(controller.start)
-  elif args.role == 'PROXY':
-    if args.reload_ipsec:
-      ipsec = ProxyIpsecConf(leftcert=controller_configuration['ipsec_certificate'], leftid=controller_configuration['ipsec_local_id'])
-      ipsec.run()
-  '''
   controller_configuration = None
 
   args = parser.parse_args()

@@ -21,7 +21,7 @@ def test(max):
     print(i)
 
 class Machine:
-    def __init__(self, xstate_json, variables = {}, controller_configuration=None, main_state=True, protocol=None):
+    def __init__(self, xstate_json, variables = {}, controller_configuration=None, main_state=True):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
@@ -34,7 +34,7 @@ class Machine:
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
-        self.protocol = protocol
+        self.protocol = None
         self.__main_state = main_state
         if controller_configuration and self.__main_state:
             if controller_configuration['role'] == 'client':
@@ -47,7 +47,6 @@ class Machine:
             self.controller = None
         self.finishing_event = "FINISHED"
         
-
     def start(self):
         if self.__main_state:
             deferToThread(self.controller.start)
@@ -55,6 +54,12 @@ class Machine:
         if self.__main_state and self.protocol:
             self.protocol.transport.loseConnection()
         return self.finishing_event
+    
+    def get_child_machine(self, nested_xstate_json):
+        nested_machine = Machine(xstate_json=nested_xstate_json, variables=self.__variables, main_state=False)
+        nested_machine.protocol = self.protocol
+        nested_machine.controller = self.controller
+        return nested_machine
 
     def get_id(self):
         return self.__id

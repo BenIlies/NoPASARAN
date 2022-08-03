@@ -10,7 +10,6 @@ from scapy.all import send
 from modules.controllers.messages import JSONLOGMessage, JSONMessage, Status
 from modules.parsers.interpreter_parser import InterpreterParser
 from modules.utils import *
-import modules.machines.machine
 
 
 class ActionInterpreter(cmd.Cmd):
@@ -38,7 +37,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_call(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))
-        nested_machine = modules.machines.machine.Machine(xstate_json=nested_xstate_json, variables=machine.get_variables(), main_state=False, protocol=machine.protocol)
+        nested_machine = machine.get_child_machine(self, nested_xstate_json)
         machine.trigger(nested_machine.start())
 
     def do_listen(self, line, machine):

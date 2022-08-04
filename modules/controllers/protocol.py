@@ -24,7 +24,7 @@ class NodeProtocol(Protocol):
                 self.local_status = Status.READY.name
                 self.transport.write(self.get_current_state_json())
             if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
-                print("aaaa")
+                self.transport.loseConnection()
         if JSONMessage.LOG.name in data:
             if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
                 logging.info('REMOTE SENT ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))

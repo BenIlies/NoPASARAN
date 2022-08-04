@@ -213,7 +213,7 @@ class ActionInterpreter(cmd.Cmd):
         start_time = time.time()
         while (True):
             if machine.root_machine.controller_protocol:
-                if machine.root_machine.controller_protocol.local_status == Status.DISCONNECTING.name and machine.root_machine.controller_protocol.remote_status == Status.DISCONNECTING.name:
+                if not machine.root_machine.controller_protocol.is_active:
                     break
             if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
                 timeout = True

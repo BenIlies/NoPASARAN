@@ -12,6 +12,7 @@ from modules.utils import get_packet_info
 class NodeProtocol(Protocol):
     remote_status = Status.DISCONNECTED.name
     local_status = Status.DISCONNECTED.name
+    is_active = True
 
     def get_current_state_json(self):
         return json.dumps({JSONMessage.STATUS.name: self.local_status}).encode()
@@ -24,6 +25,7 @@ class NodeProtocol(Protocol):
                 self.local_status = Status.READY.name
                 self.transport.write(self.get_current_state_json())
             if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
+                self.is_active = False
                 self.transport.loseConnection()
         if JSONMessage.LOG.name in data:
             if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
@@ -36,6 +38,9 @@ class NodeProtocol(Protocol):
     def disconnecting(self):
         self.local_status = Status.DISCONNECTING.name
         self.transport.write(self.get_current_state_json())
+        
+    def connectionLost(self, reason):
+        self.is_active = False
 
 class NodeClientProtocol(NodeProtocol):
     def connectionMade(self):

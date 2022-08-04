@@ -13,3 +13,4 @@ class Status(Enum):
     DISCONNECTED = 0
     CONNECTED = 1
     READY = 2
+    DISCONNECTING = 3

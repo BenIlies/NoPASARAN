@@ -28,6 +28,8 @@ class NodeClientProtocol(Protocol):
             if self.local_status == Status.CONNECTED.name and self.remote_status == Status.CONNECTED.name:
                 self.local_status = Status.READY.name
                 self.transport.write(self.get_current_state_json())
+            if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
+                print("aaaa")
         if JSONMessage.LOG.name in data:
             if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
                 logging.info('REMOTE SENT ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
@@ -35,6 +37,14 @@ class NodeClientProtocol(Protocol):
                 logging.info('REMOTE RECEIVED ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
         print("Status: ", self.local_status, self.remote_status)
         print("Received:", data)
+        
+    def disconnecting(self):
+        self.local_status = Status.DISCONNECTING.name
+        self.transport.write(self.get_current_state_json())
+        
+    def connectionLost(self, reason):
+        self.local_status = Status.DISCONNECTED.name
+        self.remote_status = Status.DISCONNECTED.name
 
 class NodeServerProtocol(Protocol):
     remote_status = Status.DISCONNECTED.name
@@ -55,6 +65,8 @@ class NodeServerProtocol(Protocol):
             if self.local_status == Status.CONNECTED.name and self.remote_status == Status.CONNECTED.name:
                 self.local_status = Status.READY.name
                 self.transport.write(self.get_current_state_json())
+            if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
+                print("aaaa")
         if JSONMessage.LOG.name in data:
             if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
                 logging.info('REMOTE SENT ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
@@ -62,3 +74,11 @@ class NodeServerProtocol(Protocol):
                 logging.info('REMOTE RECEIVED ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
         print("Status: ", self.local_status, self.remote_status)
         print("Received:", data)
+        
+    def disconnecting(self):
+        self.local_status = Status.DISCONNECTING.name
+        self.transport.write(self.get_current_state_json())
+        
+    def connectionLost(self, reason):
+        self.local_status = Status.DISCONNECTED.name
+        self.remote_status = Status.DISCONNECTED.name

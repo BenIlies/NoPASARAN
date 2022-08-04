@@ -204,3 +204,22 @@ class ActionInterpreter(cmd.Cmd):
             machine.trigger('TIMEOUT')
         else:
             machine.trigger('CONTROL_LINK_READY')
+            
+            
+    def do_wait_for_disconnecting_control_link(self, line, machine):
+        parsed = InterpreterParser.parse(line, 1)
+        timeout = False
+        machine.root_machine.controller_protocol.disconnecting()
+        start_time = time.time()
+        while (True):
+            if machine.root_machine.controller_protocol:
+                if machine.root_machine.controller_protocol.local_status == Status.DISCONNECTING.name and machine.root_machine.controller_protocol.remote_status == Status.DISCONNECTING.name:
+                    break
+            if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
+                timeout = True
+                break
+        if (timeout):
+            machine.trigger('TIMEOUT')
+        else:
+            machine.trigger('CONTROL_LINK_DISCONNECTING')
+

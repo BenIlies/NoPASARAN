@@ -49,8 +49,6 @@ class Machine:
         if self.__main_state:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
-        #if self.__main_state and self.root_machine.controller_protocol:
-        #    self.root_machine.controller_protocol.transport.loseConnection()
         return self.finishing_event
     
     def get_child_machine(self, nested_xstate_json):

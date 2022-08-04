@@ -36,10 +36,6 @@ class NodeProtocol(Protocol):
     def disconnecting(self):
         self.local_status = Status.DISCONNECTING.name
         self.transport.write(self.get_current_state_json())
-        
-    def connectionLost(self, reason):
-        self.local_status = Status.DISCONNECTED.name
-        self.remote_status = Status.DISCONNECTED.name
 
 class NodeClientProtocol(NodeProtocol):
     def connectionMade(self):

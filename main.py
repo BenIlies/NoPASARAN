@@ -17,7 +17,7 @@ from modules.ipsec_tunnels.ipsec_conf import NodeIpsecConf, ProxyIpsecConf
   - RST and kernel
   - Logger
   - Exceptions
-  - Controller
+  - Controllers
   - Server/Side
 
 
@@ -35,63 +35,7 @@ https://docs.python-guide.org/writing/documentation/#:~:text=Sphinx,manual%20pag
 PARTIE SUR LE SWITCH
 -> ADAPTER LES CONNEXION TCP/ UTILISATION ADRESSE IP PRIVEE POUR LE TUNNEL IPSEC ?
 '''
-
-'''
-conn tunnel-to-proxy
-        left=%any
-        leftsubnet=192.0.0.0/24
-        right=11.11.11.3
-        rightsubnet=192.0.0.0/24
-        ike=aes256-sha2_256-modp1024!
-        esp=aes256-sha2_256!
-        keyingtries=0
-        ikelifetime=1h
-        lifetime=8h
-        dpddelay=30
-        dpdtimeout=120
-        dpdaction=restart
-        leftcert=c1Cert.pem
-        leftid="C=CH, O=c1, CN=c1"
-        rightid="C=CH, O=proxy, CN=proxy"
-        auto=start
-        keyexchange=ikev2
-        type=tunnel
-        forceencaps=yes
-
-conn tunnel-to-node
-        leftsubnet=192.0.0.0/24
-        right=%any
-        rightsubnet=192.0.0.0/24
-        ike=aes256-sha2_256-modp1024!
-        esp=aes256-sha2_256!
-        keyingtries=0
-        ikelifetime=1h
-        lifetime=8h
-        dpddelay=30
-        dpdtimeout=120
-        dpdaction=restart
-        leftcert=proxyCert.pem
-        leftid="C=CH, O=proxy, CN=proxy"
-        auto=start
-        keyexchange=ikev2
-        type=tunnel
-        forceencaps=yes
-
-  #ProxyIpsecConf(leftcert='proxyCert.pem', leftid='C=CH, O=proxy, CN=proxy')
-  #NodeIpsecConf(right='11.11.11.3',leftcert='c1Cert.pem', leftid='C=CH, O=c1, CN=c1', rightid='C=CH, O=proxy, CN=proxy')
-
---> Fix le bug
---> Client en premier
---> Corriger le 3way-hs + timeout
---> Invoquer une machine à état finie différente de manière modulaire
-
-'''
   
-  
-def test(max):
-  for i in range(0, max):
-    print(i)
-
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(
     prog='ROLE', 

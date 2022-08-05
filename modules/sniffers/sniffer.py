@@ -27,14 +27,22 @@ class Sniffer(AsyncSniffer):
     def __filter_packet(self, packet):
         if 'Ether' in packet:
             if (packet[Ether].src != Ether().src) and ('TCP' in packet):
-                
-                
-                
-                
-                
+                for layer in self.get_packet_layers(packet):
+                    print (layer.name)
                 if (packet['TCP'].sport in self.filter_sport) or (packet['TCP'].dport in self.filter_dport):
                     return True
         return False
+
+    def get_packet_layers(self, packet):
+        counter = 0
+        while True:
+            layer = packet.getlayer(counter)
+            if layer is None:
+                break
+
+            yield layer
+            counter += 1
+
 
 
     def __handle_sniffer(self):

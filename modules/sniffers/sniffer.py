@@ -3,23 +3,24 @@ import pickle
 import logging
 import json
 
+from modules.utils import *
 from scapy.all import AsyncSniffer, Ether, sniff
 
 from modules.controllers.messages import JSONLOGMessage, JSONMessage
 
 class Sniffer(AsyncSniffer):
-    def __init__(self, stack, filter=''):
+    def __init__(self, machine, filter=''):
         super().__init__(prn=self.__handle_sniffer(), lfilter=lambda pkt: self.__filter_packet(pkt))
-        self.stack = stack 
+        self.machine = machine 
         self.__filter = filter
 
         
     def __handle_sniffer(self):
         def pkt_callback(packet):
-            #if self.root_machine.controller_protocol:
-            #    serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-            #    self.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
-            #logging.info('LOCAL RECEIVED ' + get_packet_info(packet))
+            if self.machine.root_machine.controller_protocol:
+                serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
+                self.machine.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+            logging.info('LOCAL RECEIVED ' + get_packet_info(packet))
             self.stack.append(packet)
         return pkt_callback
     

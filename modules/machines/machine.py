@@ -22,7 +22,7 @@ class Machine:
         self.filter_dport = []
         self.__sniffer_stack = 'ans'
         self.__variables[self.__sniffer_stack] = []
-        self.__sniffer = Sniffer(stack=self.__variables[self.__sniffer_stack], filter='tcp')
+        self.__sniffer = Sniffer(self, filter='tcp')
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.__main_state = main_state

@@ -21,8 +21,8 @@ def get_packet_info(packet):
             result.append("ack|" + str(packet['TCP'].ack))
         if hasattr(packet['TCP'], "seq"):
             result.append("seq|" + str(packet['TCP'].seq))
-        if hasattr(packet['TCP'], "payload"):
-            result.append("payload|" + bytes(packet['TCP'].payload).decode())
+        #if hasattr(packet['TCP'], "payload"):
+        #    result.append("payload|" + bytes(packet['TCP'].payload).decode())
     return ' '.join(result)
 
 def create_TCP_packet():

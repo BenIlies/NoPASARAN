@@ -1,18 +1,13 @@
-import codecs
-import json
-import logging
-import pickle
+
 import time
 import hashlib
 
-from scapy.all import AsyncSniffer, Ether
 from twisted.internet.threads import deferToThread
 
 
 from modules.utils import *
 from modules.interpreters.action_interpreter import ActionInterpreter
 from modules.interpreters.condition_interpreter import ConditionInterpreter
-from modules.controllers.messages import JSONLOGMessage, JSONMessage
 from modules.controllers.controller import ClientController, ServerController
 from modules.sniffers.sniffer import Sniffer
 
@@ -25,9 +20,9 @@ class Machine:
         self.__variables = variables
         self.filter_sport = []
         self.filter_dport = []
-        self.__sniffer = Sniffer('tcp')
         self.__sniffer_stack = 'ans'
         self.__variables[self.__sniffer_stack] = []
+        self.__sniffer = Sniffer(stack=self.__variables[self.__sniffer_stack], filter='tcp')
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.__main_state = main_state

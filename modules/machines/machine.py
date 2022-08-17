@@ -18,8 +18,6 @@ class Machine:
         self.__states = xstate_json['states']
         self.__current_state = self.__initial
         self.__variables = variables
-        self.filter_sport = []
-        self.filter_dport = []
         self.__sniffer_stack = 'ans'
         self.__variables[self.__sniffer_stack] = []
         self.__sniffer = Sniffer(self, filter='tcp')
@@ -107,32 +105,12 @@ class Machine:
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
 
-    '''
-    def __handle_sniffer(self):
-        def pkt_callback(packet):
-            if self.root_machine.controller_protocol:
-                serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
-                self.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
-            logging.info('LOCAL RECEIVED ' + get_packet_info(packet))
-            self.__variables[self.__sniffer_stack].append(packet)
-        return pkt_callback
-
-    def __filter_packet(self, packet):
-        if 'Ether' in packet:
-            if (packet[Ether].src != Ether().src) and ('TCP' in packet):
-                if (packet['TCP'].sport in self.filter_sport) or (packet['TCP'].dport in self.filter_dport):
-                    return True
-        return False    
-    '''
-
-
     def __transition(self, possible_states):
         def check_conditions(possible_state):
             if 'cond' in possible_state:
                 return ConditionInterpreter().onecmd(possible_state['cond'], self.__variables)
             else:
                 return True
-
             
         for state in possible_states:
             if state['target'] in self.__states:

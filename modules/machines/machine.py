@@ -8,11 +8,13 @@ import hashlib
 from scapy.all import AsyncSniffer, Ether
 from twisted.internet.threads import deferToThread
 
+
 from modules.utils import *
 from modules.interpreters.action_interpreter import ActionInterpreter
 from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.controllers.messages import JSONLOGMessage, JSONMessage
 from modules.controllers.controller import ClientController, ServerController
+from modules.sniffers.sniffer import Sniffer
 
 class Machine:
     def __init__(self, xstate_json, variables = {}, main_state=True, controller_configuration=None):
@@ -23,7 +25,7 @@ class Machine:
         self.__variables = variables
         self.filter_sport = []
         self.filter_dport = []
-        self.__sniffer = AsyncSniffer(prn=self.__handle_sniffer(), lfilter=lambda pkt: self.__filter_packet(pkt))
+        self.__sniffer = Sniffer('tcp')
         self.__sniffer_stack = 'ans'
         self.__variables[self.__sniffer_stack] = []
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
@@ -110,6 +112,7 @@ class Machine:
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
 
+    '''
     def __handle_sniffer(self):
         def pkt_callback(packet):
             if self.root_machine.controller_protocol:
@@ -124,7 +127,9 @@ class Machine:
             if (packet[Ether].src != Ether().src) and ('TCP' in packet):
                 if (packet['TCP'].sport in self.filter_sport) or (packet['TCP'].dport in self.filter_dport):
                     return True
-        return False
+        return False    
+    '''
+
 
     def __transition(self, possible_states):
         def check_conditions(possible_state):

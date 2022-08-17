@@ -164,22 +164,6 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.parse(line, 2)
         machine.set_variable(parsed[0], parsed[1])
 
-    def do_add_sport_filter(self, line, machine):
-        parsed = InterpreterParser.parse(line, 1)
-        machine.filter_sport.append(int(machine.get_variable(parsed[0])))
-
-    def do_add_dport_filter(self, line, machine):
-        parsed = InterpreterParser.parse(line, 1)
-        machine.filter_dport.append(int(machine.get_variable(parsed[0])))
-
-    def do_remove_sport_filter(self, line, machine):
-        parsed = InterpreterParser.parse(line, 1)
-        machine.filter_sport.remove(int(machine.get_variable(parsed[0])))
-
-    def do_remove_dport_filter(self, line, machine):
-        parsed = InterpreterParser.parse(line, 1)
-        machine.filter_dport.remove(int(machine.get_variable(parsed[0])))
-
     def do_set_finishing_event(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
         machine.finishing_event = parsed[0]
@@ -187,7 +171,6 @@ class ActionInterpreter(cmd.Cmd):
     def do_return(self, line, machine):
         parsed = InterpreterParser.parse(line, 0)
         machine.return_to_previous_state()
-
 
     def do_wait_for_ready_control_link(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)

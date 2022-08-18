@@ -20,7 +20,7 @@ class Sniffer(AsyncSniffer):
             if self.machine.root_machine.controller_protocol:
                 serializable_packet = codecs.encode(pickle.dumps(packet), "base64").decode()
                 self.machine.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.RECEIVED.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
-            logging.info('LOCAL RECEIVED ' + get_packet_info(packet))
+            logging.info('LOCAL RECEIVED ' + repr(packet))
             self.machine.get_stack().append(packet)
         return pkt_callback
     

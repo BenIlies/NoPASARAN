@@ -29,9 +29,9 @@ class NodeProtocol(Protocol):
                 self.transport.loseConnection()
         if JSONMessage.LOG.name in data:
             if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
-                logging.info('REMOTE SENT ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+                logging.info('REMOTE SENT ' + repr(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
             elif data[JSONMessage.LOG.name] == JSONLOGMessage.RECEIVED.name:
-                logging.info('REMOTE RECEIVED ' + get_packet_info(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+                logging.info('REMOTE RECEIVED ' + repr(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
         print("Status: ", self.local_status, self.remote_status)
         print("Received:", data)
         

@@ -27,8 +27,8 @@ class Sniffer(AsyncSniffer):
     def __filter_packet(self, packet):
         if 'Ether' in packet:
             if (packet[Ether].src != Ether().src):
-                pkts_icmp = sniff(offline=packet, filter=self.__filter)
-                if packet in pkts_icmp:
+                filtered_packets = sniff(offline=packet, filter=self.__filter)
+                if packet in filtered_packets:
                     return True
         return False
     

@@ -90,8 +90,8 @@ class ActionInterpreter(cmd.Cmd):
             
     def do_packet_filter(self, line, machine):
         for word in line:
-            if word in machine.get_variables:
-                word = machine.get_variables[word]
+            if word in machine.get_variables():
+                word = machine.get_variable(word)
         machine.set_sniffer_filter(line.join(' '))
 
     def do_pop(self, line, machine):

@@ -89,6 +89,9 @@ class Machine:
 
     def set_variable(self, name, new_value):
         self.__variables[name] = new_value
+        
+    def set_sniffer_filter(self, filter):
+        self.__sniffer.set_filter(filter)
 
     def return_to_previous_state(self):
         if len(self.__chain_states) > 1:

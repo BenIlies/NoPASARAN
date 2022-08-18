@@ -87,6 +87,12 @@ class ActionInterpreter(cmd.Cmd):
                 break
         if (timeout):
             machine.trigger('TIMEOUT')
+            
+    def do_packet_filter(self, line, machine):
+        for word in line:
+            if word in machine.get_variables:
+                word = machine.get_variables[word]
+        machine.set_sniffer_filter(line.join(' '))
 
     def do_pop(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)

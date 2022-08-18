@@ -89,10 +89,11 @@ class ActionInterpreter(cmd.Cmd):
             machine.trigger('TIMEOUT')
             
     def do_packet_filter(self, line, machine):
-        for word in line:
+        parsed = InterpreterParser.parse(line)
+        for word in parsed:
             if word in machine.get_variables():
                 word = machine.get_variable(word)
-        machine.set_sniffer_filter(line.join(' '))
+        machine.set_sniffer_filter(parsed.join(' '))
 
     def do_pop(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)
@@ -175,7 +176,7 @@ class ActionInterpreter(cmd.Cmd):
         machine.finishing_event = parsed[0]
 
     def do_return(self, line, machine):
-        parsed = InterpreterParser.parse(line, 0)
+        InterpreterParser.parse(line, 0)
         machine.return_to_previous_state()
 
     def do_wait_for_ready_control_link(self, line, machine):

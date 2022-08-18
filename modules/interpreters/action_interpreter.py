@@ -94,6 +94,14 @@ class ActionInterpreter(cmd.Cmd):
             if word in machine.get_variables():
                 word = machine.get_variable(word)
         machine.set_sniffer_filter(parsed.join(' '))
+        
+    def do_packet_filter(self, line, machine):
+        parsed = InterpreterParser.parse(line)
+        for counter in range (0, len(parsed)):
+            if parsed[counter] in machine.get_variables():
+                parsed[counter] = machine.get_variable(parsed[counter])
+        machine.set_sniffer_filter(' '.join(parsed))
+
 
     def do_pop(self, line, machine):
         parsed = InterpreterParser.parse(line, 1)

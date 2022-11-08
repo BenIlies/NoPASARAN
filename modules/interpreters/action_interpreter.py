@@ -182,7 +182,7 @@ class ActionInterpreter(cmd.Cmd):
             machine.trigger('TIMEOUT')
 
     def do_call(self, line, machine):
-        inputs, outputs = InterpreterParser.parse(line)
+        inputs, outputs = InterpreterParser.parse(line, 1, 0, True, True)
         nested_xstate_json = json.load(open('.'.join((inputs[0], 'json'))))
         nested_machine = machine.get_child_machine(nested_xstate_json)
         machine.trigger(nested_machine.start())

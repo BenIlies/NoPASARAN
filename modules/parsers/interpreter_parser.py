@@ -10,7 +10,7 @@ class InterpreterParser():
             raise Exception('Parsing error: number of argument is incorrect expected ' + str(correct_number) + ' received ' + str(len(parsed_parameters)) + '.')
 
     @staticmethod
-    def parse(command, input_args=None, output_args=None):
+    def parse(command, input_args=1, output_args=0, optional_inputs=False, optional_outputs=False):
         def checker(string):
             depth = 0
             for c in string:
@@ -40,12 +40,12 @@ class InterpreterParser():
 
         
         set_of_arguments = 0
-        if input_args not in [0, None]:
+        if input_args != 0 or optional_inputs:
             set_of_arguments = set_of_arguments + 1
-        if output_args not in [0, None]:
+        if output_args != 0 or optional_outputs:
             set_of_arguments = set_of_arguments + 1
         args = list(parenthetic_contents(command))
-        if len(args) > set_of_arguments and input_args:
+        if len(args) > set_of_arguments:
             raise Exception('Mismatch in the input and output values in ' + command + ', got too many sets of arguments.')
         if len(args) < set_of_arguments:
             raise Exception('Mismatch in the input and output values in ' + command + ', got not enough sets of arguments.')
@@ -53,7 +53,7 @@ class InterpreterParser():
         if set_of_arguments == 2:
             inputs = args[0].split(' ')
             outputs = args[1].split(' ')
-        elif set_of_arguments == 1:
+        elif set_of_arguments == 1:        
             if input_args == 0:
                 inputs = []
                 outputs = args[0].split(' ')
@@ -63,8 +63,9 @@ class InterpreterParser():
         else:
             inputs = []
             outputs = []
-        if input_args != None and input_args != len(inputs):
+
+        if not(optional_inputs) and input_args != len(inputs):
             raise Exception('Number of inputs mismatch.')
-        if output_args != None and output_args != len(outputs):  
+        if not(optional_outputs) and output_args != len(outputs):  
             raise Exception('Number of outputs mismatch.')            
         return inputs, outputs

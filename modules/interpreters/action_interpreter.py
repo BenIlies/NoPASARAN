@@ -73,8 +73,6 @@ class ActionInterpreter(cmd.Cmd):
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
         set_IP_dst(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
 
-################################################################################################
-
     def do_set_TCP_sport(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
@@ -99,6 +97,54 @@ class ActionInterpreter(cmd.Cmd):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
         set_TCP_ack(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_return(self, line, machine):
+        InterpreterParser.parse(line, 0, 0)
+        machine.return_to_previous_state()
+
+
+#################################################################################################
+    def do_set_TCP_payload(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_payload(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_remove_TCP_payload(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        remove_TCP_payload(machine.get_variable(outputs[0]))
+
+    def do_set_TCP_automatic_packet_seq(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_automatic_packet_seq(machine.get_variable(outputs[0]))
+
+    def do_set_TCP_automatic_packet_ack(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_automatic_packet_ack(machine.get_variable(outputs[0]), machine.get_variable(inputs[1])[0])
+
+    def do_get_packet_IP(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        machine.set_variable(outputs[0], get_IP_src(machine.get_variable(inputs[0])[0]))
+
+    def do_get_packet_port(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        machine.set_variable(outputs[0], get_TCP_sport(machine.get_variable(inputs[0])[0]))
+
+    def do_print_TCP_payload(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        print(machine.get_variable(inputs[0])[0]['TCP'].payload)
+
+#################################################################################################
+
+
+
+
+
+
+
+
 
 
 #################################################################################################
@@ -162,41 +208,7 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.old_parse(line, 1)
         machine.discard_stack_packet(machine.get_variable(parsed[0]))
 
-    def do_set_TCP_payload(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_TCP_payload(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
 
-    def do_remove_TCP_payload(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        remove_TCP_payload(machine.get_variable(parsed[0]))
-
-    def do_set_TCP_automatic_packet_seq(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        set_TCP_automatic_packet_seq(machine.get_variable(parsed[0]))
-
-    def do_set_TCP_automatic_packet_ack(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_TCP_automatic_packet_ack(machine.get_variable(parsed[0]), machine.get_variable(parsed[1])[0])
-
-    def do_get_packet_IP(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        machine.set_variable(parsed[0], get_IP_src(machine.get_variable(parsed[1])[0]))
-
-    def do_get_packet_port(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        machine.set_variable(parsed[0], get_TCP_sport(machine.get_variable(parsed[1])[0]))
-
-    def do_print_TCP_payload(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        print(machine.get_variable(parsed[0])[0]['TCP'].payload)
-
-    def do_set_finishing_event(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        machine.finishing_event = parsed[0]
-
-    def do_return(self, line, machine):
-        InterpreterParser.old_parse(line, 0)
-        machine.return_to_previous_state()
 
     def do_wait_for_ready_control_link(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
@@ -231,3 +243,7 @@ class ActionInterpreter(cmd.Cmd):
             machine.trigger('TIMEOUT')
         else:
             machine.trigger('CONTROL_LINK_DISCONNECTING')
+
+    def do_set_finishing_event(self, line, machine):
+        parsed = InterpreterParser.old_parse(line, 1)
+        machine.finishing_event = parsed[0]

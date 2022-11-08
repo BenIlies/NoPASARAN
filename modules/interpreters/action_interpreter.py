@@ -98,12 +98,6 @@ class ActionInterpreter(cmd.Cmd):
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
         set_TCP_ack(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
 
-    def do_return(self, line, machine):
-        InterpreterParser.parse(line, 0, 0)
-        machine.return_to_previous_state()
-
-
-#################################################################################################
     def do_set_TCP_payload(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
@@ -138,16 +132,28 @@ class ActionInterpreter(cmd.Cmd):
 
 #################################################################################################
 
+    def do_rollback(self, line, machine):
+        InterpreterParser.parse(line, 0, 0)
+        machine.return_to_previous_state()
 
+    def do_return(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 0, 0)
+        machine.finishing_event = inputs[0]
 
+    def do_pop(self, line, machine):     
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        machine.discard_stack_packet(machine.get_variable(outputs[0]))
 
-
-
-
-
-
+    def do_listen(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 1, 1)
+        machine.start_sniffer()
+        machine.set_stack(inputs[0])
 
 #################################################################################################
+
+
+
 
     def do_call(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
@@ -155,10 +161,7 @@ class ActionInterpreter(cmd.Cmd):
         nested_machine = machine.get_child_machine(nested_xstate_json)
         machine.trigger(nested_machine.start())
 
-    def do_listen(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        machine.start_sniffer()
-        machine.set_stack(parsed[0])
+#################################################################################################
 
     def do_handle_packets(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
@@ -204,12 +207,6 @@ class ActionInterpreter(cmd.Cmd):
                 parsed[counter] = machine.get_variable(parsed[counter])
         machine.set_sniffer_filter(' '.join(parsed))
 
-    def do_pop(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        machine.discard_stack_packet(machine.get_variable(parsed[0]))
-
-
-
     def do_wait_for_ready_control_link(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
         timeout = False
@@ -243,7 +240,3 @@ class ActionInterpreter(cmd.Cmd):
             machine.trigger('TIMEOUT')
         else:
             machine.trigger('CONTROL_LINK_DISCONNECTING')
-
-    def do_set_finishing_event(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        machine.finishing_event = parsed[0]

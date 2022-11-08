@@ -38,7 +38,7 @@ class Machine:
         else:
             self.controller = None
         self.controller_protocol = None
-        self.finishing_event = "FINISHED"
+        self.finishing_event = "DONE"
         
     def start(self):
         if self.__main_state:

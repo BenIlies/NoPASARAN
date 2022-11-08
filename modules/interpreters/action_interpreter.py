@@ -38,7 +38,7 @@ class ActionInterpreter(cmd.Cmd):
         inputs, outputs = InterpreterParser.parse(line, 1, 1)
         ################################################
         machine.set_variable(outputs[0], inputs[0])
-        machine.local_variables(outputs[0], inputs[0])
+        machine.local_variables[outputs[0]] = inputs[0]
         ################################################
 
     def do_send(self, line, machine):

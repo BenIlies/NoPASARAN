@@ -137,7 +137,7 @@ class ActionInterpreter(cmd.Cmd):
         machine.return_to_previous_state()
 
     def do_return(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 0, 0)
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
         machine.finishing_event = inputs[0]
 
     def do_pop(self, line, machine):     
@@ -146,7 +146,7 @@ class ActionInterpreter(cmd.Cmd):
         machine.discard_stack_packet(machine.get_variable(outputs[0]))
 
     def do_listen(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 1, 1)
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
         machine.start_sniffer()
         machine.set_stack(inputs[0])
 

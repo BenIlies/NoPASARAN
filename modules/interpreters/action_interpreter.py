@@ -63,14 +63,45 @@ class ActionInterpreter(cmd.Cmd):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], set_random_float(inputs[0], inputs[1]))
 
+    def do_set_IP_src(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_IP_src(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_set_IP_dst(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_IP_dst(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
 ################################################################################################
 
+    def do_set_TCP_sport(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_sport(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
 
+    def do_set_TCP_dport(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_dport(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_set_TCP_seq(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_seq(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_set_TCP_flags(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_flags(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_set_TCP_ack(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_TCP_ack(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
 
 
 #################################################################################################
-
-
 
     def do_call(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
@@ -127,38 +158,9 @@ class ActionInterpreter(cmd.Cmd):
                 parsed[counter] = machine.get_variable(parsed[counter])
         machine.set_sniffer_filter(' '.join(parsed))
 
-
     def do_pop(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
         machine.discard_stack_packet(machine.get_variable(parsed[0]))
-
-    def do_set_IP_dst(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_IP_dst(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
-
-    def do_set_IP_src(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_IP_src(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
-        
-    def do_set_TCP_sport(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_TCP_sport(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
-
-    def do_set_TCP_dport(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_TCP_dport(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
-
-    def do_set_TCP_seq(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_TCP_seq(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
-
-    def do_set_TCP_flags(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_TCP_flags(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
-
-    def do_set_TCP_ack(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        set_TCP_ack(machine.get_variable(parsed[0]), machine.get_variable(parsed[1]))
 
     def do_set_TCP_payload(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 2)

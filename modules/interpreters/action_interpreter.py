@@ -148,8 +148,6 @@ class ActionInterpreter(cmd.Cmd):
         machine.start_sniffer()
         machine.set_stack(inputs[0])
 
-#################################################################################################
-
     ##HAVE TO ADD THE QUEUE HERE
     def do_wait_packet_signal(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 2, 0)
@@ -221,13 +219,6 @@ class ActionInterpreter(cmd.Cmd):
         else:
             machine.trigger('CONTROL_LINK_DISCONNECTING')
 
-#################################################################################################
-
     def do_packet_filter(self, line, machine):
-        parsed = InterpreterParser.old_parse(line)
-        for counter in range (0, len(parsed)):
-            if parsed[counter] in machine.get_variables():
-                parsed[counter] = machine.get_variable(parsed[counter])
-        machine.set_sniffer_filter(' '.join(parsed))
-
-#################################################################################################
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        machine.set_sniffer_filter(machine.get_variable(inputs[0]))

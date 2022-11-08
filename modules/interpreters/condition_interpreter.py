@@ -26,43 +26,36 @@ class ConditionInterpreter(cmd.Cmd):
         raise Exception('Parsing error: argument "' + line + '" is unknown.')
 
     def if_equal(self, line, variables):
-        parsed = InterpreterParser.old_parse(line, 2)
-        if variables[parsed[0]] == parsed[1]:
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
+        if variables[inputs[0]] == variables[inputs[1]]:
             return True
         else:
             return False
 
     def if_gt(self, line, variables):
-        parsed = InterpreterParser.old_parse(line, 2)
-        if variables[parsed[0]] > parsed[1]:
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
+        if variables[inputs[0]] > variables[inputs[1]]:
             return True
         else:
             return False
 
     def if_gte(self, line, variables):
-        parsed = InterpreterParser.old_parse(line, 2)
-        if variables[parsed[0]] >= parsed[1]:
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
+        if variables[inputs[0]] >= variables[inputs[1]]:
             return True
         else:
             return False
 
     def if_it(self, line, variables):
-        parsed = InterpreterParser.old_parse(line, 2)
-        if variables[parsed[0]] < parsed[1]:
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
+        if variables[inputs[0]] < variables[inputs[1]]:
             return True
         else:
             return False
 
     def if_ite(self, line, variables):
-        parsed = InterpreterParser.old_parse(line, 2)
-        if variables[parsed[0]] <= parsed[1]:
-            return True
-        else:
-            return False
-
-    def if_equal(self, line, variables):
-        parsed = InterpreterParser.old_parse(line, 2)
-        if variables[parsed[0]] == parsed[1]:
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
+        if variables[inputs[0]] <= variables[inputs[1]]:
             return True
         else:
             return False

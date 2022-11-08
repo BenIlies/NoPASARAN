@@ -34,6 +34,30 @@ class ActionInterpreter(cmd.Cmd):
     def default(self, line, machine):
         raise Exception('Parsing error: argument "' + line + '" is unknown.')
 
+
+
+
+    def do_set(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        machine.set_variable(outputs[0], inputs[0])
+        print(machine.get_variable(outputs[0]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def do_call(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
         nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))

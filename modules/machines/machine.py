@@ -120,7 +120,7 @@ class Machine:
             if state['target'] in self.__states:
                 if check_conditions(state):
                     self.__exit_current_state()
-                    self.__assign_local_variables(get_safe_array(state['actions']))
+                    self.__assign_local_variables(state)
                     self.__current_state = state['target']
                     self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
                     self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
@@ -128,9 +128,11 @@ class Machine:
                     break
 
 
-    def __assign_local_variables(self, assignments):
+    def __assign_local_variables(self, state):
         self.local_variables = {}
-        print(assignments)        
+        if 'actions' in state:
+            assignments = get_safe_array(state['actions'])
+            print(assignments)        
 
 
     def __enter_current_state(self):

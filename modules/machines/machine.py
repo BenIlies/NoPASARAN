@@ -4,10 +4,10 @@ import hashlib
 
 from twisted.internet.threads import deferToThread
 
-
 from modules.utils import *
 from modules.interpreters.action_interpreter import ActionInterpreter
 from modules.interpreters.condition_interpreter import ConditionInterpreter
+from modules.interpreters.transition_interpreter import TransitionInterpreter
 from modules.controllers.controller import ClientController, ServerController
 from modules.sniffers.sniffer import Sniffer
 
@@ -129,10 +129,13 @@ class Machine:
 
 
     def __assign_local_variables(self, state):
-        self.local_variables = {}
+        local_variables = {}
         if 'actions' in state:
-            assignments = get_safe_array(state['actions'])
-            print(assignments)        
+            transition_actions = get_safe_array(state['actions'])
+            for transition_action in transition_actions:
+                TransitionInterpreter().onecmd(transition_action, self.local_variables, local_variables)
+        self.local_variables = local_variables
+        print(self.local_variables)
 
 
     def __enter_current_state(self):

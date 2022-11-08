@@ -34,27 +34,41 @@ class ActionInterpreter(cmd.Cmd):
     def default(self, line, machine):
         raise Exception('Parsing error: argument "' + line + '" is unknown.')
 
-
-
-
     def do_set(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 1, 1)
         machine.set_variable(outputs[0], inputs[0])
-        print(machine.get_variable(outputs[0]))
+
+    def do_send(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        send(machine.get_variable(inputs[0]))
+        serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(inputs[0])), "base64").decode()
+        if machine.root_machine.controller_protocol:
+            machine.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
+        logging.info('LOCAL SENT ' + repr(machine.get_variable(inputs[0])))
+        machine.trigger('PACKET_SENT')
+
+    def do_done(self, line, machine):
+        InterpreterParser.parse(line, 0, 0)
+        machine.trigger('DONE')
+
+    def do_create_TCP_packet(self, line, machine):
+        _, outputs = InterpreterParser.parse(line, 0, 1)
+        machine.set_variable(outputs[0], create_TCP_packet())
+
+    def do_set_random_int(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], set_random_int(inputs[0], inputs[1]))
+    
+    def do_set_random_float(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], set_random_float(inputs[0], inputs[1]))
+
+################################################################################################
 
 
 
 
-
-
-
-
-
-
-
-
-
-
+#################################################################################################
 
 
 
@@ -68,19 +82,6 @@ class ActionInterpreter(cmd.Cmd):
         parsed = InterpreterParser.old_parse(line, 1)
         machine.start_sniffer()
         machine.set_stack(parsed[0])
-
-    def do_send(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        send(machine.get_variable(parsed[0]))
-        serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(parsed[0])), "base64").decode()
-        if machine.root_machine.controller_protocol:
-            machine.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
-        logging.info('LOCAL SENT ' + repr(machine.get_variable(parsed[0])))
-        machine.trigger('PACKET_SENT')
-
-    def do_done(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 0)
-        machine.trigger('DONE')
 
     def do_handle_packets(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
@@ -130,10 +131,6 @@ class ActionInterpreter(cmd.Cmd):
     def do_pop(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
         machine.discard_stack_packet(machine.get_variable(parsed[0]))
-
-    def do_create_TCP_packet(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        machine.set_variable(parsed[0], create_TCP_packet())
 
     def do_set_IP_dst(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 2)
@@ -190,18 +187,6 @@ class ActionInterpreter(cmd.Cmd):
     def do_print_TCP_payload(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)
         print(machine.get_variable(parsed[0])[0]['TCP'].payload)
-
-    def do_set_random_int(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 3)
-        machine.set_variable(parsed[0], set_random_int(parsed[1], parsed[2]))
-    
-    def do_set_random_float(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 3)
-        machine.set_variable(parsed[0], set_random_float(parsed[1], parsed[2]))
-
-    def do_set_variable(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 2)
-        machine.set_variable(parsed[0], parsed[1])
 
     def do_set_finishing_event(self, line, machine):
         parsed = InterpreterParser.old_parse(line, 1)

@@ -67,5 +67,4 @@ class InterpreterParser():
             raise Exception('Number of inputs mismatch.')
         if output_args != None and output_args != len(outputs):  
             raise Exception('Number of outputs mismatch.')            
-        print(inputs, "AND", outputs)
         return inputs, outputs

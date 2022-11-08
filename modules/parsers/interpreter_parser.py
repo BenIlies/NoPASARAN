@@ -40,12 +40,12 @@ class InterpreterParser():
 
         
         set_of_arguments = 0
-        if input_args != 0:
+        if input_args not in [0, None]:
             set_of_arguments = set_of_arguments + 1
-        if output_args != 0:
+        if output_args not in [0, None]:
             set_of_arguments = set_of_arguments + 1
         args = list(parenthetic_contents(command))
-        if len(args) > set_of_arguments:
+        if len(args) > set_of_arguments and input_args:
             raise Exception('Mismatch in the input and output values in ' + command + ', got too many sets of arguments.')
         if len(args) < set_of_arguments:
             raise Exception('Mismatch in the input and output values in ' + command + ', got not enough sets of arguments.')

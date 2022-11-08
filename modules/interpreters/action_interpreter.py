@@ -130,8 +130,6 @@ class ActionInterpreter(cmd.Cmd):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         print(machine.get_variable(inputs[0])[0]['TCP'].payload)
 
-#################################################################################################
-
     def do_rollback(self, line, machine):
         InterpreterParser.parse(line, 0, 0)
         machine.return_to_previous_state()
@@ -152,19 +150,9 @@ class ActionInterpreter(cmd.Cmd):
 
 #################################################################################################
 
-
-
-
-    def do_call(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
-        nested_xstate_json = json.load(open('.'.join((parsed[0], 'json'))))
-        nested_machine = machine.get_child_machine(nested_xstate_json)
-        machine.trigger(nested_machine.start())
-
-#################################################################################################
-
-    def do_handle_packets(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
+    ##HAVE TO ADD THE QUEUE HERE
+    def do_wait_packet_signal(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
         timeout = False
         start_time = time.time()
         while (True):
@@ -187,35 +175,27 @@ class ActionInterpreter(cmd.Cmd):
                     break
                 else:
                     machine.discard_stack_packet(machine.get_stack())
-            if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
+            if (time.time() - start_time > float(machine.get_variable(inputs[1]))):
                 timeout = True
                 break
         if (timeout):
             machine.trigger('TIMEOUT')
-            
-    def do_packet_filter(self, line, machine):
-        parsed = InterpreterParser.old_parse(line)
-        for word in parsed:
-            if word in machine.get_variables():
-                word = machine.get_variable(word)
-        machine.set_sniffer_filter(parsed.join(' '))
-        
-    def do_packet_filter(self, line, machine):
-        parsed = InterpreterParser.old_parse(line)
-        for counter in range (0, len(parsed)):
-            if parsed[counter] in machine.get_variables():
-                parsed[counter] = machine.get_variable(parsed[counter])
-        machine.set_sniffer_filter(' '.join(parsed))
+
+    def do_call(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line)
+        nested_xstate_json = json.load(open('.'.join((inputs[0], 'json'))))
+        nested_machine = machine.get_child_machine(nested_xstate_json)
+        machine.trigger(nested_machine.start())
 
     def do_wait_for_ready_control_link(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
         timeout = False
         start_time = time.time()
         while (True):
             if machine.root_machine.controller_protocol:
                 if machine.root_machine.controller_protocol.local_status == Status.READY.name and machine.root_machine.controller_protocol.remote_status == Status.READY.name:
                     break
-            if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
+            if (time.time() - start_time > float(machine.get_variable(inputs[0]))):
                 timeout = True
                 break
         if (timeout):
@@ -225,7 +205,7 @@ class ActionInterpreter(cmd.Cmd):
             
             
     def do_wait_for_disconnecting_control_link(self, line, machine):
-        parsed = InterpreterParser.old_parse(line, 1)
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
         timeout = False
         machine.root_machine.controller_protocol.disconnecting()
         start_time = time.time()
@@ -233,10 +213,21 @@ class ActionInterpreter(cmd.Cmd):
             if machine.root_machine.controller_protocol:
                 if not machine.root_machine.controller_protocol.is_active:
                     break
-            if (time.time() - start_time > float(machine.get_variable(parsed[0]))):
+            if (time.time() - start_time > float(machine.get_variable(inputs[0]))):
                 timeout = True
                 break
         if (timeout):
             machine.trigger('TIMEOUT')
         else:
             machine.trigger('CONTROL_LINK_DISCONNECTING')
+
+#################################################################################################
+
+    def do_packet_filter(self, line, machine):
+        parsed = InterpreterParser.old_parse(line)
+        for word in parsed:
+            if word in machine.get_variables():
+                word = machine.get_variable(word)
+        machine.set_sniffer_filter(parsed.join(' '))
+
+#################################################################################################

@@ -24,6 +24,7 @@ class Machine:
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.__main_state = main_state
+        self.__local_variables = {}
         if self.__main_state:
             self.root_machine = self
         else:
@@ -39,7 +40,6 @@ class Machine:
             self.controller = None
         self.controller_protocol = None
         self.finishing_event = "DONE"
-        self.local_variables = {}
         
     def start(self):
         if self.__main_state:
@@ -83,13 +83,13 @@ class Machine:
         stack.pop(0)
 
     def get_variables(self):
-        return self.__variables
+        return self.__local_variables
 
     def get_variable(self, name):
-        return self.__variables[name]
+        return self.__local_variables[name]
 
     def set_variable(self, name, new_value):
-        self.__variables[name] = new_value
+        self.__local_variables[name] = new_value
         
     def set_sniffer_filter(self, filter):
         self.__sniffer.set_filter(filter)
@@ -112,7 +112,7 @@ class Machine:
     def __transition(self, possible_states):
         def check_conditions(possible_state):
             if 'cond' in possible_state:
-                return ConditionInterpreter().onecmd(possible_state['cond'], self.__variables)
+                return ConditionInterpreter().onecmd(possible_state['cond'], self.local_variables)
             else:
                 return True
             
@@ -133,9 +133,9 @@ class Machine:
         if 'actions' in state:
             transition_actions = get_safe_array(state['actions'])
             for transition_action in transition_actions:
-                TransitionInterpreter().onecmd(transition_action, self.local_variables, local_variables)
-        self.local_variables = local_variables
-        print(self.local_variables)
+                TransitionInterpreter().onecmd(transition_action, self.__local_variables, local_variables)
+        self.__local_variables = local_variables
+        print(self.__local_variables)
 
 
     def __enter_current_state(self):

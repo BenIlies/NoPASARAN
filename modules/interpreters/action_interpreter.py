@@ -36,10 +36,8 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_set(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 1, 1)
-        ################################################
         machine.set_variable(outputs[0], inputs[0])
-        machine.local_variables[outputs[0]] = inputs[0]
-        ################################################
+        
 
     def do_send(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)

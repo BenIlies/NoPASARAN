@@ -215,9 +215,9 @@ class ActionInterpreter(cmd.Cmd):
 
 
     def do_sync(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 0, 0, True, False)
+        InterpreterParser.parse(line, 0, 0, True, False)
         machine.root_machine.controller_protocol.send_sync()
-            
+        machine.trigger('SYNC_SENT')            
             
     def do_wait_for_disconnecting_control_link(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)

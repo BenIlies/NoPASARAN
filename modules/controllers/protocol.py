@@ -34,9 +34,7 @@ class NodeProtocol(Protocol):
             elif data[JSONMessage.LOG.name] == JSONLOGMessage.RECEIVED.name:
                 logging.info('REMOTE RECEIVED ' + repr(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
         if JSONMessage.SYNC.name in data:
-            print("RECEIVED SYNC WITH OLD QUEUE", self.queue)
             self.queue.append(data)
-            print("THIS IS THE NEW QUEUE", self.queue)
         print("Status: ", self.local_status, self.remote_status)
         print("Received:", data)
 
@@ -48,7 +46,7 @@ class NodeProtocol(Protocol):
         self.is_active = False
 
     def send_sync(self):
-        self.transport.write(json.dumps({JSONMessage.SYNC.name: JSONLOGMessage.SENT.name}).encode())
+        self.transport.write(json.dumps({JSONMessage.SYNC.name: [1 , "hello"]}).encode())
 
 class NodeClientProtocol(NodeProtocol):
     def connectionMade(self):

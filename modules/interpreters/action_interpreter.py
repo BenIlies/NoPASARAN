@@ -220,12 +220,14 @@ class ActionInterpreter(cmd.Cmd):
         machine.trigger('SYNC_SENT')     
 
     def do_wait_sync_signal(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        inputs, outputs = InterpreterParser.parse(line, 1, 0, False, True)
         timeout = False
         start_time = time.time()
+        sync_message = None
         while (True):
             if machine.root_machine.controller_protocol:
                 if len(machine.root_machine.controller_protocol.queue) > 0:
+                    sync_message = machine.root_machine.controller_protocol.queue[0]
                     machine.root_machine.controller_protocol.queue.pop(0)
                     break
             if (time.time() - start_time > float(machine.get_variable(inputs[0]))):
@@ -234,6 +236,9 @@ class ActionInterpreter(cmd.Cmd):
         if (timeout):
             machine.trigger('TIMEOUT')
         else:
+            print(sync_message)
+            for index in range (0, len(outputs)):
+                machine.set_variable(outputs[index], sync_message[JSONMessage.SYNC.name][index])
             machine.trigger('SYNC_AVAILABLE')
             
     def do_packet_filter(self, line, machine):

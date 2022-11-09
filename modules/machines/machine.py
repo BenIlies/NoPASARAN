@@ -25,6 +25,7 @@ class Machine:
         self.__chain_states = [self.__complete_chain_states[0]]
         self.__main_state = main_state
         self.__local_variables = {}
+        self.__redirections = {}
         if self.__main_state:
             self.root_machine = self
         else:
@@ -93,6 +94,9 @@ class Machine:
     def set_sniffer_filter(self, filter):
         self.__sniffer.set_filter(filter)
 
+    def add_redirection(self, event, state):
+        self.__redirections[event] = state
+
     def return_to_previous_state(self):
         if len(self.__chain_states) > 1:
             self.__chain_states.pop(len(self.__chain_states) - 1)
@@ -105,6 +109,13 @@ class Machine:
     def trigger(self, event):
         if event in self.__states[self.__current_state]['on']:
             self.__transition(get_safe_array(self.__states[self.__current_state]['on'][event]))
+        elif event in self.__redirections:
+            self.__exit_current_state()
+            self.__current_state = self.__redirections[event]
+            self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
+            self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
+            print("I enter state", self.__current_state)
+            self.__enter_current_state()
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
 

@@ -235,3 +235,7 @@ class ActionInterpreter(cmd.Cmd):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         file_variables = json.load(open('.'.join((inputs[0], 'json'))))
         machine.set_variable(outputs[0], file_variables[inputs[1]])
+
+    def do_redirect(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
+        machine.add_redirection(self, inputs[0], inputs[1])

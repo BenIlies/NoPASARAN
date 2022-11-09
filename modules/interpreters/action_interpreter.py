@@ -137,7 +137,7 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_return(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
-        machine.finishing_event = inputs[0]
+        machine.returned = inputs
 
     def do_pop(self, line, machine):     
         inputs, outputs = InterpreterParser.parse(line, 1, 1)
@@ -184,7 +184,10 @@ class ActionInterpreter(cmd.Cmd):
         inputs, outputs = InterpreterParser.parse(line, 1, 0, True, True)
         nested_xstate_json = json.load(open('.'.join((inputs[0], 'json'))))
         nested_machine = machine.get_child_machine(nested_xstate_json)
-        machine.trigger(nested_machine.start())
+        nested_machine.start()
+        for index in range (0, len(nested_machine.returned)):
+            machine.machine.set_variable(outputs[index], nested_machine.get_variable(nested_machine.returned[index])) 
+        print("RETURNED VALUES", machine.get_variables())
 
     def do_wait_for_ready_control_link(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)

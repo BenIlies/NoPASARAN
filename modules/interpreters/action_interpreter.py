@@ -136,7 +136,7 @@ class ActionInterpreter(cmd.Cmd):
         machine.return_to_previous_state()
 
     def do_return(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        inputs, _ = InterpreterParser.parse(line, 0, 0, True, False)
         machine.returned = inputs
 
     def do_pop(self, line, machine):     

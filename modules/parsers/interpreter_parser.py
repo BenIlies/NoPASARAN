@@ -44,7 +44,7 @@ class InterpreterParser():
             inputs = args[0].split(' ')
             outputs = args[1].split(' ')
         elif set_of_arguments == 1:        
-            if input_args == 0:
+            if input_args == 0 and not(optional_inputs):
                 inputs = []
                 outputs = args[0].split(' ')
             else:

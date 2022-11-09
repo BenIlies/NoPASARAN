@@ -246,5 +246,5 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_get_parameters(self, line, machine):
         _, outputs = InterpreterParser.parse(line, 0, 0, False, True)
-        for index, parameter in machine.parameters:
-            machine.set_variable(outputs[index], parameter)
+        for index in machine.parameters:
+            machine.set_variable(outputs[index], machine.parameters[index])

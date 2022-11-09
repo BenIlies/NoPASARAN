@@ -111,7 +111,7 @@ class Machine:
     def __transition(self, possible_states):
         def check_conditions(possible_state):
             if 'cond' in possible_state:
-                return ConditionInterpreter().onecmd(possible_state['cond'], self.local_variables)
+                return ConditionInterpreter().onecmd(possible_state['cond'], self.__local_variables)
             else:
                 return True
             

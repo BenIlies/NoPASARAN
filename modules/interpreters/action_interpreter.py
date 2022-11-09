@@ -185,9 +185,9 @@ class ActionInterpreter(cmd.Cmd):
         nested_xstate_json = json.load(open('.'.join((inputs[0], 'json'))))
         parameters = []
         for index in range (1, len(inputs)):
-            parameters.append(inputs[index])
+            parameters.append(machine.get_variable(inputs[index]))
         print("PARAMETERS", parameters)
-        nested_machine = machine.get_child_machine(nested_xstate_json, parameters=parameters)
+        nested_machine = machine.get_child_machine(nested_xstate_json, parameters)
         nested_machine.start()
         for index in range (0, len(nested_machine.returned)):
             machine.set_variable(outputs[index], nested_machine.get_variable(nested_machine.returned[index])) 

@@ -186,7 +186,7 @@ class ActionInterpreter(cmd.Cmd):
         nested_machine = machine.get_child_machine(nested_xstate_json)
         nested_machine.start()
         for index in range (0, len(nested_machine.returned)):
-            machine.machine.set_variable(outputs[index], nested_machine.get_variable(nested_machine.returned[index])) 
+            machine.set_variable(outputs[index], nested_machine.get_variable(nested_machine.returned[index])) 
         print("RETURNED VALUES", machine.get_variables())
 
     def do_wait_for_ready_control_link(self, line, machine):

@@ -48,8 +48,8 @@ class Machine:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
     
-    def get_child_machine(self, nested_xstate_json):
-        nested_machine = Machine(xstate_json=nested_xstate_json, variables=self.__variables, main_state=False)
+    def get_child_machine(self, nested_xstate_json , parameters):
+        nested_machine = Machine(xstate_json=nested_xstate_json, variables=self.__variables, main_state=False, parameters=parameters)
         nested_machine.root_machine = self.root_machine
         return nested_machine
 

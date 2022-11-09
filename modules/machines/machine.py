@@ -115,7 +115,6 @@ class Machine:
             self.__current_state = self.__redirections[event]
             self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
             self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
-            print("I enter state", self.__current_state)
             self.__enter_current_state()
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
@@ -146,7 +145,6 @@ class Machine:
             for transition_action in transition_actions:
                 TransitionInterpreter().onecmd(transition_action, self.__local_variables, local_variables)
         self.__local_variables = local_variables
-        print(self.__local_variables)
 
 
     def __enter_current_state(self):

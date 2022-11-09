@@ -230,3 +230,8 @@ class ActionInterpreter(cmd.Cmd):
     def do_packet_filter(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         machine.set_sniffer_filter(machine.get_variable(inputs[0]))
+
+    def do_get_from_file(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        file_variables = json.load(open('.'.join((inputs[0], 'json'))))
+        machine.set_variable(outputs[0], file_variables[inputs[1]])

@@ -217,16 +217,16 @@ class ActionInterpreter(cmd.Cmd):
     def do_sync(self, line, machine):
         InterpreterParser.parse(line, 0, 0, True, False)
         machine.root_machine.controller_protocol.send_sync()
-        machine.trigger('SYNC_SENT')            
-            
-    def do_wait_for_disconnecting_control_link(self, line, machine):
+        machine.trigger('SYNC_SENT')     
+
+    def do_wait_sync_signal(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         timeout = False
-        machine.root_machine.controller_protocol.disconnecting()
         start_time = time.time()
         while (True):
             if machine.root_machine.controller_protocol:
-                if not machine.root_machine.controller_protocol.is_active:
+                if len(machine.root_machine.controller_protocol.queue) > 0:
+                    machine.root_machine.controller_protocol.queue.pop(0)
                     break
             if (time.time() - start_time > float(machine.get_variable(inputs[0]))):
                 timeout = True
@@ -234,8 +234,8 @@ class ActionInterpreter(cmd.Cmd):
         if (timeout):
             machine.trigger('TIMEOUT')
         else:
-            machine.trigger('CONTROL_LINK_DISCONNECTING')
-
+            machine.trigger('SYNC_AVAILABLE')
+            
     def do_packet_filter(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         machine.set_sniffer_filter(machine.get_variable(inputs[0]))

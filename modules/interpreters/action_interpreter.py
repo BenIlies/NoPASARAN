@@ -197,7 +197,7 @@ class ActionInterpreter(cmd.Cmd):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         machine.trigger(machine.get_variable(inputs[0]))
 
-    def do_wait_for_ready_control_link(self, line, machine):
+    def do_wait_ready_signal(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         timeout = False
         start_time = time.time()
@@ -211,7 +211,12 @@ class ActionInterpreter(cmd.Cmd):
         if (timeout):
             machine.trigger('TIMEOUT')
         else:
-            machine.trigger('CONTROL_LINK_READY')
+            machine.trigger('READY')
+
+
+    def do_sync(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 0, 0, True, False)
+        machine.root_machine.controller_protocol.send_sync()
             
             
     def do_wait_for_disconnecting_control_link(self, line, machine):

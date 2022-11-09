@@ -4,6 +4,7 @@ class JSONMessage(Enum):
     STATUS = 0
     LOG = 1
     PARAMETERS = 2
+    SYNC = 3
 
 class JSONLOGMessage(Enum):
     RECEIVED = 0

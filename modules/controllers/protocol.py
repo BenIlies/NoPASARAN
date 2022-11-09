@@ -13,6 +13,7 @@ class NodeProtocol(Protocol):
     remote_status = Status.DISCONNECTED.name
     local_status = Status.DISCONNECTED.name
     is_active = True
+    queue = []
 
     def get_current_state_json(self):
         return json.dumps({JSONMessage.STATUS.name: self.local_status}).encode()
@@ -32,15 +33,22 @@ class NodeProtocol(Protocol):
                 logging.info('REMOTE SENT ' + repr(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
             elif data[JSONMessage.LOG.name] == JSONLOGMessage.RECEIVED.name:
                 logging.info('REMOTE RECEIVED ' + repr(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
+        if JSONMessage.SYNC.name in data:
+            print("RECEIVED SYNC WITH OLD QUEUE", self.queue)
+            self.queue.append(data)
+            print("THIS IS THE NEW QUEUE", self.queue)
         print("Status: ", self.local_status, self.remote_status)
         print("Received:", data)
-        
+
     def disconnecting(self):
         self.local_status = Status.DISCONNECTING.name
         self.transport.write(self.get_current_state_json())
         
     def connectionLost(self, reason):
         self.is_active = False
+
+    def send_sync(self):
+        self.transport.write(json.dumps({JSONMessage.SYNC.name: JSONLOGMessage.SENT.name}).encode())
 
 class NodeClientProtocol(NodeProtocol):
     def connectionMade(self):

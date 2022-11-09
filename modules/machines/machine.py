@@ -45,7 +45,6 @@ class Machine:
         if self.__main_state:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
-        return self.finishing_event
     
     def get_child_machine(self, nested_xstate_json):
         nested_machine = Machine(xstate_json=nested_xstate_json, variables=self.__variables, main_state=False)

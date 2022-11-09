@@ -238,4 +238,4 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_redirect(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 2, 0)
-        machine.add_redirection(self, inputs[0], inputs[1])
+        machine.add_redirection(inputs[0], inputs[1])

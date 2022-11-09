@@ -183,7 +183,11 @@ class ActionInterpreter(cmd.Cmd):
     def do_call(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 1, 0, True, True)
         nested_xstate_json = json.load(open('.'.join((inputs[0], 'json'))))
-        nested_machine = machine.get_child_machine(nested_xstate_json)
+        parameters = []
+        for index in range (1, len(inputs)):
+            parameters.append(inputs[index])
+        print("PARAMETERS", parameters)
+        nested_machine = machine.get_child_machine(nested_xstate_json, parameters=parameters)
         nested_machine.start()
         for index in range (0, len(nested_machine.returned)):
             machine.set_variable(outputs[index], nested_machine.get_variable(nested_machine.returned[index])) 
@@ -239,3 +243,8 @@ class ActionInterpreter(cmd.Cmd):
     def do_redirect(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 2, 0)
         machine.add_redirection(inputs[0], inputs[1])
+
+    def do_get_parameters(self, line, machine):
+        _, outputs = InterpreterParser.parse(line, 0, 0, False, True)
+        for parameter in machine.parameters:
+            machine.set(outputs[0], parameter)

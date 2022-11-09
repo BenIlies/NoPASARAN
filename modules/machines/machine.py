@@ -12,7 +12,7 @@ from modules.controllers.controller import ClientController, ServerController
 from modules.sniffers.sniffer import Sniffer
 
 class Machine:
-    def __init__(self, xstate_json, variables = {}, main_state=True, controller_configuration=None):
+    def __init__(self, xstate_json, variables = {}, parameters=[], main_state=True, controller_configuration=None):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
@@ -26,6 +26,7 @@ class Machine:
         self.__main_state = main_state
         self.__local_variables = {}
         self.__redirections = {}
+        self.parameters = parameters
         if self.__main_state:
             self.root_machine = self
         else:

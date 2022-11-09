@@ -45,8 +45,8 @@ class NodeProtocol(Protocol):
     def connectionLost(self, reason):
         self.is_active = False
 
-    def send_sync(self):
-        self.transport.write(json.dumps({JSONMessage.SYNC.name: [1 , "hello"]}).encode())
+    def send_sync(self, content):
+        self.transport.write(json.dumps({JSONMessage.SYNC.name: content}).encode())
 
 class NodeClientProtocol(NodeProtocol):
     def connectionMade(self):

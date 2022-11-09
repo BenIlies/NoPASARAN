@@ -186,12 +186,10 @@ class ActionInterpreter(cmd.Cmd):
         parameters = []
         for index in range (1, len(inputs)):
             parameters.append(machine.get_variable(inputs[index]))
-        print("PARAMETERS", parameters)
         nested_machine = machine.get_child_machine(nested_xstate_json, parameters)
         nested_machine.start()
         for index in range (0, len(nested_machine.returned)):
             machine.set_variable(outputs[index], nested_machine.get_variable(nested_machine.returned[index])) 
-        print("RETURNED VALUES", machine.get_variables())
 
     def do_trigger(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
@@ -215,8 +213,8 @@ class ActionInterpreter(cmd.Cmd):
 
 
     def do_sync(self, line, machine):
-        InterpreterParser.parse(line, 0, 0, True, False)
-        machine.root_machine.controller_protocol.send_sync()
+        inputs, _ = InterpreterParser.parse(line, 0, 0, True, False)
+        machine.root_machine.controller_protocol.send_sync(inputs)
         machine.trigger('SYNC_SENT')     
 
     def do_wait_sync_signal(self, line, machine):
@@ -236,9 +234,9 @@ class ActionInterpreter(cmd.Cmd):
         if (timeout):
             machine.trigger('TIMEOUT')
         else:
-            print(sync_message)
             for index in range (0, len(outputs)):
                 machine.set_variable(outputs[index], sync_message[JSONMessage.SYNC.name][index])
+            print(machine.get_variables())
             machine.trigger('SYNC_AVAILABLE')
             
     def do_packet_filter(self, line, machine):

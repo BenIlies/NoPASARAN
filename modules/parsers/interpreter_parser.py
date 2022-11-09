@@ -1,15 +1,5 @@
 class InterpreterParser():
     @staticmethod
-    def old_parse(parameters, correct_number=None):
-        parsed_parameters = parameters.split()
-        if correct_number == None:
-            return parsed_parameters
-        elif len(parsed_parameters) == correct_number:
-            return parsed_parameters
-        else:
-            raise Exception('Parsing error: number of argument is incorrect expected ' + str(correct_number) + ' received ' + str(len(parsed_parameters)) + '.')
-
-    @staticmethod
     def parse(command, input_args=1, output_args=0, optional_inputs=False, optional_outputs=False):
         def checker(string):
             depth = 0

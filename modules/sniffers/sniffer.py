@@ -6,18 +6,19 @@ import json
 from modules.utils import *
 from scapy.all import AsyncSniffer, Ether, sniff
 
-from modules.controllers.messages import JSONLOGMessage, JSONMessage
-
 class Sniffer(AsyncSniffer):
     def __init__(self, machine, filter=''):
         super().__init__(prn=self.__handle_sniffer(), lfilter=lambda pkt: self.__filter_packet(pkt))
         self.machine = machine 
         self.__filter = filter
+        self.queue = None
 
         
     def __handle_sniffer(self):
         def pkt_callback(packet):
-            print("Packet received", packet)
+            if self.queue != None:
+                self.queue.append(packet)
+                print("Packet received", packet)
         return pkt_callback
     
     def __filter_packet(self, packet):

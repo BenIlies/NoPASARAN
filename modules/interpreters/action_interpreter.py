@@ -147,6 +147,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_listen(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         machine.start_sniffer()
+        machine.set_sniffer_queue(inputs[0])
         print("I listen on", inputs[0])
 
     ##HAVE TO ADD THE QUEUE HERE

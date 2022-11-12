@@ -81,6 +81,9 @@ class Machine:
     def set_sniffer_filter(self, filter):
         self.__sniffer.set_filter(filter)
 
+    def set_sniffer_queue(self, queue):
+        self.__sniffer.queue = queue
+
     def add_redirection(self, event, state):
         self.__redirections[event] = state
 

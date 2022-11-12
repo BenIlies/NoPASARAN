@@ -18,9 +18,7 @@ class Machine:
         self.__states = xstate_json['states']
         self.__current_state = self.__initial
         self.__variables = variables
-        self.__sniffer_stack = 'ans'
-        self.__variables[self.__sniffer_stack] = []
-        self.__sniffer = Sniffer(self, filter='tcp')
+        self.__sniffer = Sniffer(self, filter='')
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
         self.__main_state = main_state
@@ -70,18 +68,6 @@ class Machine:
 
     def stop_sniffer(self):
         self.__sniffer.stop()
-
-    def set_stack(self, stack):
-        self.__sniffer_stack = stack
-
-    def get_stack(self):
-        return self.__variables[self.__sniffer_stack]
-
-    def get_stack_top(self):
-        return self.__variables[self.__sniffer_stack][0]
-
-    def discard_stack_packet(self, stack):
-        stack.pop(0)
 
     def get_variables(self):
         return self.__local_variables
@@ -145,7 +131,6 @@ class Machine:
             for transition_action in transition_actions:
                 TransitionInterpreter().onecmd(transition_action, self.__local_variables, local_variables)
         self.__local_variables = local_variables
-
 
     def __enter_current_state(self):
         if 'entry' in self.__states[self.__current_state]:

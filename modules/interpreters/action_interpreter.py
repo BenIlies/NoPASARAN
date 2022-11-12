@@ -142,12 +142,12 @@ class ActionInterpreter(cmd.Cmd):
     def do_pop(self, line, machine):     
         inputs, outputs = InterpreterParser.parse(line, 1, 1)
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
-        machine.discard_stack_packet(machine.get_variable(outputs[0]))
+        machine.get_variable(outputs[0]).pop(0)
 
     def do_listen(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         machine.start_sniffer()
-        machine.set_stack(inputs[0])
+        print("I listen on", inputs[0])
 
     ##HAVE TO ADD THE QUEUE HERE
     def do_wait_packet_signal(self, line, machine):
@@ -155,25 +155,27 @@ class ActionInterpreter(cmd.Cmd):
         timeout = False
         start_time = time.time()
         while (True):
-            if len(machine.get_stack()) >= 1:
-                if machine.get_stack_top()['TCP'].flags in ['S', 'SA', 'P', 'PA', 'F', 'FA', 'A']:
-                    if machine.get_stack_top()['TCP'].flags == 'S':
+            stack = machine.get_variable(inputs[0])
+            if len(stack) >= 1:
+                packet = stack[0]
+                if packet['TCP'].flags in ['S', 'SA', 'P', 'PA', 'F', 'FA', 'A']:
+                    if packet['TCP'].flags == 'S':
                         machine.trigger('SYN_RECEIVED')
-                    elif machine.get_stack_top()['TCP'].flags == 'SA':
+                    elif packet['TCP'].flags == 'SA':
                         machine.trigger('SYN_ACK_RECEIVED')
-                    elif machine.get_stack_top()['TCP'].flags == 'P':
+                    elif packet['TCP'].flags == 'P':
                         machine.trigger('PSH_RECEIVED')
-                    elif machine.get_stack_top()['TCP'].flags == 'PA':
+                    elif packet['TCP'].flags == 'PA':
                         machine.trigger('PSH_ACK_RECEIVED')
-                    elif machine.get_stack_top()['TCP'].flags == 'F':
+                    elif packet['TCP'].flags == 'F':
                         machine.trigger('FIN_RECEIVED')
-                    elif machine.get_stack_top()['TCP'].flags == 'FA':
+                    elif packet['TCP'].flags == 'FA':
                         machine.trigger('FIN_ACK_RECEIVED')
-                    elif machine.get_stack_top()['TCP'].flags == 'A':
+                    elif packet['TCP'].flags == 'A':
                         machine.trigger('ACK_RECEIVED')
                     break
                 else:
-                    machine.discard_stack_packet(machine.get_stack())
+                    machine.get_variable(inputs[0]).pop(0)
             if (time.time() - start_time > float(machine.get_variable(inputs[1]))):
                 timeout = True
                 break
@@ -236,7 +238,6 @@ class ActionInterpreter(cmd.Cmd):
         else:
             for index in range (0, len(outputs)):
                 machine.set_variable(outputs[index], sync_message[JSONMessage.SYNC.name][index])
-            print(machine.get_variables())
             machine.trigger('SYNC_AVAILABLE')
             
     def do_packet_filter(self, line, machine):

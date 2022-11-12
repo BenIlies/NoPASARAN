@@ -145,10 +145,10 @@ class ActionInterpreter(cmd.Cmd):
         machine.get_variable(outputs[0]).pop(0)
 
     def do_listen(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        _, outputs = InterpreterParser.parse(line, 0, 1)
         machine.start_sniffer()
-        machine.set_sniffer_queue(inputs[0])
-        print("I listen on", inputs[0])
+        machine.set_variable(outputs[0], [])
+        machine.set_sniffer_queue(outputs[0])
 
     ##HAVE TO ADD THE QUEUE HERE
     def do_wait_packet_signal(self, line, machine):

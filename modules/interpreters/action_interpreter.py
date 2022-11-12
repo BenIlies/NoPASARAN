@@ -148,7 +148,7 @@ class ActionInterpreter(cmd.Cmd):
         _, outputs = InterpreterParser.parse(line, 0, 1)
         machine.start_sniffer()
         machine.set_variable(outputs[0], [])
-        machine.set_sniffer_queue(outputs[0])
+        machine.set_sniffer_queue(machine.get_variable(outputs[0]))
 
     ##HAVE TO ADD THE QUEUE HERE
     def do_wait_packet_signal(self, line, machine):

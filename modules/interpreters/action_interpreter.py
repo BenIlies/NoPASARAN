@@ -141,7 +141,6 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_pop(self, line, machine):     
         inputs, outputs = InterpreterParser.parse(line, 1, 1)
-        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
         machine.get_variable(outputs[0]).pop(0)
 
     def do_listen(self, line, machine):

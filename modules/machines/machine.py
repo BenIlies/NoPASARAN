@@ -19,7 +19,7 @@ class Machine:
         self.__current_state = self.__initial
         self.__sniffer = Sniffer(self, filter='')
         self.__main_state = main_state
-        self.__local_variables = {}
+        self.__variables = {}
         self.__redirections = {}
         self.parameters = parameters
         if self.__main_state:
@@ -37,11 +37,17 @@ class Machine:
             self.controller = None
         self.controller_protocol = None
         self.returned = None
+        self.__actions = []
         
     def start(self):
         if self.__main_state:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
+        print(self.__actions)
+        #while (len(self.__actions)):
+        #    self.exec(self.__actions)
+        #    self.__actions.pop(0)
+
     
     def get_child_machine(self, nested_xstate_json , parameters):
         nested_machine = Machine(xstate_json=nested_xstate_json, main_state=False, parameters=parameters)
@@ -54,6 +60,9 @@ class Machine:
     def get_state(self):
         return self.__current_state
 
+    def set_state(self, state):
+        self.__current_state = state
+
     def start_sniffer(self):
         self.__sniffer.start()
 
@@ -61,13 +70,13 @@ class Machine:
         self.__sniffer.stop()
 
     def get_variables(self):
-        return self.__local_variables
+        return self.__variables
 
     def get_variable(self, name):
-        return self.__local_variables[name]
+        return self.__variables[name]
 
     def set_variable(self, name, new_value):
-        self.__local_variables[name] = new_value
+        self.__variables[name] = new_value
         
     def set_sniffer_filter(self, filter):
         self.__sniffer.set_filter(filter)
@@ -79,47 +88,52 @@ class Machine:
         self.__redirections[event] = state
 
     def trigger(self, event):
-        if 'on' in self.__states[self.__current_state]:
-            if event in self.__states[self.__current_state]['on']:
-                self.__transition(get_safe_array(self.__states[self.__current_state]['on'][event]))
+        if 'on' in self.__states[self.get_state()]:
+            if event in self.__states[self.get_state()]['on']:
+                self.__transition(get_safe_array(self.__states[self.get_state()]['on'][event]))
         elif event in self.__redirections:
-            self.__exit_current_state()
-            self.__current_state = self.__redirections[event]
-            self.__enter_current_state()
+            self.__append_exit_actions()
+            self.__append_state(self.__redirections[event])
+            self.__append_enter_actions()
         else:
-            print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
+            print('SKIPPED: ' + event + ' triggered in state: ' + self.get_state() + '. No matching event.')
 
     def __transition(self, possible_states):
         def check_conditions(possible_state):
             if 'cond' in possible_state:
-                return ConditionInterpreter().onecmd(possible_state['cond'], self.__local_variables)
+                return ConditionInterpreter().onecmd(possible_state['cond'], self.__variables)
             else:
                 return True
             
         for state in possible_states:
             if state['target'] in self.__states:
                 if check_conditions(state):
-                    self.__exit_current_state()
-                    self.__assign_local_variables(state)
-                    self.__current_state = state['target']
-                    self.__enter_current_state()
+                    self.__append_exit_actions()
+                    self.__append_variables(state)
+                    self.__append_state(state)
+                    self.__append_enter_actions()
                     break
 
+    def __append_enter_actions(self):
+        if 'entry' in self.__states[self.get_state()]:
+            for action in get_safe_array(self.__states[self.get_state()]['entry']):
+                self.__actions.append({'Action': action})
+                #ActionInterpreter().onecmd(action, self)
 
-    def __assign_local_variables(self, state):
-        local_variables = {}
+    def __append_exit_actions(self):
+        if 'exit' in self.__states[self.get_state()]:
+            for action in get_safe_array(self.__states[self.get_state()]['exit']):
+                self.__actions.append({'Action': action})
+                #ActionInterpreter().onecmd(action, self)
+
+    def __append_variables(self, state):
+        variables = {}
         if 'actions' in state:
             transition_actions = get_safe_array(state['actions'])
             for transition_action in transition_actions:
-                TransitionInterpreter().onecmd(transition_action, self.__local_variables, local_variables)
-        self.__local_variables = local_variables
+                TransitionInterpreter().onecmd(transition_action, self.__variables, variables)
+        self.__actions.append({'Variables': variables})
+        #self.__variables = variables
 
-    def __enter_current_state(self):
-        if 'entry' in self.__states[self.__current_state]:
-            for action in get_safe_array(self.__states[self.__current_state]['entry']):
-                ActionInterpreter().onecmd(action, self)
-
-    def __exit_current_state(self):
-        if 'exit' in self.__states[self.__current_state]:
-            for action in get_safe_array(self.__states[self.__current_state]['exit']):
-                ActionInterpreter().onecmd(action, self)
+    def __append_state(self, state):
+        self.__actions.append({'State': state})

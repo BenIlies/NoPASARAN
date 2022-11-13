@@ -1,11 +1,8 @@
-import codecs
 import json
-import logging
-import pickle
 
 from twisted.internet.protocol import Protocol
 
-from modules.controllers.messages import JSONLOGMessage, JSONMessage, Status
+from modules.controllers.messages import JSONMessage, Status
 from modules.utils import get_packet_info
 
 
@@ -28,11 +25,6 @@ class NodeProtocol(Protocol):
             if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
                 self.is_active = False
                 self.transport.loseConnection()
-        if JSONMessage.LOG.name in data:
-            if data[JSONMessage.LOG.name] == JSONLOGMessage.SENT.name:
-                logging.info('REMOTE SENT ' + repr(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
-            elif data[JSONMessage.LOG.name] == JSONLOGMessage.RECEIVED.name:
-                logging.info('REMOTE RECEIVED ' + repr(pickle.loads(codecs.decode(data[JSONMessage.PARAMETERS.name].encode(), "base64"))))
         if JSONMessage.SYNC.name in data:
             self.queue.append(data)
         print("Status: ", self.local_status, self.remote_status)

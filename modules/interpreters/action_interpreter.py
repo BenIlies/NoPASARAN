@@ -1,13 +1,10 @@
 import cmd
-import codecs
-import logging
-import pickle
 import time
 import json
 
 from scapy.all import send
 
-from modules.controllers.messages import JSONLOGMessage, JSONMessage, Status
+from modules.controllers.messages import JSONMessage, Status
 from modules.parsers.interpreter_parser import InterpreterParser
 from modules.utils import *
 
@@ -42,10 +39,6 @@ class ActionInterpreter(cmd.Cmd):
     def do_send(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         send(machine.get_variable(inputs[0]))
-        serializable_packet = codecs.encode(pickle.dumps(machine.get_variable(inputs[0])), "base64").decode()
-        if machine.root_machine.controller_protocol:
-            machine.root_machine.controller_protocol.transport.write(json.dumps({JSONMessage.LOG.name: JSONLOGMessage.SENT.name, JSONMessage.PARAMETERS.name: serializable_packet}).encode())
-        logging.info('LOCAL SENT ' + repr(machine.get_variable(inputs[0])))
         machine.trigger('PACKET_SENT')
 
     def do_done(self, line, machine):
@@ -149,7 +142,6 @@ class ActionInterpreter(cmd.Cmd):
         machine.set_variable(outputs[0], [])
         machine.set_sniffer_queue(machine.get_variable(outputs[0]))
 
-    ##HAVE TO ADD THE QUEUE HERE
     def do_wait_packet_signal(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 2, 0)
         timeout = False

@@ -97,7 +97,7 @@ class Machine:
             print('DEBUG: Cannot go back from initial state ' + self.__initial + '.')
 
     def trigger(self, event):
-        if 'on' in event in self.__states[self.__current_state]:
+        if 'on' in self.__states[self.__current_state]:
             if event in self.__states[self.__current_state]['on']:
                 self.__transition(get_safe_array(self.__states[self.__current_state]['on'][event]))
         elif event in self.__redirections:

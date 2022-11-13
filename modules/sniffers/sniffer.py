@@ -13,7 +13,6 @@ class Sniffer(AsyncSniffer):
         def pkt_callback(packet):
             if self.queue != None:
                 self.queue.append(packet)
-                print("Packet received", packet)
         return pkt_callback
     
     def __filter_packet(self, packet):

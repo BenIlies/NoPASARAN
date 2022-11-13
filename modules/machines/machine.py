@@ -1,6 +1,4 @@
-
-import time
-import hashlib
+from enum import Enum
 
 from twisted.internet.threads import deferToThread
 
@@ -10,6 +8,11 @@ from modules.interpreters.condition_interpreter import ConditionInterpreter
 from modules.interpreters.transition_interpreter import TransitionInterpreter
 from modules.controllers.controller import ClientController, ServerController
 from modules.sniffers.sniffer import Sniffer
+
+class Command(Enum):
+    EXECUTE_ACTION = 0
+    ASSIGN_VARIABLES = 1
+    SET_STATE = 2
 
 class Machine:
     def __init__(self, xstate_json, parameters=[], main_state=True, controller_configuration=None):
@@ -44,17 +47,16 @@ class Machine:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
         while (len(self.__actions) > 0):
-            print(self.__actions)
             self.execute(self.__actions[0])
             self.__actions.pop(0)
 
     def execute(self, action):
-        if 'Action' in action:
-            ActionInterpreter().onecmd(action['Action'], self)
-        elif 'Variables' in action:
-            self.__variables = action['Variables']
-        elif 'State' in action:
-            self.set_state(action['State'])
+        if Command.EXECUTE_ACTION.name in action:
+            ActionInterpreter().onecmd(action[Command.EXECUTE_ACTION], self)
+        elif Command.ASSIGN_VARIABLES.name in action:
+            self.set_variables(action[Command.ASSIGN_VARIABLES.name])
+        elif Command.SET_STATE.name in action:
+            self.set_state(action[Command.SET_STATE.name])
 
     def get_child_machine(self, nested_xstate_json , parameters):
         nested_machine = Machine(xstate_json=nested_xstate_json, main_state=False, parameters=parameters)
@@ -78,6 +80,9 @@ class Machine:
 
     def get_variables(self):
         return self.__variables
+
+    def set_variables(self, variables):
+        self.__variables = variables
 
     def get_variable(self, name):
         return self.__variables[name]
@@ -124,14 +129,12 @@ class Machine:
     def __append_enter_actions(self, state):
         if 'entry' in self.__states[state]:
             for action in get_safe_array(self.__states[state]['entry']):
-                self.__actions.append({'Action': action})
-                #ActionInterpreter().onecmd(action, self)
+                self.__actions.append({Command.EXECUTE_ACTION.name: action})
 
     def __append_exit_actions(self):
         if 'exit' in self.__states[self.get_state()]:
             for action in get_safe_array(self.__states[self.get_state()]['exit']):
-                self.__actions.append({'Action': action})
-                #ActionInterpreter().onecmd(action, self)
+                self.__actions.append({Command.EXECUTE_ACTION.name: action})
 
     def __append_variables(self, state):
         variables = {}
@@ -139,8 +142,7 @@ class Machine:
             transition_actions = get_safe_array(state['actions'])
             for transition_action in transition_actions:
                 TransitionInterpreter().onecmd(transition_action, self.__variables, variables)
-        self.__actions.append({'Variables': variables})
-        #self.__variables = variables
+        self.__actions.append({Command.ASSIGN_VARIABLES.name: variables})
 
     def __append_state(self, state):
-        self.__actions.append({'State': state})
+        self.__actions.append({Command.SET_STATE.name: state})

@@ -57,7 +57,7 @@ def set_TCP_flags(packet, flags):
 	packet['TCP'].flags = flags
 
 def get_TCP_flags(packet):
-	return packet['TCP'].flags
+	return str(packet['TCP'].flags)
 
 def set_TCP_ack(packet, ack):
     packet['TCP'].ack = int(ack)

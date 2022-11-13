@@ -110,12 +110,12 @@ class Machine:
                 if check_conditions(state):
                     self.__append_exit_actions()
                     self.__append_variables(state)
-                    self.__append_state(state)
+                    self.__append_state(state['target'])
                     self.__append_enter_actions()
                     break
 
-    def __append_enter_actions(self):
-        if 'entry' in self.__states[self.get_state()]:
+    def __append_enter_actions(self, state):
+        if 'entry' in self.__states[state]:
             for action in get_safe_array(self.__states[self.get_state()]['entry']):
                 self.__actions.append({'Action': action})
                 #ActionInterpreter().onecmd(action, self)

@@ -116,7 +116,7 @@ class Machine:
 
     def __append_enter_actions(self, state):
         if 'entry' in self.__states[state]:
-            for action in get_safe_array(self.__states[self.get_state()]['entry']):
+            for action in get_safe_array(self.__states[state]['entry']):
                 self.__actions.append({'Action': action})
                 #ActionInterpreter().onecmd(action, self)
 

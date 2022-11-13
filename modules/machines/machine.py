@@ -52,7 +52,7 @@ class Machine:
 
     def execute(self, action):
         if Command.EXECUTE_ACTION.name in action:
-            ActionInterpreter().onecmd(action[Command.EXECUTE_ACTION], self)
+            ActionInterpreter().onecmd(action[Command.EXECUTE_ACTION.name], self)
         elif Command.ASSIGN_VARIABLES.name in action:
             self.set_variables(action[Command.ASSIGN_VARIABLES.name])
         elif Command.SET_STATE.name in action:

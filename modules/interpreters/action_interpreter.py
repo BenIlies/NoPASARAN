@@ -129,10 +129,6 @@ class ActionInterpreter(cmd.Cmd):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         print(machine.get_variable(inputs[0])[0]['TCP'].payload)
 
-    def do_rollback(self, line, machine):
-        InterpreterParser.parse(line, 0, 0)
-        machine.return_to_previous_state()
-
     def do_return(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 0, 0, True, False)
         machine.returned = inputs

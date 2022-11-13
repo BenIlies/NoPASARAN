@@ -7,7 +7,6 @@ class Sniffer(AsyncSniffer):
         self.machine = machine 
         self.__filter = filter
         self.queue = None
-
         
     def __handle_sniffer(self):
         def pkt_callback(packet):

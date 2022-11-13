@@ -50,7 +50,7 @@ class Machine:
 
     def execute(self, action):
         if 'Action' in action:
-            ActionInterpreter().onecmd(action['action'], self)
+            ActionInterpreter().onecmd(action['Action'], self)
         elif 'Variables' in action:
             self.__variables = action['Variables']
         elif 'State' in action:

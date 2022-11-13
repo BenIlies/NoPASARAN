@@ -18,8 +18,6 @@ class Machine:
         self.__states = xstate_json['states']
         self.__current_state = self.__initial
         self.__sniffer = Sniffer(self, filter='')
-        self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
-        self.__chain_states = [self.__complete_chain_states[0]]
         self.__main_state = main_state
         self.__local_variables = {}
         self.__redirections = {}
@@ -52,12 +50,6 @@ class Machine:
 
     def get_id(self):
         return self.__id
-
-    def get_chain(self):
-        return self.__chain_states
-
-    def get_full_chain(self):
-        return self.__complete_chain_states
     
     def get_state(self):
         return self.__current_state
@@ -86,15 +78,6 @@ class Machine:
     def add_redirection(self, event, state):
         self.__redirections[event] = state
 
-    def return_to_previous_state(self):
-        if len(self.__chain_states) > 1:
-            self.__chain_states.pop(len(self.__chain_states) - 1)
-            self.__complete_chain_states.append(self.__chain_states[len(self.__chain_states) - 1])
-            self.__current_state = list(self.__chain_states[len(self.__chain_states) - 1].keys())[0]
-            self.__enter_current_state()
-        else:
-            print('DEBUG: Cannot go back from initial state ' + self.__initial + '.')
-
     def trigger(self, event):
         if 'on' in self.__states[self.__current_state]:
             if event in self.__states[self.__current_state]['on']:
@@ -102,8 +85,6 @@ class Machine:
         elif event in self.__redirections:
             self.__exit_current_state()
             self.__current_state = self.__redirections[event]
-            self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
-            self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
             self.__enter_current_state()
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.__current_state + '. No matching event.')
@@ -121,8 +102,6 @@ class Machine:
                     self.__exit_current_state()
                     self.__assign_local_variables(state)
                     self.__current_state = state['target']
-                    self.__complete_chain_states.append({self.__current_state: hashlib.sha256(repr(time.time()).encode()).hexdigest()})
-                    self.__chain_states.append(self.__complete_chain_states[len(self.__complete_chain_states) - 1])
                     self.__enter_current_state()
                     break
 

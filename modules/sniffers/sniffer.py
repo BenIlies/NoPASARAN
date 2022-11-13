@@ -1,8 +1,3 @@
-import codecs
-import pickle
-import logging
-import json
-
 from modules.utils import *
 from scapy.all import AsyncSniffer, Ether, sniff
 

@@ -82,6 +82,10 @@ class ActionInterpreter(cmd.Cmd):
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
         set_TCP_seq(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
 
+    def do_get_TCP_flags(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        machine.set_variable(outputs[0], get_TCP_flags(machine.get_variable(inputs[0])[0]))
+
     def do_set_TCP_flags(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
@@ -148,26 +152,9 @@ class ActionInterpreter(cmd.Cmd):
         start_time = time.time()
         while (True):
             stack = machine.get_variable(inputs[0])
-            if len(stack) >= 1:
-                packet = stack[0]
-                if packet['TCP'].flags in ['S', 'SA', 'P', 'PA', 'F', 'FA', 'A']:
-                    if packet['TCP'].flags == 'S':
-                        machine.trigger('SYN_RECEIVED')
-                    elif packet['TCP'].flags == 'SA':
-                        machine.trigger('SYN_ACK_RECEIVED')
-                    elif packet['TCP'].flags == 'P':
-                        machine.trigger('PSH_RECEIVED')
-                    elif packet['TCP'].flags == 'PA':
-                        machine.trigger('PSH_ACK_RECEIVED')
-                    elif packet['TCP'].flags == 'F':
-                        machine.trigger('FIN_RECEIVED')
-                    elif packet['TCP'].flags == 'FA':
-                        machine.trigger('FIN_ACK_RECEIVED')
-                    elif packet['TCP'].flags == 'A':
-                        machine.trigger('ACK_RECEIVED')
-                    break
-                else:
-                    machine.get_variable(inputs[0]).pop(0)
+            if len(stack) > 0:
+                machine.trigger('PACKET_AVAILABLE')
+                break
             if (time.time() - start_time > float(machine.get_variable(inputs[1]))):
                 timeout = True
                 break

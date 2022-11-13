@@ -94,7 +94,7 @@ class Machine:
         elif event in self.__redirections:
             self.__append_exit_actions()
             self.__append_state(self.__redirections[event])
-            self.__append_enter_actions()
+            self.__append_enter_actions(self.__redirections[event])
         else:
             print('SKIPPED: ' + event + ' triggered in state: ' + self.get_state() + '. No matching event.')
 
@@ -111,7 +111,7 @@ class Machine:
                     self.__append_exit_actions()
                     self.__append_variables(state)
                     self.__append_state(state['target'])
-                    self.__append_enter_actions()
+                    self.__append_enter_actions(state['target'])
                     break
 
     def __append_enter_actions(self, state):

@@ -43,12 +43,19 @@ class Machine:
         if self.__main_state:
             deferToThread(self.controller.start)
         self.trigger('STARTED')
-        print(self.__actions)
-        #while (len(self.__actions)):
-        #    self.exec(self.__actions)
-        #    self.__actions.pop(0)
+        while (len(self.__actions) > 0):
+            print(self.__actions)
+            self.execute(self.__actions[0])
+            self.__actions.pop(0)
 
-    
+    def execute(self, action):
+        if 'Action' in action:
+            ActionInterpreter().onecmd(action['action'], self)
+        elif 'Variables' in action:
+            self.__variables = action['Variables']
+        elif 'State' in action:
+            self.set_state(action['State'])
+
     def get_child_machine(self, nested_xstate_json , parameters):
         nested_machine = Machine(xstate_json=nested_xstate_json, main_state=False, parameters=parameters)
         nested_machine.root_machine = self.root_machine

@@ -12,12 +12,11 @@ from modules.controllers.controller import ClientController, ServerController
 from modules.sniffers.sniffer import Sniffer
 
 class Machine:
-    def __init__(self, xstate_json, variables = {}, parameters=[], main_state=True, controller_configuration=None):
+    def __init__(self, xstate_json, parameters=[], main_state=True, controller_configuration=None):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
         self.__current_state = self.__initial
-        self.__variables = variables
         self.__sniffer = Sniffer(self, filter='')
         self.__complete_chain_states = [{self.__initial: hashlib.sha256(repr(time.time()).encode()).hexdigest()}]
         self.__chain_states = [self.__complete_chain_states[0]]
@@ -47,7 +46,7 @@ class Machine:
         self.trigger('STARTED')
     
     def get_child_machine(self, nested_xstate_json , parameters):
-        nested_machine = Machine(xstate_json=nested_xstate_json, variables=self.__variables, main_state=False, parameters=parameters)
+        nested_machine = Machine(xstate_json=nested_xstate_json, main_state=False, parameters=parameters)
         nested_machine.root_machine = self.root_machine
         return nested_machine
 

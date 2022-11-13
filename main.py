@@ -49,7 +49,6 @@ if __name__ == '__main__':
 
   node_parser = subparsers.add_parser("NODE", help="set the role of the node as an endpoint for testing the end to end connection", parents=[base_parser])
   node_parser.add_argument("-s", "--scenario", required=True, help="JSON scenario file for the finite state machine")
-  node_parser.add_argument("-v", "--variables", required=False, help="JSON variables file for the scenario")
 
   proxy_parser = subparsers.add_parser("PROXY", help="set the role of the node as a proxy for control link", parents=[base_parser])
   controller_configuration = None
@@ -68,10 +67,7 @@ if __name__ == '__main__':
 
   if args.role == 'NODE':
     xstate_json = json.load(open(args.scenario))
-    if args.variables:
-      machine = Machine(xstate_json=xstate_json, variables=json.load(open(args.variables)), controller_configuration=controller_configuration)
-    else:
-      machine = Machine(xstate_json=xstate_json, controller_configuration=controller_configuration)
+    machine = Machine(xstate_json=xstate_json, controller_configuration=controller_configuration)
     main_thread = deferToThread(machine.start)
     main_thread.addCallback(lambda _: reactor.stop())
     reactor.run()

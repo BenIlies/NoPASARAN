@@ -85,6 +85,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_get_TCP_flags(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 1, 1)
         machine.set_variable(outputs[0], get_TCP_flags(machine.get_variable(inputs[0])[0]))
+        print(machine.get_variable(outputs[0]))
 
     def do_set_TCP_flags(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)

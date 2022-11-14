@@ -176,12 +176,12 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_wait_ready_signal(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 2, 0)
-        controller_protocol = machine.get_variable(inputs[0])
         timeout = False
         start_time = time.time()
         while (True):
+            controller_protocol = machine.get_variable(inputs[0])
             print(controller_protocol)
-            if len(controller_protocol) > 0:
+            if controller_protocol:
                 if controller_protocol.local_status == Status.READY.name and controller_protocol.remote_status == Status.READY.name:
                     break
             if (time.time() - start_time > float(machine.get_variable(inputs[1]))):

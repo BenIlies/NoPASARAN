@@ -196,7 +196,7 @@ class ActionInterpreter(cmd.Cmd):
         inputs, _ = InterpreterParser.parse(line, 1, 0, True, False)
         controller_protocol = machine.get_variable(inputs[0])
         if controller_protocol:
-            controller_protocol.send_sync(inputs)
+            controller_protocol.send_sync(inputs[1:])
             machine.trigger('SYNC_SENT')     
 
     def do_wait_sync_signal(self, line, machine):

@@ -23,14 +23,14 @@ class ClientController(Controller):
         '''
         self._factory = NodeClientFactory(state_machine)
         '''
-        self._factory = NodeClientFactory()
+        self.factory = NodeClientFactory()
 
     def configure(self, dst_ip, dst_port):
         self.__dst_ip = dst_ip
         self.__dst_port = dst_port
     
     def start(self):
-        reactor.connectSSL(self.__dst_ip, self.__dst_port, self._factory, self._own_private_certificate.options(self._trusted_authority_certificate))
+        reactor.connectSSL(self.__dst_ip, self.__dst_port, self.factory, self._own_private_certificate.options(self._trusted_authority_certificate))
 
 class ServerController(Controller):
     '''
@@ -41,10 +41,10 @@ class ServerController(Controller):
         '''
         self._factory = NodeServerFactory(state_machine)
         '''
-        self._factory = NodeServerFactory()
+        self.factory = NodeServerFactory()
 
     def configure(self, src_port):
         self.__src_port = src_port
 
     def start(self):
-        reactor.listenSSL(self.__src_port, self._factory, self._own_private_certificate.options(self._trusted_authority_certificate))
+        reactor.listenSSL(self.__src_port, self.factory, self._own_private_certificate.options(self._trusted_authority_certificate))

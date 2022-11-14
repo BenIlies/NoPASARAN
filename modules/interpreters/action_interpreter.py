@@ -175,14 +175,14 @@ class ActionInterpreter(cmd.Cmd):
         machine.trigger(machine.get_variable(inputs[0]))
 
     def do_wait_ready_signal(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        inputs, _ = InterpreterParser.parse(line, 2, 0)
+        controller = machine.get_variable(inputs[0])
         timeout = False
         start_time = time.time()
         while (True):
-            if machine.root_machine.controller_protocol:
-                if machine.root_machine.controller_protocol.local_status == Status.READY.name and machine.root_machine.controller_protocol.remote_status == Status.READY.name:
-                    break
-            if (time.time() - start_time > float(machine.get_variable(inputs[0]))):
+            if controller.controller_protocol.local_status == Status.READY.name and controller.controller_protocol.remote_status == Status.READY.name:
+                break
+            if (time.time() - start_time > float(machine.get_variable(inputs[1]))):
                 timeout = True
                 break
         if (timeout):

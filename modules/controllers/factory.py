@@ -12,7 +12,7 @@ class NodeClientFactory(ReconnectingClientFactory):
     '''
     
     def __init__(self):
-        self.controller_protocol = None
+        self.controller_protocol = []
     
 
 
@@ -25,4 +25,4 @@ class NodeServerFactory(ServerFactory):
     '''
 
     def __init__(self):
-        self.controller_protocol = None
+        self.controller_protocol = []

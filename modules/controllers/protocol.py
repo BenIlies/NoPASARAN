@@ -3,8 +3,6 @@ import json
 from twisted.internet.protocol import Protocol
 
 from modules.controllers.messages import JSONMessage, Status
-from modules.utils import get_packet_info
-
 
 class NodeProtocol(Protocol):
     remote_status = Status.DISCONNECTED.name
@@ -43,9 +41,6 @@ class NodeProtocol(Protocol):
 class NodeClientProtocol(NodeProtocol):
     def connectionMade(self):
         self.factory.stopTrying()
-        '''
-        self.factory.state_machine.controller_protocol = self
-        '''
         self.factory.state_machine.set_variable(self.factory.variable, self)
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())
@@ -53,9 +48,6 @@ class NodeClientProtocol(NodeProtocol):
 
 class NodeServerProtocol(NodeProtocol):
     def connectionMade(self):
-        '''
-        self.factory.state_machine.controller_protocol = self
-        '''
         self.factory.state_machine.set_variable(self.factory.variable, self)
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())

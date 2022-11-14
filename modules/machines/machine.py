@@ -32,27 +32,10 @@ class Machine:
             self.root_machine = self
         else:
             self.root_machine = None 
-        '''
-        if controller_configuration and self.__main_state:
-            if controller_configuration['role'] == 'client':
-                self.controller = ClientController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-                self.controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
-            elif controller_configuration['role'] == 'server':
-                self.controller = ServerController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-                self.controller.configure(int(controller_configuration['server_port']))
-        else:
-            self.controller = None
-        self.controller_protocol = None
-        '''
-
         self.returned = None
         self.__actions = []
         
     def start(self):
-        '''
-        if self.__main_state:
-            deferToThread(self.controller.start)
-        '''
         self.trigger('STARTED')
         while (len(self.__actions) > 0):
             self.execute(self.__actions[0])

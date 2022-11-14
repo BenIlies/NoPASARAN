@@ -180,7 +180,6 @@ class ActionInterpreter(cmd.Cmd):
         start_time = time.time()
         while (True):
             controller_protocol = machine.get_variable(inputs[0])
-            print(controller_protocol)
             if controller_protocol:
                 if controller_protocol.local_status == Status.READY.name and controller_protocol.remote_status == Status.READY.name:
                     break

@@ -193,22 +193,25 @@ class ActionInterpreter(cmd.Cmd):
 
 
     def do_sync(self, line, machine):
-        inputs, _ = InterpreterParser.parse(line, 0, 0, True, False)
-        machine.root_machine.controller_protocol.send_sync(inputs)
-        machine.trigger('SYNC_SENT')     
+        inputs, _ = InterpreterParser.parse(line, 1, 0, True, False)
+        controller_protocol = machine.get_variable(inputs[0])
+        if controller_protocol:
+            controller_protocol.send_sync(inputs)
+            machine.trigger('SYNC_SENT')     
 
     def do_wait_sync_signal(self, line, machine):
-        inputs, outputs = InterpreterParser.parse(line, 1, 0, False, True)
+        inputs, outputs = InterpreterParser.parse(line, 2, 0, False, True)
         timeout = False
         start_time = time.time()
         sync_message = None
         while (True):
-            if machine.root_machine.controller_protocol:
-                if len(machine.root_machine.controller_protocol.queue) > 0:
-                    sync_message = machine.root_machine.controller_protocol.queue[0]
-                    machine.root_machine.controller_protocol.queue.pop(0)
+            controller_protocol = machine.get_variable(inputs[0])
+            if controller_protocol:
+                if len(controller_protocol.queue) > 0:
+                    sync_message = controller_protocol.queue[0]
+                    controller_protocol.queue.pop(0)
                     break
-            if (time.time() - start_time > float(machine.get_variable(inputs[0]))):
+            if (time.time() - start_time > float(machine.get_variable(inputs[1]))):
                 timeout = True
                 break
         if (timeout):

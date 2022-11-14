@@ -180,7 +180,7 @@ class ActionInterpreter(cmd.Cmd):
         timeout = False
         start_time = time.time()
         while (True):
-            if controller.controller_protocol.local_status == Status.READY.name and controller.controller_protocol.remote_status == Status.READY.name:
+            if controller.protocol.local_status == Status.READY.name and controller.protocol.remote_status == Status.READY.name:
                 break
             if (time.time() - start_time > float(machine.get_variable(inputs[1]))):
                 timeout = True

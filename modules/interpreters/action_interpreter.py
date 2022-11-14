@@ -176,12 +176,12 @@ class ActionInterpreter(cmd.Cmd):
 
     def do_wait_ready_signal(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 2, 0)
-        factory = machine.get_variable(inputs[0])
+        controller_protocol = machine.get_variable(inputs[0])
         timeout = False
         start_time = time.time()
         while (True):
-            if factory.protocol:
-                if factory.protocol.local_status == Status.READY.name and factory.protocol.remote_status == Status.READY.name:
+            if controller_protocol:
+                if controller_protocol.local_status == Status.READY.name and controller_protocol.remote_status == Status.READY.name:
                     break
             if (time.time() - start_time > float(machine.get_variable(inputs[1]))):
                 timeout = True
@@ -242,22 +242,22 @@ class ActionInterpreter(cmd.Cmd):
         machine.set_variable(outputs[0], controller_configuration)
 
     def do_configure_client_control_channel(self, line, machine):
-        inputs, outputs = InterpreterParser.parse(line, 1, 2)
+        inputs, outputs = InterpreterParser.parse(line, 1, 3)
         controller_configuration = machine.get_variable(inputs[0])
         controller = ClientController(controller_configuration['root_certificate'], controller_configuration['private_certificate'])
         controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
         machine.set_variable(outputs[0], controller)
         machine.set_variable(outputs[1], controller.factory)
-        print(machine.get_variable(outputs[1]))
+        machine.set_variable(outputs[2], controller.factory.controller_protocol)
 
     def do_configure_server_control_channel(self, line, machine):
-        inputs, outputs = InterpreterParser.parse(line, 1, 2)
+        inputs, outputs = InterpreterParser.parse(line, 1, 3)
         controller_configuration = machine.get_variable(inputs[0])
         controller = ServerController(controller_configuration['root_certificate'], controller_configuration['private_certificate'])
         controller.configure(int(controller_configuration['server_port']))
         machine.set_variable(outputs[0], controller)
         machine.set_variable(outputs[1], controller.factory)
-        print(machine.get_variable(outputs[1]))
+        machine.set_variable(outputs[2], controller.factory.controller_protocol)
 
     def do_start_control_channel(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)

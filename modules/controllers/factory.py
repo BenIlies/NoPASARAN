@@ -4,11 +4,16 @@ from modules.controllers.protocol import NodeClientProtocol, NodeServerProtocol
 
 class NodeClientFactory(ReconnectingClientFactory):
     protocol = NodeClientProtocol
+    
 
     '''
     def __init__(self, state_machine):
         self.state_machine = state_machine
     '''
+    
+    def __init__(self):
+        self.controller_protocol = None
+    
 
 
 class NodeServerFactory(ServerFactory):
@@ -18,3 +23,6 @@ class NodeServerFactory(ServerFactory):
     def __init__(self, state_machine):
         self.state_machine = state_machine
     '''
+
+    def __init__(self):
+        self.controller_protocol = None

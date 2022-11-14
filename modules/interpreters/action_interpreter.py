@@ -245,6 +245,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_configure_client_control_channel(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 1, 2)
         controller_configuration = machine.get_variable(inputs[0])
+        machine.set_variable(outputs[1], None)
         controller = ClientController(machine, outputs[1], controller_configuration['root_certificate'], controller_configuration['private_certificate'])
         controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
         machine.set_variable(outputs[0], controller)
@@ -252,6 +253,7 @@ class ActionInterpreter(cmd.Cmd):
     def do_configure_server_control_channel(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 1, 2)
         controller_configuration = machine.get_variable(inputs[0])
+        machine.set_variable(outputs[1], None)
         controller = ServerController(machine, outputs[1], controller_configuration['root_certificate'], controller_configuration['private_certificate'])
         controller.configure(int(controller_configuration['server_port']))
         machine.set_variable(outputs[0], controller)

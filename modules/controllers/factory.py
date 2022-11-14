@@ -11,8 +11,9 @@ class NodeClientFactory(ReconnectingClientFactory):
         self.state_machine = state_machine
     '''
     
-    def __init__(self):
-        self.controller_protocol = []
+    def __init__(self, state_machine, variable):
+        self.state_machine = state_machine
+        self.variable = variable
     
 
 
@@ -24,5 +25,6 @@ class NodeServerFactory(ServerFactory):
         self.state_machine = state_machine
     '''
 
-    def __init__(self):
-        self.controller_protocol = []
+    def __init__(self, state_machine, variable):
+        self.state_machine = state_machine
+        self.variable = variable

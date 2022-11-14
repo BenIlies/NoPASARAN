@@ -46,7 +46,7 @@ class NodeClientProtocol(NodeProtocol):
         '''
         self.factory.state_machine.controller_protocol = self
         '''
-        self.factory.controller_protocol = [self]
+        self.factory.state_machine.set_variable(self.factory.variable, self)
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())
         
@@ -56,6 +56,6 @@ class NodeServerProtocol(NodeProtocol):
         '''
         self.factory.state_machine.controller_protocol = self
         '''
-        self.factory.controller_protocol = [self]
+        self.factory.state_machine.set_variable(self.factory.variable, self)
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())

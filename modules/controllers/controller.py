@@ -15,9 +15,15 @@ class Controller():
         self._own_private_certificate = PrivateCertificate.loadPEM(own_private_certificate)
 
 class ClientController(Controller):
+    '''
     def __init__(self, state_machine, root_certificate_file, client_private_certificate_file):
+    '''
+    def __init__(self, root_certificate_file, client_private_certificate_file):
         super().__init__(root_certificate_file, client_private_certificate_file)
+        '''
         self._factory = NodeClientFactory(state_machine)
+        '''
+        self._factory = NodeClientFactory()
 
     def configure(self, dst_ip, dst_port):
         self.__dst_ip = dst_ip
@@ -27,9 +33,15 @@ class ClientController(Controller):
         reactor.connectSSL(self.__dst_ip, self.__dst_port, self._factory, self._own_private_certificate.options(self._trusted_authority_certificate))
 
 class ServerController(Controller):
+    '''
     def __init__(self, state_machine, root_certificate_file, server_private_certificate_file):
+    '''
+    def __init__(self, root_certificate_file, server_private_certificate_file):
         super().__init__(root_certificate_file, server_private_certificate_file)
+        '''
         self._factory = NodeServerFactory(state_machine)
+        '''
+        self._factory = NodeServerFactory()
 
     def configure(self, src_port):
         self.__src_port = src_port

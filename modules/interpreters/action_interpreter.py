@@ -3,9 +3,11 @@ import time
 import json
 
 from scapy.all import send
+from twisted.internet.threads import deferToThread
 
 from modules.controllers.messages import JSONMessage, Status
 from modules.parsers.interpreter_parser import InterpreterParser
+from modules.controllers.controller import ClientController, ServerController
 from modules.utils import *
 
 
@@ -232,3 +234,26 @@ class ActionInterpreter(cmd.Cmd):
         _, outputs = InterpreterParser.parse(line, 0, 0, False, True)
         for index in range (0, len(machine.parameters)):
             machine.set_variable(outputs[index], machine.parameters[index])
+
+    def do_load_control_channel_configuration(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        controller_configuration = json.load(open('.'.join((inputs[0], 'json'))))
+        machine.set_variable(outputs[0], controller_configuration)
+
+    def do_configure_client_control_channel(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        controller_configuration = machine.machine.get_variable(inputs[0])
+        controller = ClientController(controller_configuration['root_certificate'], controller_configuration['private_certificate'])
+        controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
+        machine.set_variable(outputs[0], controller)
+
+    def do_configure_server_control_channel(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        controller_configuration = machine.machine.get_variable(inputs[0])
+        controller = ServerController(controller_configuration['root_certificate'], controller_configuration['private_certificate'])
+        controller.configure(int(controller_configuration['server_port']))
+        machine.set_variable(outputs[0], controller)
+
+    def do_start_control_channel(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        deferToThread(machine.machine.get_variable(inputs[0]).start)

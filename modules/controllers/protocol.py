@@ -43,13 +43,17 @@ class NodeProtocol(Protocol):
 class NodeClientProtocol(NodeProtocol):
     def connectionMade(self):
         self.factory.stopTrying()
+        '''
         self.factory.state_machine.controller_protocol = self
+        '''
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())
         
 
 class NodeServerProtocol(NodeProtocol):
     def connectionMade(self):
+        '''
         self.factory.state_machine.controller_protocol = self
+        '''
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())

@@ -15,7 +15,10 @@ class Command(Enum):
     SET_STATE = 2
 
 class Machine:
-    def __init__(self, xstate_json, parameters=[], main_state=True, controller_configuration=None):
+    '''
+    def __init__(self, xstate_json, parameters=[], main_state=True, controller_configuration=None):    
+    '''
+    def __init__(self, xstate_json, parameters=[], main_state=True):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
@@ -28,7 +31,8 @@ class Machine:
         if self.__main_state:
             self.root_machine = self
         else:
-            self.root_machine = None     
+            self.root_machine = None 
+        '''
         if controller_configuration and self.__main_state:
             if controller_configuration['role'] == 'client':
                 self.controller = ClientController(self, controller_configuration['root_certificate'], controller_configuration['private_certificate'])
@@ -39,12 +43,16 @@ class Machine:
         else:
             self.controller = None
         self.controller_protocol = None
+        '''
+
         self.returned = None
         self.__actions = []
         
     def start(self):
+        '''
         if self.__main_state:
             deferToThread(self.controller.start)
+        '''
         self.trigger('STARTED')
         while (len(self.__actions) > 0):
             self.execute(self.__actions[0])

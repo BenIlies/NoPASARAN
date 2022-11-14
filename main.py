@@ -44,8 +44,12 @@ if __name__ == '__main__':
 
   base_parser = argparse.ArgumentParser(add_help=False)
   subparsers = parser.add_subparsers(dest='role', help='role for testing the end to end connection')
+  
+  '''
   base_parser.add_argument("-c", "--controller-configuration", required=False, help="JSON controller configuration file for the parameters of the control link")
   base_parser.add_argument("-ri", "--reload-ipsec", required=False, help="reload the ipsec configuration file", action='store_true')
+  '''
+
 
   node_parser = subparsers.add_parser("NODE", help="set the role of the node as an endpoint for testing the end to end connection", parents=[base_parser])
   node_parser.add_argument("-s", "--scenario", required=True, help="JSON scenario file for the finite state machine")
@@ -54,6 +58,7 @@ if __name__ == '__main__':
   controller_configuration = None
 
   args = parser.parse_args()
+  '''
   if args.controller_configuration:
     controller_configuration = json.load(open(args.controller_configuration))
     if args.reload_ipsec:
@@ -64,10 +69,15 @@ if __name__ == '__main__':
       ipsec.run()
   elif args.reload_ipsec:
     print('Missing the configuration file so no ipsec reload')
+  '''
 
   if args.role == 'NODE':
     xstate_json = json.load(open(args.scenario))
+    '''
     machine = Machine(xstate_json=xstate_json, controller_configuration=controller_configuration)
+    '''
+
+    machine = Machine(xstate_json=xstate_json)
     main_thread = deferToThread(machine.start)
     main_thread.addCallback(lambda _: reactor.stop())
     reactor.run()

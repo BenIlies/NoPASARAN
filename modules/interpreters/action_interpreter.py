@@ -263,3 +263,25 @@ class ActionInterpreter(cmd.Cmd):
     def do_start_control_channel(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         deferToThread(machine.get_variable(inputs[0]).start)
+
+    def do_add_tls_payload(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        add_TLS_payload(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_set_as_tls_handshake(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        add_TLS_handshake(machine.get_variable(outputs[0]))
+
+    def do_add_tls_client_hello(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        add_TLS_client_hello(machine.get_variable(outputs[0]))
+
+    def do_add_tls_server_hello(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        add_TLS_server_hello(machine.get_variable(outputs[0]))
+
+    def do_set_as_tls_application_data(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        add_TLS_application_data(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))

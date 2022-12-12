@@ -128,14 +128,20 @@ def add_TLS_handshake(packet):
 def add_TLS_client_hello(packet):
 	payload = TLSClientHello(ciphers=[0])
 	length = len(payload) 
-	packet['TLS'].len = packet['TLS'].len + length
+	if packet['TLS'].len == None:
+		packet['TLS'].len = length
+	else:
+		packet['TLS'].len = packet['TLS'].len + length
 	packet = packet/payload
 	return packet
 
 def add_TLS_server_hello(packet):
 	payload = TLSServerHello(cipher=0)
 	length = len(payload) 
-	packet['TLS'].len = packet['TLS'].len + length
+	if packet['TLS'].len == None:
+		packet['TLS'].len = length
+	else:
+		packet['TLS'].len = packet['TLS'].len + length
 	packet = packet/payload
 	return packet
 
@@ -143,6 +149,9 @@ def add_TLS_application_data(packet, data):
 	packet['TLS'].type=23
 	payload = TLSApplicationData(data=data)
 	length = len(payload) 
-	packet['TLS'].len = packet['TLS'].len + length
+	if packet['TLS'].len == None:
+		packet['TLS'].len = length
+	else:
+		packet['TLS'].len = packet['TLS'].len + length
 	packet = packet/payload
 	return packet

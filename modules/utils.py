@@ -119,21 +119,25 @@ def add_TLS_payload(packet, tls_version):
 	else:
 		raise Exception('Unknown TLS version.')
 	packet = packet/TLS(version=version)
+	return packet
 
 def add_TLS_handshake(packet):
 	packet['TLS'].type=22
+	return packet
 
 def add_TLS_client_hello(packet):
 	payload = TLSClientHello(ciphers=[0])
 	length = len(payload) 
 	packet['TLS'].len = packet['TLS'].len + length
 	packet = packet/payload
+	return packet
 
 def add_TLS_server_hello(packet):
 	payload = TLSServerHello(cipher=0)
 	length = len(payload) 
 	packet['TLS'].len = packet['TLS'].len + length
 	packet = packet/payload
+	return packet
 
 def add_TLS_application_data(packet, data):
 	packet['TLS'].type=23
@@ -141,3 +145,4 @@ def add_TLS_application_data(packet, data):
 	length = len(payload) 
 	packet['TLS'].len = packet['TLS'].len + length
 	packet = packet/payload
+	return packet

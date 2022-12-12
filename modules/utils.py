@@ -116,6 +116,8 @@ def add_TLS_payload(packet, tls_version):
 		version = 0x302
 	elif tls_version == "3":
 		version = 0x303
+	elif tls_version == "4":
+		version = 0x304
 	else:
 		raise Exception('Unknown TLS version.')
 	packet = packet/TLS(version=version)

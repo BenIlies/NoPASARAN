@@ -293,3 +293,8 @@ class ActionInterpreter(cmd.Cmd):
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
         packet = add_TLS_application_data(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
         machine.set_variable(outputs[0], packet)
+
+    def do_get_TCP_payload_length(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 1, 1)
+        length = get_TCP_payload_length(machine.get_variable(inputs[0]))
+        machine.set_variable(outputs[0], length)

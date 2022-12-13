@@ -165,3 +165,9 @@ def add_TLS_application_data(packet, data):
 		packet['TLS'].len = packet['TLS'].len + length
 	packet = packet/payload
 	return packet
+
+def get_TCP_payload_length(packet):
+	if packet['TCP'].payload != None:
+		return len(packet['TCP'].payload)
+	else:
+		return 0

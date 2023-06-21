@@ -37,4 +37,4 @@ Contents
    usage
    quickstart
    contact
-   tutorial/*
+   tutorial/index

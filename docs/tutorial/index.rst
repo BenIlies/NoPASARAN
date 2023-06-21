@@ -3,7 +3,7 @@ Tutorial
 
 This section provides a step-by-step guide to using NoPASARAN, starting with setting up an end-to-end control channel.
 
-Contents
+Control channel
 --------
 
 .. toctree::

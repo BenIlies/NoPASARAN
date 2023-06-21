@@ -9,4 +9,4 @@ Contents
 .. toctree::
    :maxdepth: 1
 
-   setup_tls_tunnel.rst
+   setup_tls_tunnel

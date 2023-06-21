@@ -9,4 +9,4 @@ Contents
 .. toctree::
    :maxdepth: 1
 
-   setup_tls_tunnel
+   TLS Mutual Authenticated End-to-End Tunnel <setup_tls_tunnel>

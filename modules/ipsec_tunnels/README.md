@@ -1,6 +1,6 @@
-# IPSec Control Channel: Root CA Certificate Generation and Certificate Signing
+# TLS Mutual Authenticated End-to-End Tunnel: Root CA Certificate Generation and Certificate Signing
 
-The following guide offers step-by-step instructions on how to generate a root Certification Authority (CA) certificate for use in the IPSec Control Channel configuration. This root CA certificate will be used to sign certificates for the IPSec endpoints.
+This guide provides step-by-step instructions on how to generate a root Certification Authority (CA) certificate for use in the configuration of a TLS mutual authenticated end-to-end tunnel. This root CA certificate will be used to sign certificates for the TLS endpoints.
 
 ## Step 1: Generate the Root CA Certificate
 
@@ -24,13 +24,13 @@ The following guide offers step-by-step instructions on how to generate a root C
 
     Provide the required information when prompted. The information typically includes the Common Name (CN), organization details, and other details related to your root CA.
 
-    The root CA certificate (root_ca.crt) is now created and ready to be used to sign certificates for IPSec endpoints.
+    The root CA certificate (root_ca.crt) is now created and ready to be used to sign certificates for TLS endpoints.
 
-## Step 2: Generate IPSec Endpoint Certificates using a CSR
+## Step 2: Generate TLS Endpoint Certificates using a CSR
 
-To generate certificates for the IPSec endpoints signed by the root CA certificate, follow these steps for each endpoint:
+To generate certificates for the TLS endpoints signed by the root CA certificate, follow these steps for each endpoint:
 
-1. Generate a private key for the IPSec endpoint:
+1. Generate a private key for the TLS endpoint:
 
     ```bash
     openssl genrsa -out endpoint1.key 2048
@@ -46,7 +46,7 @@ To generate certificates for the IPSec endpoints signed by the root CA certifica
 
     This command creates a CSR file (endpoint1.csr) using the private key generated in the previous step.
 
-    Enter the required information when prompted, including the Common Name (CN) and other details related to the IPSec endpoint.
+    Enter the required information when prompted, including the Common Name (CN) and other details related to the TLS endpoint.
 
 3. Submit the CSR (endpoint1.csr) to the root CA for signing:
 
@@ -56,6 +56,29 @@ To generate certificates for the IPSec endpoints signed by the root CA certifica
 
     This command signs the CSR using the root CA certificate (root_ca.crt) and private key (root_ca.key) and generates the signed certificate (endpoint1.crt) valid for 365 days.
 
-Repeat steps 1-3 for each IPSec endpoint, generating a unique private key, CSR, and certificate for each.
+4. Concatenate the private key and the certificate into one file:
 
-The root CA has now signed the CSRs and provided you with the signed certificates (endpoint1.crt, endpoint2.crt, etc.) for each IPSec endpoint.
+    ```bash
+    cat endpoint1.key endpoint1.crt > endpoint1.pem
+    ```
+
+    This command combines the private key and the certificate into a single file (endpoint1.pem). This file will be used by the program that requires both in a single file.
+
+Repeat steps 1-4 for each TLS endpoint, generating a unique private key, CSR, certificate, and combined PEM file for each.
+
+The root CA has now signed the CSRs and provided you with the signed certificates (endpoint1.crt, endpoint2.crt, etc.) for each TLS endpoint.
+
+## Step 3: Configuration for Each Endpoint
+
+With the root CA certificate and the endpoint's private certificate generated, you can configure each endpoint using a JSON configuration file, as shown below:
+
+```json
+{
+	"root_certificate": "root_ca.crt",
+	"private_certificate": "endpoint1.pem",
+	"destination_ip": "192.168.122.247",
+	"server_port": "443"
+}
+```
+
+Replace `"endpoint1.pem"` with the respective filename for each endpoint, and adjust `"destination_ip"` and `"server_port"` as necessary for your network configuration.

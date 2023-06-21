@@ -1,6 +1,6 @@
 # IPSec Control Channel: Root CA Certificate Generation and Certificate Signing
 
-We provide below step-by-step instructions on how to generate a root Certification Authority (CA) certificate for use in the IPSec Control Channel configuration. The root CA certificate will be used to sign certificates for the IPSec endpoints.
+The following guide offers step-by-step instructions on how to generate a root Certification Authority (CA) certificate for use in the IPSec Control Channel configuration. This root CA certificate will be used to sign certificates for the IPSec endpoints.
 
 ## Step 1: Generate the Root CA Certificate
 
@@ -9,12 +9,10 @@ We provide below step-by-step instructions on how to generate a root Certificati
 2. Generate a private key for the root CA certificate:
 
     ```bash
-    openssl genrsa -aes256 -out root_ca.key 4096
+    openssl genrsa -out root_ca.key 4096
     ```
 
-   This command generates a 4096-bit RSA private key (root_ca.key) and encrypts it using AES-256 encryption.
-
-   Enter a passphrase for the private key when prompted. Choose a strong passphrase and remember it, as you will need it later.
+   This command generates a 4096-bit RSA private key (root_ca.key).
 
 3. Generate the self-signed root CA certificate:
 
@@ -22,7 +20,7 @@ We provide below step-by-step instructions on how to generate a root Certificati
     openssl req -new -x509 -sha256 -key root_ca.key -out root_ca.crt -days 3650
     ```
 
-    This command creates a self-signed certificate (root_ca.crt) using the encrypted private key generated in the previous step.
+    This command creates a self-signed certificate (root_ca.crt) using the private key generated in the previous step.
 
     Provide the required information when prompted. The information typically includes the Common Name (CN), organization details, and other details related to your root CA.
 
@@ -35,12 +33,10 @@ To generate certificates for the IPSec endpoints signed by the root CA certifica
 1. Generate a private key for the IPSec endpoint:
 
     ```bash
-    openssl genrsa -aes256 -out endpoint1.key 2048
+    openssl genrsa -out endpoint1.key 2048
     ```
 
-    This command generates a 2048-bit RSA private key (endpoint1.key) and encrypts it using AES-256 encryption.
-
-    Enter a passphrase for the private key when prompted. Choose a strong passphrase and remember it, as you will need it later.
+    This command generates a 2048-bit RSA private key (endpoint1.key).
 
 2. Create a Certificate Signing Request (CSR) file using the private key:
 
@@ -60,6 +56,6 @@ To generate certificates for the IPSec endpoints signed by the root CA certifica
 
     This command signs the CSR using the root CA certificate (root_ca.crt) and private key (root_ca.key) and generates the signed certificate (endpoint1.crt) valid for 365 days.
 
-Repeat steps 1-5 for each IPSec endpoint, generating a unique private key, CSR, and certificate for each.
+Repeat steps 1-3 for each IPSec endpoint, generating a unique private key, CSR, and certificate for each.
 
 The root CA has now signed the CSRs and provided you with the signed certificates (endpoint1.crt, endpoint2.crt, etc.) for each IPSec endpoint.

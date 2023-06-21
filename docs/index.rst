@@ -20,8 +20,6 @@ You may cite this work as follows:
      publisher={Index Copernicus}
    }
 
-For more information, check out the :doc:`usage` section, which includes how to :ref:`installation` the project.
-
 .. note::
 
    This project is under active development.
@@ -31,10 +29,7 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-   :glob:
-   :titlesonly:
 
-   usage
    quickstart
-   contact
    tutorial/index
+   contact

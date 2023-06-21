@@ -33,4 +33,6 @@ Contents
    :maxdepth: 2
 
    usage
+   quickstart
+   contact
    tutorial/index

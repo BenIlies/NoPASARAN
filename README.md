@@ -13,7 +13,6 @@ NoPASARAN is an advanced network tool designed to detect, fingerprint, and locat
 ## Requirements
 
 * Python 3.8 or later
-* Ansible
 * Scapy
 * Twisted
 

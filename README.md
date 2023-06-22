@@ -49,10 +49,6 @@ NoPASARAN can be run in either the Node or Proxy role using the main.py script:
 
 Replace `<path-to-json-scenario-file>` with the path to your actual JSON scenario file.
 
-## Documentation
-
-Visit our [documentation](https://nopasaran.readthedocs.io) for more detailed guides and information about NoPASARAN.
-
 ## Docker
 
 Alternatively, you can directly download a worker node using Docker:
@@ -67,3 +63,7 @@ Alternatively, you can directly download a worker node using Docker:
    docker run -it benilies/nopasaran:latest
 
 The worker node container is now ready for use.
+
+## Documentation
+
+Visit our [documentation](https://nopasaran.readthedocs.io) for more detailed guides and information about NoPASARAN.

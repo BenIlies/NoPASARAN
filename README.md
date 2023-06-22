@@ -52,3 +52,18 @@ Replace `<path-to-json-scenario-file>` with the path to your actual JSON scenari
 ## Documentation
 
 Visit our [documentation](https://nopasaran.readthedocs.io) for more detailed guides and information about NoPASARAN.
+
+## Docker
+
+Alternatively, you can directly download a worker node using Docker:
+
+1. Pull the latest worker node image:
+   ```bash
+   docker pull benilies/nopasaran:latest
+
+2. Run the worker node container:
+
+   ```bash
+   docker run -it benilies/nopasaran:latest
+
+The worker node container is now ready for use.

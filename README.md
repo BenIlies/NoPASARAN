@@ -67,3 +67,15 @@ The worker node container is now ready for use.
 ## Documentation
 
 Visit our [documentation](https://nopasaran.readthedocs.io) for more detailed guides and information about NoPASARAN.
+
+## Acknowledgements
+
+This software is based on the research paper titled "NoPASARAN: a Novel Platform to Analyse Semi Active elements in Routes Across the Network" by Ilies Benhabbour and Marc Dacier, published in 2022.
+
+```bibtex
+@article{benhabbour2022nopasaran,
+  title={NoPASARAN: a Novel Platform to Analyse Semi Active elements in Routes Across the Network},
+  author={Benhabbour, Ilies and Dacier, Marc},
+  year={2022},
+  publisher={Index Copernicus}
+}

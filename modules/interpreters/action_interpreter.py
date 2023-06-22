@@ -278,7 +278,7 @@ class ActionInterpreter(cmd.Cmd):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         deferToThread(machine.get_variable(inputs[0]).start)
 
-    def do_print(self, line, machine):
+    def do_print_packet(self, line, machine):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         print(machine.get_variable(inputs[0]).show())
 

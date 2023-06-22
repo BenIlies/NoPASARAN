@@ -51,7 +51,7 @@ class ActionInterpreter(cmd.Cmd):
         _, outputs = InterpreterParser.parse(line, 0, 1)
         machine.set_variable(outputs[0], create_TCP_packet())
 
-    def do_create_TCP_packet(self, line, machine):
+    def do_create_UDP_packet(self, line, machine):
         _, outputs = InterpreterParser.parse(line, 0, 1)
         machine.set_variable(outputs[0], create_UDP_packet())
 
@@ -82,6 +82,16 @@ class ActionInterpreter(cmd.Cmd):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
         set_TCP_dport(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_set_UDP_sport(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_UDP_sport(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
+
+    def do_set_UDP_dport(self, line, machine):
+        inputs, outputs = InterpreterParser.parse(line, 2, 1)
+        machine.set_variable(outputs[0], machine.get_variable(inputs[0]))
+        set_UDP_dport(machine.get_variable(outputs[0]), machine.get_variable(inputs[1]))
 
     def do_set_TCP_seq(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)

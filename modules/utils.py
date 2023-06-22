@@ -48,6 +48,12 @@ def set_TCP_sport(packet, sport):
 def set_TCP_dport(packet, dport):
 	packet['TCP'].dport = int(dport)
 
+def set_UDP_sport(packet, sport):
+	packet['UDP'].sport = int(sport)
+
+def set_UDP_dport(packet, dport):
+	packet['UDP'].dport = int(dport)
+
 def get_TCP_sport(packet):
 	return packet['TCP'].sport
 

@@ -3,7 +3,7 @@ Tutorial
 
 This section provides a step-by-step guide to using NoPASARAN, including various scenarios and the setup of an end-to-end control channel.
 
-Introduction to Scenarios
+Scenarios
 -------------------------
 
 Here are some example scenarios that demonstrate the basic usage of NoPASARAN.
@@ -12,6 +12,7 @@ Here are some example scenarios that demonstrate the basic usage of NoPASARAN.
    :maxdepth: 1
 
    Introduction to Scenarios <intro_scenario.rst>
+   Introduction to Variables <intro_variables.rst>
 
 Control Channel
 ---------------

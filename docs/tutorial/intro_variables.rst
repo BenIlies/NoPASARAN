@@ -49,14 +49,14 @@ Here's the JSON file that represents our FSM:
 The JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 
 - `id`: An identifier for the FSM. In this example, the id is "Tutorial".
-- `initial`: Specifies the name of the initial state of the FSM, which is "Init".
+- `initial`: Specifies the name of the initial state of the FSM, which is "Init". Note that every FSM will automatically trigger a "STARTED" event when initiated.
 - `states`: Contains an object, where each key-value pair represents a state in the FSM.
 
 The `states` object defines four states:
 
 1. `Init`: This is the initial state of the FSM. It includes an `on` key, indicating the possible transitions from this state. In this case, the "STARTED" event causes a transition to the "Variables Creation" state.
 
-2. `Variables Creation`: Upon entering this state, two `get_from_file` actions are executed. These actions retrieve the specified variables ("ip-server" and "port-server") from the specified file ("variables") and assign them to local variables ("ip-old-state" and "port-old-state"). Once these actions have been executed, the "done" action triggers the "DONE" event, leading to a transition to the "Variables Reception" state. As part of this transition, the `assign` actions are executed, which assign the values of "ip-old-state" and "port-old-state" to new state variables ("ip-new-state" and "port-new-state").
+2. `Variables Creation`: Upon entering this state, two `get_from_file` actions are executed. These actions retrieve the specified variables ("ip-server" and "port-server") from the specified file ("variables.json") and assign them to local variables ("ip-old-state" and "port-old-state"). Once these actions have been executed, the "done" action triggers the "DONE" event, leading to a transition to the "Variables Reception" state. As part of this transition, the `assign` actions are executed, which assign the values of "ip-old-state" and "port-old-state" to new state variables ("ip-new-state" and "port-new-state").
 
 3. `Variables Reception`: This state is responsible for receiving and storing the values assigned from the "Variables Creation" state. Upon entering this state, the "done" action is executed, which inherently triggers the "DONE" event, leading to a transition to the `End` state.
 

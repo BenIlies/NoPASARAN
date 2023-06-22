@@ -1,4 +1,4 @@
-from scapy.all import IP, TCP
+from scapy.all import IP, TCP, UDP
 import random
 from scapy.layers.tls.all import *
 
@@ -26,6 +26,9 @@ def get_packet_info(packet):
 
 def create_TCP_packet():
 	return IP()/TCP()
+
+def create_UDP_packet():
+	return IP()/UDP()
 
 def set_IP_dst(packet, dst):
 	packet['IP'].dst = dst

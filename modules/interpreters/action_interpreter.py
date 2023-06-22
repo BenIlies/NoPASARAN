@@ -51,6 +51,10 @@ class ActionInterpreter(cmd.Cmd):
         _, outputs = InterpreterParser.parse(line, 0, 1)
         machine.set_variable(outputs[0], create_TCP_packet())
 
+    def do_create_TCP_packet(self, line, machine):
+        _, outputs = InterpreterParser.parse(line, 0, 1)
+        machine.set_variable(outputs[0], create_UDP_packet())
+
     def do_set_random_int(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], set_random_int(inputs[0], inputs[1]))

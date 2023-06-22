@@ -278,6 +278,10 @@ class ActionInterpreter(cmd.Cmd):
         inputs, _ = InterpreterParser.parse(line, 1, 0)
         deferToThread(machine.get_variable(inputs[0]).start)
 
+    def do_print(self, line, machine):
+        inputs, _ = InterpreterParser.parse(line, 1, 0)
+        print(machine.get_variable(inputs[0]).show())
+
     def do_add_tls_payload(self, line, machine):
         inputs, outputs = InterpreterParser.parse(line, 2, 1)
         machine.set_variable(outputs[0], machine.get_variable(inputs[0]))

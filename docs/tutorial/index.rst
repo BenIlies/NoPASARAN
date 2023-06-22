@@ -11,8 +11,9 @@ Here are some example scenarios that demonstrate the basic usage of NoPASARAN.
 .. toctree::
    :maxdepth: 1
 
-   Introduction to Scenarios <intro_scenario.rst>
+   Introduction to Scenarios <intro_scenarios.rst>
    Introduction to Variables <intro_variables.rst>
+   Introduction to Guards <intro_guards.rst>
 
 Control Channel
 ---------------

@@ -3,9 +3,6 @@ Tutorial
 
 This section provides a step-by-step guide to using NoPASARAN, including various scenarios and the setup of an end-to-end control channel.
 
-Scenarios
---------
-
 Introduction to Scenarios
 -------------------------
 

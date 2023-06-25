@@ -102,7 +102,7 @@ The FSMs operate as follows:
 4. The nested FSM begins in the "Init" state. The "STARTED" event is triggered, leading to a transition to the "Catch FSM Input Arguments" state.
 5. The nested FSM retrieves the input arguments using the `get_parameters` action and then executes the "done" action, triggering the "DONE" event.
 6. The "DONE" event in the nested FSM triggers the transition to the "End" state. In this state, an event identifier is set, and the `return` action passes the return values back to the main FSM.
-7. In the main FSM, the returned event from the nested FSM is detected, triggering the "EVENT_FROM_NESTED_FSM" transition. The `equal` condition is checked, and if it holds true, the FSM transitions to the "End" state.
+7. In the main FSM, the returned event from the nested FSM is detected, triggering the "EVENT_FROM_NESTED_FSM" transition. The `equal` condition is checked, and if it holds true (which it should, since "input-arg1" ("ping") is equal to "output-arg2" ("ping")), the FSM transitions to the "End" state. The `assign` action is then executed, storing "output-arg1" in the final state.
 8. The "End" state is the final state and marks the end of this FSM scenario as it does not define any further actions or transitions.
 
-This tutorial demonstrates the concept of nested FSMs, which is crucial for creating modular, understandable, and easily modifiable scenarios. By allowing the reuse of other FSMs across different scenarios, this feature contributes significantly to the abstraction and efficiency of FSM design.
+At the end of this process, "output-arg1", which was returned by the nested FSM and assigned to "output-arg1" in the main FSM, should hold the value "pong". This demonstrates the transfer of data between nested FSMs.

@@ -88,7 +88,7 @@ For the main FSM, the `states` object defines three states:
 
 1. `Init`: This is the initial state of the FSM. It includes an `on` key, indicating the possible transitions from this state. In this case, the "STARTED" event causes a transition to the "Intermediate State".
 
-2. `Intermediate State`: This state sets up two local variables, "input-arg1" and "input-arg2", and assigns them the values "ping" and "pong" respectively using the `set` action. After this, the nested FSM is called using the `call` action. The `call` action specifies the nested FSM's identifier and its input parameters, as well as the expected output parameters. Following this, the `trigger` action is executed, initiating the nested FSM. The transition from this state depends on the event returned by the nested FSM.
+2. `Intermediate State`: This state sets up two local variables, "input-arg1" and "input-arg2", and assigns them the values "ping" and "pong" respectively using the `set` action. After this, the nested FSM is called using the `call` action. This action requires at least one parameter: the file name of the nested FSM, which, in this case, should be "NESTED-FSM.json", a JSON file located in the current working directory. Additional optional parameters can also be provided to the nested FSM. Following this, the `trigger` action is executed, initiating the nested FSM. The transition from this state depends on the event returned by the nested FSM.
 
 3. `End`: This is the final state of the main FSM. It does not define any further actions or transitions, marking the end of the FSM scenario.
 

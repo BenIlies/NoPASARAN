@@ -1,0 +1,49 @@
+name: Code Climate
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  codeclimate:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      # Fetch Code Climate test reporter binary
+      - name: Fetch Code Climate test reporter binary
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 -o test-reporter
+          chmod +x test-reporter
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install coverage
+
+      # Run tests
+      - name: Run tests
+        run: |
+          coverage run --source=. -m unittest discover
+          coverage xml -o coverage.xml
+
+      # Before build
+      - name: Before build
+        run: |
+          ./test-reporter before-build --debug
+
+      # Upload coverage to Code Climate
+      - name: Upload coverage to Code Climate
+        run: |
+          export CC_TEST_REPORTER_ID=${{ secrets.TEST_REPORTER_ID }}
+          ./test-reporter format-coverage --input-type coverage.py
+          ./test-reporter upload-coverage

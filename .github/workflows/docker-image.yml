@@ -1,0 +1,27 @@
+name: Docker
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        # Step: Checkout the repository's code at the latest commit
+
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag benilies/nopasaran:latest
+        # Step: Build the Docker image using the Dockerfile present in the repository
+
+      - name: Log in to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        # Step: Authenticate with Docker Hub using the repository secrets
+
+      - name: Push Docker image to Docker Hub
+        run: docker push benilies/nopasaran:latest
+        # Step: Push the previously built Docker image to Docker Hub

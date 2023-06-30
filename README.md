@@ -1,9 +1,10 @@
 # NoPASARAN
 
-[![Documentation Status](https://readthedocs.org/projects/nopasaran/badge/?version=latest)](https://nopasaran.readthedocs.io/en/latest/?badge=latest)
 [![Docker](https://github.com/BenIlies/NoPASARAN/actions/workflows/docker-image.yml/badge.svg)](https://github.com/BenIlies/NoPASARAN/actions/workflows/docker-image.yml)
+[![Documentation Status](https://readthedocs.org/projects/nopasaran/badge/?version=latest)](https://nopasaran.readthedocs.io/en/latest/?badge=latest)
 [![Maintainability](https://api.codeclimate.com/v1/badges/68f1d2f9ef6af3f65864/maintainability)](https://codeclimate.com/github/BenIlies/NoPASARAN/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/68f1d2f9ef6af3f65864/test_coverage)](https://codeclimate.com/github/BenIlies/NoPASARAN/test_coverage)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://app.gitter.im/#/room/#nopasaran:gitter.im)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 
@@ -74,6 +75,10 @@ The worker node container is now ready for use.
 ## Documentation
 
 Visit our [documentation](https://nopasaran.readthedocs.io) for more detailed guides and information about NoPASARAN.
+
+## Gitter
+
+Join the discussion on [Gitter](https://app.gitter.im/#/room/#nopasaran:gitter.im).
 
 ## Acknowledgements
 

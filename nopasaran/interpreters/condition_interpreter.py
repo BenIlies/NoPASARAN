@@ -1,5 +1,5 @@
 import cmd
-from modules.parsers.interpreter_parser import InterpreterParser
+from nopasaran.parsers.interpreter_parser import InterpreterParser
 
 class ConditionInterpreter(cmd.Cmd):
     """

@@ -2,12 +2,12 @@ from enum import Enum
 
 from twisted.internet.threads import deferToThread
 
-from modules.utils import *
-from modules.interpreters.action_interpreter import ActionInterpreter
-from modules.interpreters.condition_interpreter import ConditionInterpreter
-from modules.interpreters.transition_interpreter import TransitionInterpreter
-from modules.controllers.controller import ClientController, ServerController
-from modules.sniffers.sniffer import Sniffer
+from nopasaran.utils import *
+from nopasaran.interpreters.action_interpreter import ActionInterpreter
+from nopasaran.interpreters.condition_interpreter import ConditionInterpreter
+from nopasaran.interpreters.transition_interpreter import TransitionInterpreter
+from nopasaran.controllers.controller import ClientController, ServerController
+from nopasaran.sniffers.sniffer import Sniffer
 
 class Command(Enum):
     EXECUTE_ACTION = 0

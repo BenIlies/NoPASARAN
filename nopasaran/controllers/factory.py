@@ -1,6 +1,6 @@
 from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 
-from modules.controllers.protocol import NodeClientProtocol, NodeServerProtocol
+from nopasaran.controllers.protocol import NodeClientProtocol, NodeServerProtocol
 
 class NodeClientFactory(ReconnectingClientFactory):
     protocol = NodeClientProtocol

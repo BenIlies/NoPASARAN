@@ -1,4 +1,4 @@
-from modules.utils import *
+from nopasaran.utils import *
 from scapy.all import AsyncSniffer, Ether, sniff
 
 class Sniffer(AsyncSniffer):

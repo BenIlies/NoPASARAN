@@ -5,10 +5,10 @@ import json
 from scapy.all import send
 from twisted.internet.threads import deferToThread
 
-from modules.controllers.messages import JSONMessage, Status
-from modules.parsers.interpreter_parser import InterpreterParser
-from modules.controllers.controller import ClientController, ServerController
-from modules.utils import *
+from nopasaran.controllers.messages import JSONMessage, Status
+from nopasaran.parsers.interpreter_parser import InterpreterParser
+from nopasaran.controllers.controller import ClientController, ServerController
+from nopasaran.utils import *
 
 
 class ActionInterpreter(cmd.Cmd):

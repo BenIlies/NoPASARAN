@@ -22,6 +22,10 @@ Requirements
 Installation
 ------------
 
+There are two ways to install and use NoPASARAN: by using the source code from GitHub or by installing it as a Python package.
+
+Installing from Source Code:
+
 1. Clone the NoPASARAN repository:
 
    .. code-block:: bash
@@ -40,16 +44,30 @@ Installation
 
       pip install -r requirements.txt
 
+Installing as a Python Package:
+
+1. Install NoPASARAN using pip:
+
+   .. code-block:: bash
+
+      pip install nopasaran
+
 Usage
 -----
 
-NoPASARAN can be run in either the Node or Proxy role using the main.py script:
+NoPASARAN can be run in either the Node or Proxy role:
 
 - To run as a Node:
 
   .. code-block:: bash
 
      python main.py NODE --scenario=<path-to-json-scenario-file>
+     
+  Or using the Python package:
+
+  .. code-block:: bash
+
+     nopasaran NODE --scenario=<path-to-json-scenario-file>
 
 - To run as a Proxy:
 
@@ -57,12 +75,18 @@ NoPASARAN can be run in either the Node or Proxy role using the main.py script:
 
      python main.py PROXY
 
+  Or using the Python package:
+
+  .. code-block:: bash
+
+     nopasaran PROXY
+
 Replace <path-to-json-scenario-file> with the path to your actual JSON scenario file.
 
 Docker
 ------
 
-Alternatively, you can directly download a worker node using Docker:
+You can also use Docker to download and run the NoPASARAN worker node:
 
 1. Pull the latest worker node image:
 

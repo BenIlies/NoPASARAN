@@ -23,22 +23,17 @@ jobs:
     - name: Install wheel
       run: pip install wheel
 
-    - name: Install bump2version
-      run: pip install --upgrade bumpversion
+    - name: Install requests
+      run: pip install requests
+      
+    - name: Install packaging
+      run: pip install packaging
 
-    - name: Install dependencies
+    - name: Fetch current version, increment patch version, and update setup.py
       run: |
-        pip install -r requirements.txt
-        pip install wheel
-
-    - name: Checkout dev branch and bump version
-      run: |
-        git config --local user.email "${{ secrets.USER_EMAIL }}"
-        git config --local user.name "Ilies Benhabbour"
-        git checkout dev
-        bumpversion patch
-        git commit -a -m "Bump version"
-        git push
+        VERSION=$(python -c "import requests; from packaging.version import Version; print(requests.get('https://pypi.org/pypi/nopasaran/json').json()['info']['version'])")
+        NEW_VERSION=$(python -c "from packaging.version import Version; v = Version('$VERSION'); new_version = str(Version('.'.join(map(str, [v.release[0], v.release[1], v.release[2] + 1])))); print(new_version)")
+        sed -i "s/version=.*/version='$NEW_VERSION',/" setup.py
 
     - name: Build a binary wheel and a source tarball
       run: python setup.py sdist bdist_wheel

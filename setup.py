@@ -10,9 +10,10 @@ requirements_file = os.path.join(os.path.dirname(__file__), "requirements.txt")
 with open(requirements_file, "r") as f:
     requirements = [str(req) for req in parse_requirements(f)]
 
+# Version will automatically be updated when pushed on the main branch
 setup(
     name="nopasaran",
-    version="0.2.1",
+    version="0.0.0",
     author="Ilies Benhabbour",
     author_email="ilies.benhabbour@kaust.edu.sa",
     description="NoPASARAN is an advanced network tool designed to detect, fingerprint, and locate network middleboxes in a unified framework.",

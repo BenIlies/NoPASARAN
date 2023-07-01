@@ -10,6 +10,23 @@
 
 NoPASARAN is an advanced network tool designed to detect, fingerprint, and locate network middleboxes in a unified framework. Written in Python, NoPASARAN uses finite state machines to describe test cases and leverages Ansible for distributing and orchestrating these tests across a network of nodes.
 
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [Installing from Source Code](#installing-from-source-code)
+  - [Installing as a Python Package](#installing-as-a-python-package)
+- [Usage](#usage)
+  - [WORKER Role](#worker-role)
+  - [PROXY Role](#proxy-role)
+  - [Additional Options](#additional-options)
+- [Docker](#docker)
+- [Documentation](#documentation)
+- [Gitter](#gitter)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+
 ## Features
 
 - Detection, fingerprinting, and location of network middleboxes.
@@ -32,27 +49,27 @@ You can install and use NoPASARAN either by cloning the source code from GitHub 
 
 1. Clone the NoPASARAN repository:
 
-    ```
+    ```bash
     git clone https://github.com/BenIlies/NoPASARAN.git
     ```
 
 2. Navigate into the NoPASARAN directory:
 
-    ```
+    ```bash
     cd NoPASARAN
     ```
 
 3. Install the necessary Python packages:
 
-    ```
+    ```bash
     pip install -r requirements.txt
     ```
 
 ### Installing as a Python Package
 
-Alternatively, you can install NoPASARAN as a Python package using pip:
+- Alternatively, you can install NoPASARAN as a Python package using pip:
 
-    ```
+    ```bash
     pip install nopasaran
     ```
 
@@ -66,15 +83,15 @@ In the WORKER role, NoPASARAN performs a test campaign to evaluate network middl
 
 To run NoPASARAN in the WORKER role, you need to specify a JSON scenario file that indicates the test campaign the Worker has to run.
 
-From the source code:
+- From the source code:
 
-    ```
+    ```bash
     python main.py WORKER --scenario=<path-to-json-scenario-file>
     ```
 
-As a package:
+- As a package:
 
-    ```
+    ```bash
     nopasaran WORKER --scenario=<path-to-json-scenario-file>
     ```
 
@@ -84,15 +101,15 @@ In the PROXY role, NoPASARAN does not perform any tests. It acts as a server acc
 
 To run NoPASARAN in the PROXY role:
 
-From the source code:
+- From the source code:
 
-    ```
+    ```bash
     python main.py PROXY
     ```
 
-As a package:
+- As a package:
 
-    ```
+    ```bash
     nopasaran PROXY
     ```
 
@@ -114,13 +131,13 @@ You can also use Docker to download and run a NoPASARAN node.
 
 1. Pull the latest node image:
 
-    ```
+    ```bash
     docker pull benilies/nopasaran:latest
     ```
 
 2. Run the node container:
 
-    ```
+    ```bash
     docker run -it benilies/nopasaran:latest
     ```
 

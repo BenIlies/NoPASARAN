@@ -31,18 +31,14 @@ jobs:
         pip install -r requirements.txt
         pip install wheel
 
-    - name: Bump version and commit
+    - name: Checkout dev branch and bump version
       run: |
         git config --local user.email "${{ secrets.USER_EMAIL }}"
         git config --local user.name "Ilies Benhabbour"
+        git checkout dev
         bumpversion patch
         git commit -a -m "Bump version"
-        
-    - name: Push changes
-      run: |
-        git fetch origin dev
-        git rebase origin/dev
-        git push origin HEAD:dev
+        git push
 
     - name: Build a binary wheel and a source tarball
       run: python setup.py sdist bdist_wheel

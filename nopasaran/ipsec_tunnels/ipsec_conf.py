@@ -89,16 +89,16 @@ class ProxyIpsecConf(IpsecConf):
         """
         self.configure_ipsec(controller_section='tunnel-to-node', leftsubnet='192.0.0.0/24', right='%any', rightsubnet='192.0.0.0/24', leftcert=leftcert, leftid=leftid)
 
-class NodeIpsecConf(IpsecConf):
+class WorkerIpsecConf(IpsecConf):
     """
-    The NodeIpsecConf class is a specialized version of the IpsecConf class 
-    for a node's IPsec configuration. It is initialized with a right IP, right subnet,
-    left certificate, left ID, and right ID, and sets up an IPsec connection from the node 
+    The WorkerIpsecConf class is a specialized version of the IpsecConf class
+    for a worker's IPsec configuration. It is initialized with a right IP, right subnet,
+    left certificate, left ID, and right ID, and sets up an IPsec connection from the worker
     to a specific proxy on the 192.0.0.0/24 subnet.
     """
     def __init__(self, right, rightsubnet, leftcert, leftid, rightid):
         """
-        Initializer for the NodeIpsecConf class.
+        Initializer for the WorkerIpsecConf class.
         Args:
             right (str): Right IP.
             rightsubnet (str): Right Subnet.

@@ -4,7 +4,7 @@ from twisted.internet.protocol import Protocol
 
 from nopasaran.controllers.messages import JSONMessage, Status
 
-class NodeProtocol(Protocol):
+class WorkerProtocol(Protocol):
     remote_status = Status.DISCONNECTED.name
     local_status = Status.DISCONNECTED.name
     is_active = True
@@ -38,7 +38,7 @@ class NodeProtocol(Protocol):
     def send_sync(self, content):
         self.transport.write(json.dumps({JSONMessage.SYNC.name: content}).encode())
 
-class NodeClientProtocol(NodeProtocol):
+class WorkerClientProtocol(WorkerProtocol):
     def connectionMade(self):
         self.factory.stopTrying()
         self.factory.state_machine.set_variable(self.factory.variable, self)
@@ -46,7 +46,7 @@ class NodeClientProtocol(NodeProtocol):
         self.transport.write(self.get_current_state_json())
         
 
-class NodeServerProtocol(NodeProtocol):
+class WorkerServerProtocol(WorkerProtocol):
     def connectionMade(self):
         self.factory.state_machine.set_variable(self.factory.variable, self)
         self.local_status = Status.CONNECTED.name

@@ -1,12 +1,9 @@
 from enum import Enum
 
-from twisted.internet.threads import deferToThread
-
 from nopasaran.utils import *
 from nopasaran.interpreters.action_interpreter import ActionInterpreter
 from nopasaran.interpreters.condition_interpreter import ConditionInterpreter
 from nopasaran.interpreters.transition_interpreter import TransitionInterpreter
-from nopasaran.controllers.controller import ClientController, ServerController
 from nopasaran.sniffers.sniffer import Sniffer
 
 class Command(Enum):
@@ -15,9 +12,6 @@ class Command(Enum):
     SET_STATE = 2
 
 class Machine:
-    '''
-    def __init__(self, xstate_json, parameters=[], main_state=True, controller_configuration=None):    
-    '''
     def __init__(self, xstate_json, parameters=[], main_state=True):
         self.__id = xstate_json['id']
         self.__initial = xstate_json['initial']

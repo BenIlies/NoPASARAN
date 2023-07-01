@@ -1,9 +1,9 @@
 from twisted.internet.protocol import ReconnectingClientFactory, ServerFactory
 
-from nopasaran.controllers.protocol import NodeClientProtocol, NodeServerProtocol
+from nopasaran.controllers.protocol import WorkerClientProtocol, WorkerServerProtocol
 
-class NodeClientFactory(ReconnectingClientFactory):
-    protocol = NodeClientProtocol
+class WorkerClientFactory(ReconnectingClientFactory):
+    protocol = WorkerClientProtocol
     
     def __init__(self, state_machine, variable):
         self.state_machine = state_machine
@@ -11,8 +11,8 @@ class NodeClientFactory(ReconnectingClientFactory):
     
 
 
-class NodeServerFactory(ServerFactory):
-    protocol = NodeServerProtocol
+class WorkerServerFactory(ServerFactory):
+    protocol = WorkerServerProtocol
 
     def __init__(self, state_machine, variable):
         self.state_machine = state_machine

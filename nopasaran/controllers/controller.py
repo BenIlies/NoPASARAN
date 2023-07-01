@@ -1,7 +1,7 @@
 from twisted.internet import reactor
 from twisted.internet.ssl import Certificate, PrivateCertificate
 
-from nopasaran.controllers.factory import NodeClientFactory, NodeServerFactory
+from nopasaran.controllers.factory import WorkerClientFactory, WorkerServerFactory
 
 class Controller():
     def __init__(self, root_certificate_file, own_private_certificate_file):        
@@ -17,7 +17,7 @@ class Controller():
 class ClientController(Controller):
     def __init__(self, state_machine, variable, root_certificate_file, client_private_certificate_file):
         super().__init__(root_certificate_file, client_private_certificate_file)
-        self.factory = NodeClientFactory(state_machine, variable)
+        self.factory = WorkerClientFactory(state_machine, variable)
 
     def configure(self, dst_ip, dst_port):
         self.__dst_ip = dst_ip
@@ -29,7 +29,7 @@ class ClientController(Controller):
 class ServerController(Controller):
     def __init__(self, state_machine, variable, root_certificate_file, server_private_certificate_file):
         super().__init__(root_certificate_file, server_private_certificate_file)
-        self.factory = NodeServerFactory(state_machine, variable)
+        self.factory = WorkerServerFactory(state_machine, variable)
 
     def configure(self, src_port):
         self.__src_port = src_port

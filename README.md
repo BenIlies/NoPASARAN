@@ -32,19 +32,19 @@ You can install and use NoPASARAN either by cloning the source code from GitHub 
 
 1. Clone the NoPASARAN repository:
 
-    ```bash
+    ```
     git clone https://github.com/BenIlies/NoPASARAN.git
     ```
 
 2. Navigate into the NoPASARAN directory:
 
-    ```bash
+    ```
     cd NoPASARAN
     ```
 
 3. Install the necessary Python packages:
 
-    ```bash
+    ```
     pip install -r requirements.txt
     ```
 
@@ -52,7 +52,7 @@ You can install and use NoPASARAN either by cloning the source code from GitHub 
 
 Alternatively, you can install NoPASARAN as a Python package using pip:
 
-    ```bash
+    ```
     pip install nopasaran
     ```
 
@@ -68,13 +68,13 @@ To run NoPASARAN in the WORKER role, you need to specify a JSON scenario file th
 
 From the source code:
 
-    ```bash
+    ```
     python main.py WORKER --scenario=<path-to-json-scenario-file>
     ```
 
 As a package:
 
-    ```bash
+    ```
     nopasaran WORKER --scenario=<path-to-json-scenario-file>
     ```
 
@@ -86,13 +86,13 @@ To run NoPASARAN in the PROXY role:
 
 From the source code:
 
-    ```bash
+    ```
     python main.py PROXY
     ```
 
 As a package:
 
-    ```bash
+    ```
     nopasaran PROXY
     ```
 
@@ -114,13 +114,13 @@ You can also use Docker to download and run a NoPASARAN node.
 
 1. Pull the latest node image:
 
-    ```bash
+    ```
     docker pull benilies/nopasaran:latest
     ```
 
 2. Run the node container:
 
-    ```bash
+    ```
     docker run -it benilies/nopasaran:latest
     ```
 

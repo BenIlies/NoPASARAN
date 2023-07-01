@@ -1,4 +1,6 @@
+import logging
 from enum import Enum
+import uuid
 
 from nopasaran.utils import *
 from nopasaran.interpreters.action_interpreter import ActionInterpreter
@@ -13,7 +15,8 @@ class Command(Enum):
 
 class Machine:
     def __init__(self, xstate_json, parameters=[], main_state=True):
-        self.__id = xstate_json['id']
+        self.__nonce = uuid.uuid4().hex[:6]
+        self.__id = xstate_json['id'] + '-' + self.__nonce
         self.__initial = xstate_json['initial']
         self.__states = xstate_json['states']
         self.__current_state = self.__initial
@@ -28,14 +31,17 @@ class Machine:
             self.root_machine = None 
         self.returned = None
         self.__actions = []
+        logging.info('Initialized new machine with ID: {}'.format(self.__id))
         
     def start(self):
+        logging.info('Starting machine with ID: {}'.format(self.__id))
         self.trigger('STARTED')
         while (len(self.__actions) > 0):
             self.execute(self.__actions[0])
             self.__actions.pop(0)
 
     def execute(self, action):
+        logging.info('Machine ID: {}. Executing action: {}'.format(self.__id, action))
         if Command.EXECUTE_ACTION.name in action:
             ActionInterpreter().onecmd(action[Command.EXECUTE_ACTION.name], self)
         elif Command.ASSIGN_VARIABLES.name in action:
@@ -44,6 +50,7 @@ class Machine:
             self.set_state(action[Command.SET_STATE.name])
 
     def get_child_machine(self, nested_xstate_json , parameters):
+        logging.info('Machine ID: {}. Getting nested finite state machine.'.format(self.__id))
         nested_machine = Machine(xstate_json=nested_xstate_json, main_state=False, parameters=parameters)
         nested_machine.root_machine = self.root_machine
         return nested_machine
@@ -55,18 +62,22 @@ class Machine:
         return self.__current_state
 
     def set_state(self, state):
+        logging.info('Machine ID: {}. Setting state to: {}'.format(self.__id, state))
         self.__current_state = state
 
     def start_sniffer(self):
+        logging.info('Starting sniffer for machine with ID: {}'.format(self.__id))
         self.__sniffer.start()
 
     def stop_sniffer(self):
+        logging.info('Stopping sniffer for machine with ID: {}'.format(self.__id))
         self.__sniffer.stop()
 
     def get_variables(self):
         return self.__variables
 
     def set_variables(self, variables):
+        logging.debug('Machine ID: {}. Setting variables: {}'.format(self.__id, variables))
         self.__variables = variables
 
     def get_variable(self, name):
@@ -82,9 +93,11 @@ class Machine:
         self.__sniffer.queue = queue
 
     def add_redirection(self, event, state):
+        logging.debug('Machine ID: {}. Adding redirection from event {} to state {}.'.format(self.__id, event, state))
         self.__redirections[event] = state
 
     def trigger(self, event):
+        logging.info('Machine ID: {}. Event {} triggered'.format(self.__id, event))
         if 'on' in self.__states[self.get_state()]:
             if event in self.__states[self.get_state()]['on']:
                 self.__transition(get_safe_array(self.__states[self.get_state()]['on'][event]))
@@ -93,7 +106,7 @@ class Machine:
             self.__append_state(self.__redirections[event])
             self.__append_enter_actions(self.__redirections[event])
         else:
-            print('SKIPPED: ' + event + ' triggered in state: ' + self.get_state() + '. No matching event.')
+            logging.warning('Machine ID: {}. No matching event for {}. Skipping.'.format(self.__id, event))
 
     def __transition(self, possible_states):
         def check_conditions(possible_state):

@@ -41,7 +41,7 @@ def main():
         return
 
     # Set log level based on -ll argument
-    log_level = getattr(logging, args.log_level.upper()) if args.log_level else logging.INFO
+    log_level = getattr(logging, args.log_level.upper()) if args.log_level else logging.ERROR
 
     # Configure logging
     log_file = args.log_file

@@ -12,7 +12,7 @@ with open(requirements_file, "r") as f:
 
 setup(
     name="nopasaran",
-    version="0.2.0",
+    version="0.2.1",
     author="Ilies Benhabbour",
     author_email="ilies.benhabbour@kaust.edu.sa",
     description="NoPASARAN is an advanced network tool designed to detect, fingerprint, and locate network middleboxes in a unified framework.",

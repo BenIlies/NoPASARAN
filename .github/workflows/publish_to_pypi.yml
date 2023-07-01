@@ -24,7 +24,9 @@ jobs:
       run: pip install --upgrade bump2version
 
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: |
+        pip install -r requirements.txt
+        pip install wheel
 
     - name: Bump version and commit
       run: bumpversion patch

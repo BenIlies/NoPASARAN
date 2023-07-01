@@ -1,6 +1,7 @@
 import argparse
 import json
 import logging
+import sys
 from twisted.internet.threads import deferToThread
 from twisted.internet import reactor
 from nopasaran.machines.machine import Machine
@@ -15,9 +16,11 @@ def main():
 
     # Set up base parser
     base_parser = argparse.ArgumentParser(add_help=False)
-    base_parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
-    base_parser.add_argument("--log", dest="log_file", default="conf.log", help="Path to the log file (default: %(default)s)")
-    base_parser.add_argument("--log-level", choices=["info", "warning", "error"], help="Log level for output")
+    base_parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+
+    # Add -l and -ll options as shorter names for --log and --log-level
+    base_parser.add_argument("-l", "--log", dest="log_file", default="conf.log", help="Path to the log file (default: %(default)s)")
+    base_parser.add_argument("-ll", "--log-level", choices=["info", "warning", "error"], help="Log level for output")
 
     # Create subparsers for the role
     subparsers = parser.add_subparsers(dest='role', help='Define the role for the machine in the architecture')
@@ -37,17 +40,25 @@ def main():
         parser.print_help()
         return
 
-    # Set log level based on debug flag or --log-level argument
-    log_level = logging.DEBUG if hasattr(args, 'debug') and args.debug else getattr(logging, args.log_level.upper()) if hasattr(args, 'log_level') and args.log_level else logging.INFO
+    # Set log level based on -ll argument
+    log_level = getattr(logging, args.log_level.upper()) if args.log_level else logging.INFO
 
     # Configure logging
-    log_file = getattr(args, 'log_file', 'conf.log')
+    log_file = args.log_file
     logging.basicConfig(
         filename=log_file,
         level=log_level,
         format='%(asctime)s %(levelname)s %(name)s - %(message)s',
         datefmt='%m/%d/%Y %I:%M:%S %p %Z'
     )
+
+    # Set up console logging if -v option is provided
+    if args.verbose:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(log_level)
+        console_formatter = logging.Formatter('%(message)s')
+        console_handler.setFormatter(console_formatter)
+        logging.getLogger().addHandler(console_handler)
 
     # If role is WORKER, load JSON file and start the machine
     if args.role == 'WORKER':
@@ -57,7 +68,8 @@ def main():
 
         logging.info('Loading JSON scenario file...')
         try:
-            xstate_json = json.load(open(args.scenario))
+            with open(args.scenario) as f:
+                xstate_json = json.load(f)
         except Exception as e:
             logging.error(f'Error loading JSON scenario file: {str(e)}')
             return

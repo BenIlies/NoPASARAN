@@ -86,11 +86,11 @@ Replace <path-to-json-scenario-file> with the path to your actual JSON scenario 
 
 Additional options:
 
-- Enable debug logging with `--debug`
-- Specify the path to the log file with `--log=<path-to-log-file>`. The default path is "conf.log".
-- Specify the log level for output with `--log-level=<log-level>`. Valid choices are "info", "warning", and "error".
+- ``--verbose`` or ``-v``: Enable verbose output.
+- ``--log=<path-to-log-file>`` or ``-l=<path-to-log-file>``: Specify the path to the log file (default is "conf.log").
+- ``--log-level=<log-level>`` or ``-ll=<log-level>``: Specify the log level for output. Valid choices are "info", "warning", and "error".
 
-For any further assistance, use the `--help` argument with any command for additional information.
+For any further assistance, use the ``--help`` argument with any command for additional information.
 
 Docker
 ------

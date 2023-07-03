@@ -13,14 +13,14 @@ def parsing_decorator(input_args, output_args, optional_inputs=False, optional_o
                 inputs, outputs = Parser.parse(line, input_args, output_args, optional_inputs, optional_outputs)
                 logging.debug("Received inputs: {}. Received outputs: {}".format(inputs, outputs))
             except Exception as e:
-                logging.error("Error parsing line '{}': {}".format(line, e))
-                sys.exit(1)
+                logging.error("Error while parsing primitive '{}': {}".format(func.__name__, e))
+                sys.exit("Error while parsing primitive '{}': {}".format(func.__name__, e))
             
             try:
                 return func(inputs, outputs, variable_dict_dict)
             except Exception as e:
-                logging.error("Error executing primitive {}: {}".format(func.__name__, e))
-                sys.exit("Error executing primitive {}: {}".format(func.__name__, e))
+                logging.error("Error while executing primitive {}: {}".format(func.__name__, e))
+                sys.exit("Error while executing primitive {}: {}".format(func.__name__, e))
             
         return wrapper
     return decorator

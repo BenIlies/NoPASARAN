@@ -2,28 +2,6 @@ from scapy.all import IP, TCP, UDP
 import random
 from scapy.layers.tls.all import *
 
-def get_packet_info(packet):
-    result = []
-    if 'IP' in packet:
-        if hasattr(packet['IP'], "src"):
-            result.append("src|" + packet['IP'].src)
-        if hasattr(packet['IP'], "dst"):
-            result.append("dst|" + packet['IP'].dst)
-        if hasattr(packet['IP'], "ttl"):
-            result.append("ttl|" + str(packet['IP'].ttl))
-    if 'TCP' in packet:
-        if hasattr(packet['TCP'], "sport"):
-            result.append("sport|" + str(packet['TCP'].sport))
-        if hasattr(packet['TCP'], "dport"):
-            result.append("dport|" + str(packet['TCP'].dport))
-        if hasattr(packet['TCP'], "flags"):
-            result.append("flags|" + str(packet['TCP'].flags))
-        if hasattr(packet['TCP'], "ack"):
-            result.append("ack|" + str(packet['TCP'].ack))
-        if hasattr(packet['TCP'], "seq"):
-            result.append("seq|" + str(packet['TCP'].seq))
-    return ' '.join(result)
-
 def create_TCP_packet():
 	return IP()/TCP()
 
@@ -100,14 +78,11 @@ def set_TCP_payload(packet, payload):
 	packet['TCP'].remove_payload()
 	packet['TCP'].add_payload(payload)
 
-
 def remove_TCP_payload(packet):
 	packet['TCP'].remove_payload()
 
-
 def not_(boolean):
 	boolean = not(boolean)
-
 
 def get_safe_array(key):
 	if isinstance(key, str):

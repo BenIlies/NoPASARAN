@@ -1,3 +1,4 @@
+import logging
 from nopasaran.utils import *
 from scapy.all import AsyncSniffer, Ether, sniff
 
@@ -13,9 +14,11 @@ class Sniffer(AsyncSniffer):
             filter (str): A string defining the filter for packets.
         """
         super().__init__(prn=self.__handle_sniffer(), lfilter=lambda pkt: self.__filter_packet(pkt))
-        self.machine = machine 
+        self.machine = machine
         self.__filter = filter
         self.queue = None
+        logging.debug('Machine ID: {}: Sniffer initialized'.format(machine.get_id()))
+
         
     def __handle_sniffer(self):
         """
@@ -24,7 +27,7 @@ class Sniffer(AsyncSniffer):
             pkt_callback (func): Function to execute when a packet is sniffed.
         """
         def pkt_callback(packet):
-            if self.queue != None:
+            if self.queue is not None:
                 self.queue.append(packet)
         return pkt_callback
     
@@ -37,9 +40,10 @@ class Sniffer(AsyncSniffer):
             bool: True if the packet is accepted, False otherwise.
         """
         if 'Ether' in packet:
-            if (packet[Ether].src != Ether().src):
+            if packet[Ether].src != Ether().src:
                 filtered_packets = sniff(offline=packet, filter=self.__filter)
                 if packet in filtered_packets:
+                    logging.debug("Packet passed the filter: %s", packet)
                     return True
         return False
     
@@ -50,6 +54,7 @@ class Sniffer(AsyncSniffer):
             filter (str): String defining the new filter.
         """
         self.__filter = filter
+        logging.debug("Filter set to: %s", filter)
     
     def get_packet_layers(self, packet):
         """
@@ -68,4 +73,5 @@ class Sniffer(AsyncSniffer):
             else:
                 layers.append(layer)
             counter += 1
+        logging.debug("Packet layers: %s", layers)
         return layers

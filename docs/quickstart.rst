@@ -88,7 +88,7 @@ Additional options:
 
 - ``--verbose`` or ``-v``: Enable verbose output.
 - ``--log=<path-to-log-file>`` or ``-l=<path-to-log-file>``: Specify the path to the log file (default is "conf.log").
-- ``--log-level=<log-level>`` or ``-ll=<log-level>``: Specify the log level for output. Valid choices are "info", "warning", and "error".
+- ``--log-level=<log-level>`` or ``-ll=<log-level>``: Specify the log level for output. Valid choices are "debug", "info", "warning", and "error".
 
 For any further assistance, use the ``--help`` argument with any command for additional information.
 

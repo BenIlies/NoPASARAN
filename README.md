@@ -119,7 +119,7 @@ You can further customize the behavior of NoPASARAN with the following options:
 
 - `--verbose` or `-v`: Enable verbose output.
 - `--log=<path-to-log-file>` or `-l=<path-to-log-file>`: Specify the path to the log file (default is "conf.log").
-- `--log-level=<log-level>` or `-ll=<log-level>`: Specify the log level for output. Valid choices are "info", "warning", and "error".
+- `--log-level=<log-level>` or `-ll=<log-level>`: Specify the log level for output. Valid choices are "debug", "info", "warning", and "error".
 
 Replace `<path-to-json-scenario-file>` with the path to your actual JSON scenario file.
 

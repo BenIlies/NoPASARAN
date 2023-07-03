@@ -6,7 +6,8 @@ from scapy.all import send as sendpacket
 
 import nopasaran.utils as utils
 from nopasaran.controllers.controller import ClientController, ServerController
-from nopasaran.controllers.messages import JSONMessage, Status
+from nopasaran.definitions.control_channel_messages import JSONMessage, Status
+from nopasaran.definitions.events import Event
 from nopasaran.decorators import parsing_decorator
 
 
@@ -20,12 +21,12 @@ class ActionPrimitives:
     @parsing_decorator(input_args=1, output_args=0)
     def send(inputs, outputs, state_machine):
         sendpacket(state_machine.get_variable(inputs[0]))
-        state_machine.trigger('PACKET_SENT')
+        state_machine.trigger(Event.PACKET_SENT.name)
 
     @staticmethod
     @parsing_decorator(input_args=0, output_args=0)
     def done(inputs, outputs, state_machine):
-        state_machine.trigger('DONE')
+        state_machine.trigger(Event.DONE.name)
 
     @staticmethod
     @parsing_decorator(input_args=0, output_args=1)
@@ -170,22 +171,22 @@ class ActionPrimitives:
         while True:
             stack = state_machine.get_variable(inputs[0])
             if len(stack) > 0:
-                state_machine.trigger('PACKET_AVAILABLE')
+                state_machine.trigger(Event.PACKET_AVAILABLE.name)
                 break
             if time.time() - start_time > float(state_machine.get_variable(inputs[1])):
                 timeout = True
                 break
         if timeout:
-            state_machine.trigger('TIMEOUT')
+            state_machine.trigger(Event.TIMEOUT.name)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0, optional_inputs=True, optional_outputs=True)
     def call(inputs, outputs, state_machine):
-        nested_xstate_json = json.load(open('.'.join((inputs[0], 'json'))))
+        nested_state_json = json.load(open('.'.join((inputs[0], 'json'))))
         parameters = []
-        for index in range(1, len(inputs)):
-            parameters.append(state_machine.get_variable(inputs[index]))
-        nested_machine = state_machine.get_child_machine(nested_xstate_json, parameters)
+        for nested_variables in inputs[1:]:
+            parameters.append(state_machine.get_variable(nested_variables))
+        nested_machine = state_machine.get_child_machine(nested_state_json, parameters)
         nested_machine.start()
         for index in range(len(nested_machine.returned)):
             state_machine.set_variable(outputs[index], nested_machine.get_variable(nested_machine.returned[index]))
@@ -209,9 +210,9 @@ class ActionPrimitives:
                 timeout = True
                 break
         if timeout:
-            state_machine.trigger('TIMEOUT')
+            state_machine.trigger(Event.TIMEOUT.name)
         else:
-            state_machine.trigger('READY')
+            state_machine.trigger(Event.READY.name)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0, optional_inputs=True)
@@ -219,7 +220,7 @@ class ActionPrimitives:
         controller_protocol = state_machine.get_variable(inputs[0])
         if controller_protocol:
             controller_protocol.send_sync(inputs[1:])
-            state_machine.trigger('SYNC_SENT')
+            state_machine.trigger(Event.SYNC_SENT.name)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0, optional_outputs=True)
@@ -238,11 +239,11 @@ class ActionPrimitives:
                 timeout = True
                 break
         if timeout:
-            state_machine.trigger('TIMEOUT')
+            state_machine.trigger(Event.TIMEOUT.name)
         else:
             for index in range(len(outputs)):
                 state_machine.set_variable(outputs[index], sync_message[JSONMessage.SYNC.name][index])
-            state_machine.trigger('SYNC_AVAILABLE')
+            state_machine.trigger(Event.SYNC_AVAILABLE.name)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)

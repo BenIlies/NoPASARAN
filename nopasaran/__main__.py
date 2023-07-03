@@ -20,7 +20,7 @@ def main():
 
     # Add -l and -ll options as shorter names for --log and --log-level
     base_parser.add_argument("-l", "--log", dest="log_file", default="conf.log", help="Path to the log file (default: %(default)s)")
-    base_parser.add_argument("-ll", "--log-level", choices=["info", "warning", "error"], help="Log level for output")
+    base_parser.add_argument("-ll", "--log-level", choices=["debug", "info", "warning", "error"], help="Log level for output")
 
     # Create subparsers for the role
     subparsers = parser.add_subparsers(dest='role', help='Define the role for the machine in the architecture')
@@ -77,9 +77,9 @@ def main():
         logging.info('JSON scenario file loaded')
         machine = Machine(state_json=state_json)
 
-        logging.info('Starting the machine')
+        logging.info('Starting the root machine')
         try:
-            deferToThread(machine.start).addCallback(lambda _: reactor.stop())
+            deferToThread(machine.start).addErrback(lambda _: reactor.stop())
             reactor.run()
         except Exception as e:
             logging.error(f'Error starting the machine: {str(e)}')

@@ -2,7 +2,7 @@ import json
 
 from twisted.internet.protocol import Protocol
 
-from nopasaran.controllers.messages import JSONMessage, Status
+from nopasaran.definitions.control_channel_messages import JSONMessage, Status
 
 class WorkerProtocol(Protocol):
     remote_status = Status.DISCONNECTED.name

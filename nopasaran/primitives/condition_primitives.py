@@ -4,7 +4,6 @@ class ConditionPrimitives:
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)
     def equal(inputs, outputs, state_variables):
-        print("HEHE")
         return state_variables[inputs[0]] == state_variables[inputs[1]]
 
     @staticmethod

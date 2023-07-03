@@ -69,13 +69,13 @@ def main():
         logging.info('Loading JSON scenario file...')
         try:
             with open(args.scenario) as f:
-                xstate_json = json.load(f)
+                state_json = json.load(f)
         except Exception as e:
             logging.error(f'Error loading JSON scenario file: {str(e)}')
             return
 
         logging.info('JSON scenario file loaded')
-        machine = Machine(xstate_json=xstate_json)
+        machine = Machine(state_json=state_json)
 
         logging.info('Starting the machine')
         try:

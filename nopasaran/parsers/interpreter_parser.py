@@ -1,4 +1,4 @@
-class InterpreterParser():
+class Parser():
     @staticmethod
     def parse(command, input_args=1, output_args=0, optional_inputs=False, optional_outputs=False):
         def checker(string):

@@ -14,11 +14,11 @@ class Command(Enum):
     SET_STATE = 2
 
 class Machine:
-    def __init__(self, xstate_json, parameters=[], main_state=True):
+    def __init__(self, state_json, parameters=[], main_state=True):
         self.__nonce = uuid.uuid4().hex[:6]
-        self.__id = xstate_json['id'] + '-' + self.__nonce
-        self.__initial = xstate_json['initial']
-        self.__states = xstate_json['states']
+        self.__id = state_json['id'] + '-' + self.__nonce
+        self.__initial = state_json['initial']
+        self.__states = state_json['states']
         self.__current_state = self.__initial
         self.__sniffer = Sniffer(self, filter='')
         self.__main_state = main_state
@@ -43,15 +43,15 @@ class Machine:
     def execute(self, action):
         logging.info('Machine ID: {}. Executing action: {}'.format(self.__id, action))
         if Command.EXECUTE_ACTION.name in action:
-            ActionInterpreter().onecmd(action[Command.EXECUTE_ACTION.name], self)
+            ActionInterpreter.evaluate(action[Command.EXECUTE_ACTION.name], self)
         elif Command.ASSIGN_VARIABLES.name in action:
             self.set_variables(action[Command.ASSIGN_VARIABLES.name])
         elif Command.SET_STATE.name in action:
             self.set_state(action[Command.SET_STATE.name])
 
-    def get_child_machine(self, nested_xstate_json , parameters):
+    def get_child_machine(self, nested_state_json , parameters):
         logging.info('Machine ID: {}. Getting nested finite state machine.'.format(self.__id))
-        nested_machine = Machine(xstate_json=nested_xstate_json, main_state=False, parameters=parameters)
+        nested_machine = Machine(state_json=nested_state_json, main_state=False, parameters=parameters)
         nested_machine.root_machine = self.root_machine
         return nested_machine
 
@@ -111,7 +111,7 @@ class Machine:
     def __transition(self, possible_states):
         def check_conditions(possible_state):
             if 'cond' in possible_state:
-                return ConditionInterpreter().onecmd(possible_state['cond'], self.__variables)
+                return ConditionInterpreter.evaluate(possible_state['cond'], self.__variables)
             else:
                 return True
             
@@ -135,12 +135,15 @@ class Machine:
                 self.__actions.append({Command.EXECUTE_ACTION.name: action})
 
     def __append_variables(self, state):
-        variables = {}
+        variables = {
+            TransitionInterpreter.OLD_STATE_KEY: self.__variables,
+            TransitionInterpreter.NEW_STATE_KEY: {},
+                     }
         if 'actions' in state:
             transition_actions = get_safe_array(state['actions'])
             for transition_action in transition_actions:
-                TransitionInterpreter().onecmd(transition_action, self.__variables, variables)
-        self.__actions.append({Command.ASSIGN_VARIABLES.name: variables})
+                TransitionInterpreter.evaluate(transition_action, variables)
+        self.__actions.append({Command.ASSIGN_VARIABLES.name: variables[TransitionInterpreter.NEW_STATE_KEY]})
 
     def __append_state(self, state):
         self.__actions.append({Command.SET_STATE.name: state})

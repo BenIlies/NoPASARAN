@@ -79,10 +79,10 @@ With the root CA certificate and the endpoint's private certificate generated, y
 .. code-block:: json
 
    {
-	"root_certificate": "root_ca.crt",
-	"private_certificate": "endpoint1.pem",
-	"destination_ip": "192.168.122.247",
-	"server_port": "443"
+	"ROOT_CERTIFICATE": "root_ca.crt",
+	"PRIVATE_CERTIFICATE": "endpoint1.pem",
+	"DESTINATION_IP": "192.168.122.247",
+	"SERVER_PORT": "443"
    }
 
 Replace "endpoint1.pem" with the respective filename for each endpoint, and adjust "destination_ip" and "server_port" as necessary for your network configuration.

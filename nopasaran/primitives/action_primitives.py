@@ -6,7 +6,7 @@ from scapy.all import send as sendpacket
 
 import nopasaran.utils as utils
 from nopasaran.controllers.controller import ClientController, ServerController
-from nopasaran.definitions.control_channel_messages import JSONMessage, Status
+from nopasaran.definitions.control_channel import JSONMessage, Status, Configuration
 from nopasaran.definitions.events import Event
 from nopasaran.decorators import parsing_decorator
 
@@ -278,8 +278,8 @@ class ActionPrimitives:
     def configure_client_control_channel(inputs, outputs, state_machine):
         controller_configuration = state_machine.get_variable(inputs[0])
         state_machine.set_variable(outputs[1], None)
-        controller = ClientController(state_machine, outputs[1], controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-        controller.configure(controller_configuration['destination_ip'], int(controller_configuration['server_port']))
+        controller = ClientController(state_machine, outputs[1], controller_configuration[Configuration.ROOT_CERTIFICATE.name], controller_configuration[Configuration.PRIVATE_CERTIFICATE.name])
+        controller.configure(controller_configuration[Configuration.DESTINATION_IP.name], int(controller_configuration[Configuration.SERVER_PORT.name]))
         state_machine.set_variable(outputs[0], controller)
 
     @staticmethod
@@ -287,8 +287,8 @@ class ActionPrimitives:
     def configure_server_control_channel(inputs, outputs, state_machine):
         controller_configuration = state_machine.get_variable(inputs[0])
         state_machine.set_variable(outputs[1], None)
-        controller = ServerController(state_machine, outputs[1], controller_configuration['root_certificate'], controller_configuration['private_certificate'])
-        controller.configure(int(controller_configuration['server_port']))
+        controller = ServerController(state_machine, outputs[1], controller_configuration[Configuration.ROOT_CERTIFICATE.name], controller_configuration[Configuration.PRIVATE_CERTIFICATE.name])
+        controller.configure(int(controller_configuration[Configuration.SERVER_PORT.name]))
         state_machine.set_variable(outputs[0], controller)
 
     @staticmethod

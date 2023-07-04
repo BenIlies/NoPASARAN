@@ -66,24 +66,24 @@ def main():
             parser.error("The 'WORKER' role requires the '--scenario' argument.")
             return
 
-        logging.info('Loading JSON scenario file...')
+        logging.info('[Main] Loading JSON scenario file...')
         try:
             with open(args.scenario) as f:
                 state_json = json.load(f)
         except Exception as e:
-            logging.error(f'Error loading JSON scenario file: {str(e)}')
+            logging.error(f'[Main] Error loading JSON scenario file: {str(e)}')
             return
 
-        logging.info('JSON scenario file loaded')
+        logging.info('[Main] JSON scenario file loaded')
         machine = Machine(state_json=state_json)
 
-        logging.info('Starting the root machine')
+        logging.info('[Main] Starting the root machine')
         try:
             deferToThread(machine.start).addBoth(lambda _: reactor.stop())
             reactor.run()
         except Exception as e:
-            logging.error(f'Error starting the machine: {str(e)}')
+            logging.error(f'[Main] Error starting the machine: {str(e)}')
 
-    logging.info('Application finished')
+    logging.info('[Main] Application finished')
 
 main()

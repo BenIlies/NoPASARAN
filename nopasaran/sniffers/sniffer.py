@@ -17,7 +17,7 @@ class Sniffer(AsyncSniffer):
         self.machine = machine
         self.__filter = filter
         self.queue = None
-        logging.debug('Machine ID: {}: Sniffer initialized'.format(machine.get_id()))
+        logging.debug('[Sniffer] Machine ID: {}: Sniffer initialized'.format(machine.get_id()))
 
         
     def __handle_sniffer(self):
@@ -43,7 +43,7 @@ class Sniffer(AsyncSniffer):
             if packet[Ether].src != Ether().src:
                 filtered_packets = sniff(offline=packet, filter=self.__filter)
                 if packet in filtered_packets:
-                    logging.debug("Packet passed the filter: %s", packet)
+                    logging.debug("[Sniffer] Packet passed the filter: %s", packet)
                     return True
         return False
     
@@ -54,7 +54,7 @@ class Sniffer(AsyncSniffer):
             filter (str): String defining the new filter.
         """
         self.__filter = filter
-        logging.debug("Filter set to: %s", filter)
+        logging.debug("[Sniffer] Filter set to: %s", filter)
     
     def get_packet_layers(self, packet):
         """
@@ -73,5 +73,5 @@ class Sniffer(AsyncSniffer):
             else:
                 layers.append(layer)
             counter += 1
-        logging.debug("Packet layers: %s", layers)
+        logging.debug("[Sniffer] Packet layers: %s", layers)
         return layers

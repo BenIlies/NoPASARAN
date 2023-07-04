@@ -8,11 +8,8 @@ from nopasaran.interpreters.condition_interpreter import ConditionInterpreter
 from nopasaran.interpreters.transition_interpreter import TransitionInterpreter
 from nopasaran.sniffers.sniffer import Sniffer
 from nopasaran.definitions.events import Event
-
-class Command(Enum):
-    EXECUTE_ACTION = 0
-    ASSIGN_VARIABLES = 1
-    SET_STATE = 2
+from nopasaran.definitions.transitions import StateDuringTransition
+from nopasaran.definitions.commands import Command
 
 class Machine:
     def __init__(self, state_json, parameters=[], main_state=True):
@@ -137,14 +134,14 @@ class Machine:
 
     def __append_variables(self, state):
         variables = {
-            TransitionInterpreter.OLD_STATE_KEY: self.__variables,
-            TransitionInterpreter.NEW_STATE_KEY: {},
+            StateDuringTransition.OLD_STATE.name: self.__variables,
+            StateDuringTransition.NEW_STATE.name: {},
                      }
         if 'actions' in state:
             transition_actions = get_safe_array(state['actions'])
             for transition_action in transition_actions:
                 TransitionInterpreter.evaluate(transition_action, variables)
-        self.__actions.append({Command.ASSIGN_VARIABLES.name: variables[TransitionInterpreter.NEW_STATE_KEY]})
+        self.__actions.append({Command.ASSIGN_VARIABLES.name: variables[StateDuringTransition.NEW_STATE.name]})
 
     def __append_state(self, state):
         self.__actions.append({Command.SET_STATE.name: state})

@@ -1,5 +1,3 @@
-from nopasaran.errors.command_error import InvalidCommandError
-
 class Parser:
     @staticmethod
     def _check_validity(string):
@@ -10,13 +8,13 @@ class Parser:
             elif c == ')':
                 depth -= 1
             elif c != ' ' and depth == 0:
-                raise InvalidCommandError(f"Value without parentheses in '{string}'.")
+                raise RuntimeError(f"Value without parentheses in '{string}'.")
             if depth < 0:
-                raise InvalidCommandError(f"Closing parentheses without corresponding opening parentheses in '{string}'.")
+                raise RuntimeError(f"Closing parentheses without corresponding opening parentheses in '{string}'.")
             elif depth > 1:
-                raise InvalidCommandError(f"Nested parentheses are not allowed in '{string}'.")
+                raise RuntimeError(f"Nested parentheses are not allowed in '{string}'.")
         if depth > 0:
-            raise InvalidCommandError(f"Number of opening and closing parentheses does not match in '{string}'.")
+            raise RuntimeError(f"Number of opening and closing parentheses does not match in '{string}'.")
 
     @staticmethod
     def _extract_arguments(string):
@@ -36,9 +34,9 @@ class Parser:
         num_argument_sets = sum([input_args != 0 or optional_inputs, output_args != 0 or optional_outputs])
 
         if len(args) > num_argument_sets:
-            raise InvalidCommandError(f"Too many argument sets in '{command}'. Expected: {num_argument_sets}.")
+            raise RuntimeError(f"Too many argument sets in '{command}'. Expected: {num_argument_sets}.")
         if len(args) < num_argument_sets:
-            raise InvalidCommandError(f"Not enough argument sets in '{command}'. Expected: {num_argument_sets}.")
+            raise RuntimeError(f"Not enough argument sets in '{command}'. Expected: {num_argument_sets}.")
 
         inputs, outputs = [], []
 
@@ -52,8 +50,8 @@ class Parser:
                 inputs = args[0].split()
 
         if not optional_inputs and input_args != len(inputs):
-            raise InvalidCommandError(f"Incorrect number of inputs in '{command}'. Expected: {input_args}.")
+            raise RuntimeError(f"Incorrect number of inputs in '{command}'. Expected: {input_args}.")
         if not optional_outputs and output_args != len(outputs):
-            raise InvalidCommandError(f"Incorrect number of outputs in '{command}'. Expected: {output_args}.")
+            raise RuntimeError(f"Incorrect number of outputs in '{command}'. Expected: {output_args}.")
 
         return inputs, outputs

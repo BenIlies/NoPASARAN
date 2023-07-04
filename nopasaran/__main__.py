@@ -79,7 +79,7 @@ def main():
 
         logging.info('Starting the root machine')
         try:
-            deferToThread(machine.start).addErrback(lambda _: reactor.stop())
+            deferToThread(machine.start).addBoth(lambda _: reactor.stop())
             reactor.run()
         except Exception as e:
             logging.error(f'Error starting the machine: {str(e)}')

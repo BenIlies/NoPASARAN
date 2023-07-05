@@ -43,14 +43,14 @@ class WorkerProtocol(Protocol):
 class WorkerClientProtocol(WorkerProtocol):
     def connectionMade(self):
         self.factory.stopTrying()
-        self.factory.state_machine.set_variable(self.factory.variable, self)
+        self.factory.state_machine.set_variable_value(self.factory.variable, self)
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())
         logging.info("[Control Channel] Connection made")
 
 class WorkerServerProtocol(WorkerProtocol):
     def connectionMade(self):
-        self.factory.state_machine.set_variable(self.factory.variable, self)
+        self.factory.state_machine.set_variable_value(self.factory.variable, self)
         self.local_status = Status.CONNECTED.name
         self.transport.write(self.get_current_state_json())
         logging.info("[Control Channel] Connection made")

@@ -4,7 +4,7 @@ import logging
 import sys
 from twisted.internet.threads import deferToThread
 from twisted.internet import reactor
-from nopasaran.machines.machine import Machine
+from nopasaran.machines.state_machine import StateMachine
 
 def main():
     # Set up argument parser
@@ -75,7 +75,7 @@ def main():
             return
 
         logging.info('[Main] JSON scenario file loaded')
-        machine = Machine(state_json=state_json)
+        machine = StateMachine(state_json=state_json)
 
         logging.info('[Main] Starting the root machine')
         try:

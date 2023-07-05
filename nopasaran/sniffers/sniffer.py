@@ -17,7 +17,7 @@ class Sniffer(AsyncSniffer):
         self.machine = machine
         self.__filter = filter
         self.queue = None
-        logging.debug('[Sniffer] Machine ID: {}: Sniffer initialized'.format(machine.get_id()))
+        logging.debug('[Sniffer] Machine ID: {}: Sniffer initialized'.format(machine.machine_id))
 
         
     def __handle_sniffer(self):

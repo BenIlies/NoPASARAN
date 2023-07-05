@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Event(Enum):
+class EventNames(Enum):
     STARTED = 0
     SYNC = 1
     PACKET_SENT = 2

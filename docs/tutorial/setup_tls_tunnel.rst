@@ -1,5 +1,5 @@
 TLS Mutual Authenticated End-to-End Tunnel: Root CA Certificate Generation and Certificate Signing
-=================================================================================================
+==================================================================================================
 
 This guide provides step-by-step instructions on how to generate a root Certification Authority (CA) certificate for use in the configuration of a TLS mutual authenticated end-to-end tunnel. This root CA certificate will be used to sign certificates for the TLS endpoints.
 

@@ -8,7 +8,7 @@ Core Features
 
 Here are the main features that form the backbone of NoPASARAN.
 
-.. automodule:: nopasaran
+.. automodule:: nopasaran.machines.state_machine
    :members:
    :undoc-members:
    :show-inheritance:

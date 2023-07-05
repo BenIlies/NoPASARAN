@@ -72,7 +72,7 @@ Consider the following JSON representation of our main FSM and a nested FSM:
        "End": {
          "entry": [
            "set (EVENT_FROM_NESTED_FSM) (event)",
-           "return (event return-val1 return-val2)"
+           "return_values (event return-val1 return-val2)"
          ]
        }
      }
@@ -92,7 +92,7 @@ For the main FSM, the `states` object defines three states:
 
 3. `End`: This is the final state of the main FSM. It does not define any further actions or transitions, marking the end of the FSM scenario.
 
-The nested FSM, similar to the main FSM, begins in the "Init" state. On receiving the "STARTED" event, it transitions to the "Catch FSM Input Arguments" state. Here, it retrieves the input arguments passed from the main FSM using the `get_parameters` primitive. Following this, the "DONE" event leads to a transition to the "End" state. The "End" state sets an event identifier and returns the required values back to the main FSM using the `return` action.
+The nested FSM, similar to the main FSM, begins in the "Init" state. On receiving the "STARTED" event, it transitions to the "Catch FSM Input Arguments" state. Here, it retrieves the input arguments passed from the main FSM using the `get_parameters` primitive. Following this, the "DONE" event leads to a transition to the "End" state. The "End" state sets an event identifier and returns the required values back to the main FSM using the `return_values` action.
 
 The FSMs operate as follows:
 
@@ -101,7 +101,7 @@ The FSMs operate as follows:
 3. Upon entering the "Intermediate State", the `set` actions are executed, assigning "ping" to "input-arg1" and "pong" to "input-arg2". The `call` action is then executed, calling the nested FSM and passing in the arguments "input-arg1" and "input-arg2".
 4. The nested FSM begins in the "Init" state. The "STARTED" event is triggered, leading to a transition to the "Catch FSM Input Arguments" state.
 5. The nested FSM retrieves the input arguments using the `get_parameters` action and then executes the "done" action, triggering the "DONE" event.
-6. The "DONE" event in the nested FSM triggers the transition to the "End" state. In this state, an event identifier is set, and the `return` action passes the return values back to the main FSM.
+6. The "DONE" event in the nested FSM triggers the transition to the "End" state. In this state, an event identifier is set, and the `return_values` action passes the return values back to the main FSM.
 7. In the main FSM, the returned event from the nested FSM is detected, triggering the "EVENT_FROM_NESTED_FSM" transition. The `equal` condition is checked, and if it holds true (which it should, since "input-arg1" ("ping") is equal to "output-arg2" ("ping")), the FSM transitions to the "End" state. The `assign` action is then executed, storing "output-arg1" in the final state.
 8. The "End" state is the final state and marks the end of this FSM scenario as it does not define any further actions or transitions.
 

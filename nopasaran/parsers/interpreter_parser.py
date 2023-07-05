@@ -1,6 +1,23 @@
 class Parser:
+    """
+    A class for parsing commands and validating arguments.
+    """
+
     @staticmethod
     def _check_validity(string):
+        """
+        Check the validity of the string.
+        
+        This method checks whether the string has valid parentheses.
+        
+        Args:
+            string (str): The string to check.
+        
+        Raises:
+            RuntimeError: If the string contains a value without parentheses,
+                closing parentheses without corresponding opening parentheses,
+                or nested parentheses are not allowed.
+        """
         depth = 0
         for c in string:
             if c == '(':
@@ -18,6 +35,20 @@ class Parser:
 
     @staticmethod
     def _extract_arguments(string):
+        """
+        Extract arguments from the string.
+        
+        This method extracts the arguments enclosed in parentheses from the string.
+        
+        Args:
+            string (str): The string to extract arguments from.
+        
+        Yields:
+            str: Each extracted argument from the string.
+        
+        Raises:
+            RuntimeError: If the string does not have valid parentheses.
+        """
         Parser._check_validity(string)
         stack = []
         for i, c in enumerate(string):
@@ -29,6 +60,26 @@ class Parser:
 
     @staticmethod
     def parse(command, input_args, output_args, optional_inputs=False, optional_outputs=False):
+        """
+        Parse the command and validate the arguments.
+        
+        This method parses the command and validates the number of input and output arguments
+        based on the specified constraints.
+        
+        Args:
+            command (str): The command to parse.
+            input_args (int): The expected number of input arguments.
+            output_args (int): The expected number of output arguments.
+            optional_inputs (bool, optional): Whether optional inputs are allowed. Defaults to False.
+            optional_outputs (bool, optional): Whether optional outputs are allowed. Defaults to False.
+        
+        Returns:
+            tuple: A tuple containing two lists: the input arguments and the output arguments.
+        
+        Raises:
+            RuntimeError: If the command has too many or too few argument sets,
+                incorrect number of inputs or outputs, or if the arguments do not match the expected constraints.
+        """
         args = list(Parser._extract_arguments(command))
 
         num_argument_sets = sum([input_args != 0 or optional_inputs, output_args != 0 or optional_outputs])

@@ -2,13 +2,16 @@ import logging
 from nopasaran.utils import *
 from scapy.all import AsyncSniffer, Ether, sniff
 
+
 class Sniffer(AsyncSniffer):
     """
     Custom Sniffer class inheriting from the AsyncSniffer of Scapy.
     """
+
     def __init__(self, machine, filter=''):
         """
-        Initializer for the Sniffer class.
+        Initialize the Sniffer.
+        
         Args:
             machine (str): A string defining the machine to sniff.
             filter (str): A string defining the filter for packets.
@@ -19,23 +22,31 @@ class Sniffer(AsyncSniffer):
         self.queue = None
         logging.debug('[Sniffer] Machine ID: {}: Sniffer initialized'.format(machine.machine_id))
 
-        
     def __handle_sniffer(self):
         """
-        Internal method to handle the sniffer. A callback for packets sniffed.
+        Handle the sniffer callback.
+        
         Returns:
-            pkt_callback (func): Function to execute when a packet is sniffed.
+            function: The callback function to execute when a packet is sniffed.
         """
         def pkt_callback(packet):
+            """
+            Callback function for sniffed packets.
+            
+            Args:
+                packet: The sniffed packet.
+            """
             if self.queue is not None:
                 self.queue.append(packet)
         return pkt_callback
-    
+
     def __filter_packet(self, packet):
         """
-        Internal method to filter the packets.
+        Filter the packets.
+        
         Args:
-            packet (Packet): Packet to filter.
+            packet: The packet to filter.
+        
         Returns:
             bool: True if the packet is accepted, False otherwise.
         """
@@ -46,21 +57,24 @@ class Sniffer(AsyncSniffer):
                     logging.debug("[Sniffer] Packet passed the filter: %s", packet)
                     return True
         return False
-    
+
     def set_filter(self, filter):
         """
-        Method to set a new filter.
+        Set a new filter.
+        
         Args:
-            filter (str): String defining the new filter.
+            filter (str): The new filter string.
         """
         self.__filter = filter
         logging.debug("[Sniffer] Filter set to: %s", filter)
-    
+
     def get_packet_layers(self, packet):
         """
-        Method to get all the layers in a packet.
+        Get all the layers in a packet.
+        
         Args:
-            packet (Packet): Packet to analyze.
+            packet: The packet to analyze.
+        
         Returns:
             list: List of layers in the packet.
         """

@@ -10,4 +10,14 @@ class ConditionInterpreter(Interpreter):
 
     @classmethod
     def evaluate(cls, line, state_variables):
+        """
+        Evaluate the condition line using the provided state variables.
+
+        Args:
+            line (str): The condition line to evaluate.
+            state_variables: The state variables to use during evaluation.
+
+        Returns:
+            The result of the evaluation.
+        """
         return super().evaluate(line, state_variables, ConditionPrimitives)

@@ -1,6 +1,7 @@
 from nopasaran.interpreters.interpreter import Interpreter
 from nopasaran.primitives.transition_primitives import TransitionPrimitives
 
+
 class TransitionInterpreter(Interpreter):
     """
     A custom TransitionInterpreter class that inherits from Interpreter.
@@ -9,4 +10,14 @@ class TransitionInterpreter(Interpreter):
 
     @classmethod
     def evaluate(cls, line, trans_tmp_dict):
+        """
+        Evaluate the transition line using the provided transition temporary dictionary.
+
+        Args:
+            line (str): The transition line to evaluate.
+            trans_tmp_dict: The transition temporary dictionary to use during evaluation.
+
+        Returns:
+            The result of the evaluation.
+        """
         super().evaluate(line, trans_tmp_dict, TransitionPrimitives)

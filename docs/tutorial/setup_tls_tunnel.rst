@@ -51,7 +51,9 @@ To generate certificates for the TLS endpoints signed by the root CA certificate
 
    Enter the required information when prompted, including the Common Name (CN) and other details related to the TLS endpoint.
 
-   **Note:** It is crucial to accurately enter the Common Name (CN) when generating the Certificate Signing Request (CSR) for each endpoint. The CN plays a vital role in identifying the endpoint during TLS handshakes, so ensure its correctness to avoid any certificate validation issues.
+   .. note::
+   
+      It is crucial to accurately enter the Common Name (CN) when generating the Certificate Signing Request (CSR) for each endpoint. The CN plays a vital role in identifying the endpoint during TLS handshakes, so ensure its correctness to avoid any certificate validation issues.
 
 3. Submit the CSR (endpoint1.csr) to the root CA for signing:
 

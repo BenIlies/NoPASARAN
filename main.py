@@ -1,4 +1,4 @@
-from nopasaran import __main__
+from nopasaran.__main__ import main
 
 if __name__ == "__main__":
-    __main__
+    main()

@@ -86,4 +86,5 @@ def main():
 
     logging.info('[Main] Application finished')
 
-main()
+if __name__ == "__main__":
+    main()

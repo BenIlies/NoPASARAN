@@ -15,7 +15,7 @@ class Interpreter(cmd.Cmd):
         Args:
             line (str): The input line to evaluate.
             variable: The variable to use during evaluation.
-            *function_classes: Variable-length argument list of function classes.
+            function_classes: Variable-length argument list of function classes.
 
         Returns:
             The result of the evaluation.

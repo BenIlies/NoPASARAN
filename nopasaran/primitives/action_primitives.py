@@ -193,7 +193,7 @@ class ActionPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)
-    def trigger_event(inputs, _, state_machine):
+    def trigger(inputs, _, state_machine):
         state_machine.trigger_event(state_machine.get_variable_value(inputs[0]))
 
     @staticmethod

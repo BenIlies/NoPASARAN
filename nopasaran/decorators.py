@@ -1,5 +1,7 @@
 import logging
 
+from functools import wraps
+
 from nopasaran.parsers.interpreter_parser import Parser
 
 
@@ -22,6 +24,7 @@ def parsing_decorator(input_args, output_args, optional_inputs=False, optional_o
         RuntimeError: If an error occurs while parsing or executing the function.
     """
     def decorator(func):
+        @wraps(func)
         def wrapper(line, variable_dict):
             """
             Wrapper function for the decorator.

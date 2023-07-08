@@ -12,22 +12,28 @@ from nopasaran.decorators import parsing_decorator
 
 
 class ActionPrimitives:
+    """
+    Class containing action primitives for the state machine.
+
+    """
+
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def set(inputs, outputs, state_machine):
         """
         Set the value of an output variable in the machine's state.
-        
-        # of Input Args: 1
-        # of Output Args: 1
-        Optional Input Arguments? No
-        Optional Output Arguments? No
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
         
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the new value.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modification.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the new value.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modification.
             state_machine: The state machine object.
 
         Returns:
@@ -43,8 +49,7 @@ class ActionPrimitives:
         network interface. Triggers the event PACKET_SENT.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of the variable storing the packet to be sent.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable storing the packet to be sent.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -78,8 +83,7 @@ class ActionPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the created TCP packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the created TCP packet.
             state_machine: The state machine object.
 
         Returns:
@@ -95,8 +99,7 @@ class ActionPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the created UDP packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the created UDP packet.
             state_machine: The state machine object.
 
         Returns:
@@ -111,10 +114,8 @@ class ActionPrimitives:
         Generate a random integer between two input values and store it in an output variable in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the lower bound and the upper bound.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the generated random integer.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the lower bound and the upper bound.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the generated random integer.
             state_machine: The state machine object.
 
         Returns:
@@ -129,10 +130,8 @@ class ActionPrimitives:
         Generate a random float between two input values and store it in an output variable in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the lower bound and the upper bound.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the generated random float.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the lower bound and the upper bound.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the generated random float.
             state_machine: The state machine object.
 
         Returns:
@@ -147,10 +146,8 @@ class ActionPrimitives:
         Set the source IP address of a packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new IP address and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified packet.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new IP address and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified packet.
             state_machine: The state machine object.
 
         Returns:
@@ -166,10 +163,8 @@ class ActionPrimitives:
         Set the destination IP address of a packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new IP address and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified packet.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new IP address and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified packet.
             state_machine: The state machine object.
 
         Returns:
@@ -185,10 +180,8 @@ class ActionPrimitives:
         Set the source port of a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new source port value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified packet.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new source port value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified packet.
             state_machine: The state machine object.
 
         Returns:
@@ -204,10 +197,8 @@ class ActionPrimitives:
         Set the destination port of a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new destination port value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified packet.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new destination port value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified packet.
             state_machine: The state machine object.
 
         Returns:
@@ -223,10 +214,8 @@ class ActionPrimitives:
         Set the source port of a UDP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new source port value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified packet.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new source port value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified packet.
             state_machine: The state machine object.
 
         Returns:
@@ -242,10 +231,8 @@ class ActionPrimitives:
         Set the destination port of a UDP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new destination port value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified packet.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new destination port value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified packet.
             state_machine: The state machine object.
 
         Returns:
@@ -261,10 +248,8 @@ class ActionPrimitives:
         Set the sequence number of a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new sequence number value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified packet.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new sequence number value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified packet.
             state_machine: The state machine object.
 
         Returns:
@@ -280,10 +265,8 @@ class ActionPrimitives:
         Get the TCP flags from a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the TCP flags.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the TCP flags.
             state_machine: The state machine object.
 
         Returns:
@@ -298,10 +281,8 @@ class ActionPrimitives:
         Set the TCP flags of a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new TCP flags value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified TCP flags.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new TCP flags value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified TCP flags.
             state_machine: The state machine object.
 
         Returns:
@@ -317,10 +298,8 @@ class ActionPrimitives:
         Set the acknowledgment number of a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new acknowledgment number value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified acknowledgment number.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new acknowledgment number value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified acknowledgment number.
             state_machine: The state machine object.
 
         Returns:
@@ -336,10 +315,8 @@ class ActionPrimitives:
         Set the payload of a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new payload value and the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the modified payload.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new payload value and the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the modified payload.
             state_machine: The state machine object.
 
         Returns:
@@ -355,10 +332,8 @@ class ActionPrimitives:
         Remove the payload from a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the payload removed.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the payload removed.
             state_machine: The state machine object.
 
         Returns:
@@ -374,10 +349,8 @@ class ActionPrimitives:
         Set the sequence number of a TCP packet in the machine's state to an automatically generated value.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the automatically generated sequence number.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the automatically generated sequence number.
             state_machine: The state machine object.
 
         Returns:
@@ -393,10 +366,8 @@ class ActionPrimitives:
         Set the acknowledgment number of a TCP packet in the machine's state to an automatically generated value.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the new acknowledgment number value, the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable with the automatically generated acknowledgment number.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the new acknowledgment number value, the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable with the automatically generated acknowledgment number.
             state_machine: The state machine object.
 
         Returns:
@@ -412,10 +383,8 @@ class ActionPrimitives:
         Get the source IP address from a packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the source IP address.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the source IP address.
             state_machine: The state machine object.
 
         Returns:
@@ -430,10 +399,8 @@ class ActionPrimitives:
         Get the source port from a packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of a variable representing the packet.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the source port.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of a variable representing the packet.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the source port.
             state_machine: The state machine object.
 
         Returns:
@@ -448,8 +415,7 @@ class ActionPrimitives:
         Print the payload of a TCP packet in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of a variable representing the packet.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of a variable representing the packet.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -483,8 +449,7 @@ class ActionPrimitives:
         Remove the first element from a list stored in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of a variable representing the list.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of a variable representing the list.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -501,8 +466,7 @@ class ActionPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable to store the captured packets.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the captured packets.
             state_machine: The state machine object.
 
         Returns:
@@ -522,8 +486,7 @@ class ActionPrimitives:
         triggers the event PACKET_AVAILABLE. Otherwise, triggers the event TIMEOUT.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the name of the packet stack variable and the timeout value.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the name of the packet stack variable and the timeout value.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -555,11 +518,8 @@ class ActionPrimitives:
         input arguments specified in the 'return_values' primitive used within the nested state machine.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of the nested state machine to call, and optional input arguments
-                                representing the parameters assigned to the nested state machine.
-            outputs (List[str]): The list of output variable names. It contains the names of the variables where
-                                 the returned values will be stored (optional).
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the nested state machine to call, and optional input arguments representing the parameters assigned to the nested state machine.
+            outputs (List[str]): The list of output variable names. It contains the names of the variables where the returned values will be stored (optional).
             state_machine: The state machine object.
 
         Returns:
@@ -581,8 +541,7 @@ class ActionPrimitives:
         Generate an event with a given name based on a local state variable.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of the event to trigger.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the event to trigger.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -600,8 +559,7 @@ class ActionPrimitives:
         triggers the event READY. Otherwise, triggers the event TIMEOUT.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the names of the local and remote status variables, and the timeout value.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the names of the local and remote status variables, and the timeout value.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -631,9 +589,7 @@ class ActionPrimitives:
         Triggers the event SYNC_SENT.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of the variable storing the inputs to be synchronized,
-                                and optional input arguments representing additional synchronization inputs.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable storing the inputs to be synchronized, and optional input arguments representing additional synchronization inputs.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -655,11 +611,8 @@ class ActionPrimitives:
         Otherwise, triggers the event TIMEOUT.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the name of the variable storing the received synchronization message,
-                                and the timeout value.
-            outputs (List[str]): The list of output variable names. It contains the names of the variables where
-                                 the synchronization message will be stored (optional).
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the name of the variable storing the received synchronization message, and the timeout value.
+            outputs (List[str]): The list of output variable names. It contains the names of the variables where the synchronization message will be stored (optional).
             state_machine: The state machine object.
 
         Returns:
@@ -692,8 +645,7 @@ class ActionPrimitives:
         Set the packet filter for the packet sniffer.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the new packet filter value.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the new packet filter value.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -709,10 +661,8 @@ class ActionPrimitives:
         Load variables from a file and store them in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the file path and the name of the variable to store the loaded variables.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable where the loaded variables will be stored.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the file path and the name of the variable to store the loaded variables.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable where the loaded variables will be stored.
             state_machine: The state machine object.
 
         Returns:
@@ -730,8 +680,7 @@ class ActionPrimitives:
         as the first mandatory input argument and the target state as the second mandatory input argument.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments,
-                                which are the name of the event to redirect and the name of the target state.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments, which are the name of the event to redirect and the name of the target state.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 
@@ -752,8 +701,7 @@ class ActionPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names.
-            outputs (List[str]): The list of output variable names. It contains the names of the variables where
-                                 the parameter values will be stored (optional).
+            outputs (List[str]): The list of output variable names. It contains the names of the variables where the parameter values will be stored (optional).
             state_machine: The state machine object.
 
         Returns:
@@ -769,11 +717,8 @@ class ActionPrimitives:
         Load the control channel configuration from a file and store it in the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the file path, and one mandatory output argument,
-                                which is the name of the variable to store the loaded configuration.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
-                                 which is the name of the variable where the loaded configuration will be stored.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the file path, and one mandatory output argument, which is the name of the variable to store the loaded configuration.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable where the loaded configuration will be stored.
             state_machine: The state machine object.
 
         Returns:
@@ -789,13 +734,8 @@ class ActionPrimitives:
         Configure the client control channel using the controller configuration from the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of the variable storing the configuration,
-                                and two mandatory output arguments, which are the names of the variables where
-                                the configured controller and controller protocols will be stored.
-            outputs (List[str]): The list of output variable names. It contains two mandatory output arguments,
-                                 which are the names of the variables where the configured controller and controller
-                                 protocols will be stored.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable storing the configuration, and two mandatory output arguments, which are the names of the variables where the configured controller and controller protocols will be stored.
+            outputs (List[str]): The list of output variable names. It contains two mandatory output arguments, which are the names of the variables where the configured controller and controller protocols will be stored.
             state_machine: The state machine object.
 
         Returns:
@@ -814,13 +754,8 @@ class ActionPrimitives:
         Configure the server control channel using the controller configuration from the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of the variable storing the configuration,
-                                and two mandatory output arguments, which are the names of the variables where
-                                the configured controller and controller protocols will be stored.
-            outputs (List[str]): The list of output variable names. It contains two mandatory output arguments,
-                                 which are the names of the variables where the configured controller and controller
-                                 protocols will be stored.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable storing the configuration, and two mandatory output arguments, which are the names of the variables where the configured controller and controller protocols will be stored.
+            outputs (List[str]): The list of output variable names. It contains two mandatory output arguments, which are the names of the variables where the configured controller and controller protocols will be stored.
             state_machine: The state machine object.
 
         Returns:
@@ -839,8 +774,7 @@ class ActionPrimitives:
         Start the control channel using the specified variable's value from the machine's state.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
-                                which is the name of the variable storing the control channel object.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable storing the control channel object.
             outputs (List[str]): The list of output variable names.
             state_machine: The state machine object.
 

@@ -12,5 +12,3 @@ extensions = [
 autosummary_generate = True
 
 templates_path = ['templates']
-
-html_theme = "sphinxawesome_theme"

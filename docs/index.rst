@@ -1,5 +1,5 @@
 Welcome to NoPASARAN's documentation!
-======================================
+=====================================
 
 .. image:: https://github.com/BenIlies/NoPASARAN/actions/workflows/docker-image.yml/badge.svg
    :target: https://github.com/BenIlies/NoPASARAN/actions/workflows/docker-image.yml

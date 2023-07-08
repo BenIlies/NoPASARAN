@@ -1,5 +1,5 @@
-NoPASARAN API Reference
-=======================
+API Reference
+=============
 
 This section provides detailed references for the Application Programming Interface (API) of NoPASARAN, including descriptions of its features.
 

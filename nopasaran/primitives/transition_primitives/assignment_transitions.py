@@ -1,9 +1,9 @@
 from nopasaran.decorators import parsing_decorator
 from nopasaran.definitions.transitions import StateDuringTransition
 
-class AssignmentTransitionPrimitives:
+class VariableAssignmentTransitions:
     """
-    Class containing transition primitives for the state machine.
+    Class containing methods for assigning variables during state transitions in a state machine.
     """
 
     @staticmethod

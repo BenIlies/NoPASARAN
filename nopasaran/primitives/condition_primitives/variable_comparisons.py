@@ -1,8 +1,8 @@
 from nopasaran.decorators import parsing_decorator
 
-class VariablesConditionPrimitives:
+class VariableComparisons:
     """
-    Class containing condition primitives for the state machine.
+    Class containing methods for comparing variables in a state machine.
     """
 
     @staticmethod

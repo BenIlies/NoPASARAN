@@ -18,6 +18,11 @@ class ActionPrimitives:
         """
         Set the value of an output variable in the machine's state.
         
+        # of Input Args: 1
+        # of Output Args: 1
+        Optional Input Arguments? No
+        Optional Output Arguments? No
+        
         Args:
             inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
                                 which is the new value.

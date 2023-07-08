@@ -1,5 +1,5 @@
 from nopasaran.interpreters.interpreter import Interpreter
-from nopasaran.primitives.transition_primitives import TransitionPrimitives
+from nopasaran.primitives.transition_primitives.transition_primitives import TransitionPrimitives
 
 
 class TransitionInterpreter(Interpreter):
@@ -20,4 +20,5 @@ class TransitionInterpreter(Interpreter):
         Returns:
             The result of the evaluation.
         """
-        super().evaluate(line, trans_tmp_dict, TransitionPrimitives)
+        transition_primitives = TransitionPrimitives()
+        super().evaluate(line, trans_tmp_dict, transition_primitives)

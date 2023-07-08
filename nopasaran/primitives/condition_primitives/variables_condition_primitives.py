@@ -1,6 +1,6 @@
 from nopasaran.decorators import parsing_decorator
 
-class ConditionPrimitives:
+class VariablesConditionPrimitives:
     """
     Class containing condition primitives for the state machine.
     """

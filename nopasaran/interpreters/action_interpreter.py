@@ -1,5 +1,5 @@
 from nopasaran.interpreters.interpreter import Interpreter
-from nopasaran.primitives.action_primitives import ActionPrimitives
+from nopasaran.primitives.action_primitives.action_primitives import ActionPrimitives
 
 
 class ActionInterpreter(Interpreter):
@@ -20,4 +20,5 @@ class ActionInterpreter(Interpreter):
         Returns:
             The result of the evaluation.
         """
-        super().evaluate(line, state_variables, ActionPrimitives)
+        action_primitives = ActionPrimitives()
+        super().evaluate(line, state_variables, action_primitives)

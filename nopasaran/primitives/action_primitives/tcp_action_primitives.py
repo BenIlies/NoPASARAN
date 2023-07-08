@@ -11,7 +11,7 @@ from nopasaran.definitions.events import EventNames
 from nopasaran.decorators import parsing_decorator
 
 
-class ActionPrimitives:
+class TCPActionPrimitives:
     """
     Class containing action primitives for the state machine.
 

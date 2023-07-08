@@ -1,5 +1,5 @@
 from nopasaran.interpreters.interpreter import Interpreter
-from nopasaran.primitives.condition_primitives import ConditionPrimitives
+from nopasaran.primitives.condition_primitives.condition_primitives import ConditionPrimitives
 
 
 class ConditionInterpreter(Interpreter):
@@ -20,4 +20,5 @@ class ConditionInterpreter(Interpreter):
         Returns:
             The result of the evaluation.
         """
-        return super().evaluate(line, state_variables, ConditionPrimitives)
+        condition_primitives = ConditionPrimitives()
+        return super().evaluate(line, state_variables, condition_primitives)

@@ -1,7 +1,7 @@
 from nopasaran.decorators import parsing_decorator
 from nopasaran.definitions.transitions import StateDuringTransition
 
-class TransitionPrimitives:
+class AssignmentTransitionPrimitives:
     """
     Class containing transition primitives for the state machine.
     """

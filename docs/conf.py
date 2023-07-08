@@ -6,7 +6,8 @@ extensions = [
    'sphinx.ext.duration',
    'sphinx.ext.doctest',
    'sphinx.ext.autodoc',
-   'sphinx.ext.autosummary'
+   'sphinx.ext.autosummary',
+   "sphinxawesome_theme"
 ]
 
 autosummary_generate = True

@@ -9,7 +9,7 @@ class VariableComparisons:
     @parsing_decorator(input_args=2, output_args=0)
     def equal(inputs, outputs, state_variables):
         """
-        Check if two values in the state variables are equal.
+        Check if the two variables stored in the state are equal before the transition occurs.
 
         Number of input arguments: 2
         
@@ -35,7 +35,7 @@ class VariableComparisons:
     @parsing_decorator(input_args=2, output_args=0)
     def gt(inputs, outputs, state_variables):
         """
-        Check if the first value in the state variables is greater than the second value.
+        Check if the first value stored in the state variables is greater than the second value before the transition occurs.
 
         Number of input arguments: 2
         
@@ -61,7 +61,7 @@ class VariableComparisons:
     @parsing_decorator(input_args=2, output_args=0)
     def gte(inputs, outputs, state_variables):
         """
-        Check if the first value in the state variables is greater than or equal to the second value.
+        Check if the first value stored in the state variables is greater than or equal to the second value before the transition occurs.
 
         Number of input arguments: 2
         
@@ -87,7 +87,7 @@ class VariableComparisons:
     @parsing_decorator(input_args=2, output_args=0)
     def lt(inputs, outputs, state_variables):
         """
-        Check if the first value in the state variables is less than the second value.
+        Check if the first value stored in the state variables is less than the second value before the transition occurs.
 
         Number of input arguments: 2
         
@@ -113,7 +113,7 @@ class VariableComparisons:
     @parsing_decorator(input_args=2, output_args=0)
     def lte(inputs, outputs, state_variables):
         """
-        Check if the first value in the state variables is less than or equal to the second value.
+        Check if the first value stored in the state variables is less than or equal to the second value before the transition occurs.
 
         Number of input arguments: 2
         

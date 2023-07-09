@@ -65,7 +65,7 @@ class DataChannelPrimitives:
         """
         state_machine.start_sniffer()
         state_machine.set_variable_value(outputs[0], [])
-        state_machine.set_sniffer_queue(state_machine.get_variable_value(outputs[0]))
+        state_machine.update_sniffer_queue(state_machine.get_variable_value(outputs[0]))
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)

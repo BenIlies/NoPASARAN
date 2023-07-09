@@ -91,7 +91,7 @@ class DataChannelPrimitives:
         Returns:
             None
         """
-        state_machine.set_sniffer_filter(state_machine.get_variable_value(inputs[0]))
+        state_machine.update_sniffer_filter(state_machine.get_variable_value(inputs[0]))
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)

@@ -1,9 +1,8 @@
 import logging
-
 from functools import wraps
 
 from nopasaran.parsers.interpreter_parser import Parser
-
+from nopasaran.errors.parsing_error import ParsingError
 
 def parsing_decorator(input_args, output_args, optional_inputs=False, optional_outputs=False):
     """
@@ -21,8 +20,13 @@ def parsing_decorator(input_args, output_args, optional_inputs=False, optional_o
         function: The decorated function.
     
     Raises:
-        RuntimeError: If an error occurs while parsing or executing the function.
+        ParsingError: If an error occurs while parsing or executing the function.
     """
+    def handle_parsing_error(func, message):
+        error_msg = f"Error while {message} '{func.__name__}':"
+        logging.error("[Parsing] " + error_msg)
+        raise ParsingError(error_msg)
+
     def decorator(func):
         @wraps(func)
         def wrapper(line, variable_dict):
@@ -39,25 +43,27 @@ def parsing_decorator(input_args, output_args, optional_inputs=False, optional_o
                 The result of the decorated function.
             
             Raises:
-                RuntimeError: If an error occurs while parsing or executing the function.
+                ParsingError: If an error occurs while parsing or executing the function.
             """
-            logging.debug("[Parsing] Primitive name: {}. Expecting {} input(s) and {} output(s). Optional inputs: {}. Optional outputs: {}"
+            logging.debug("[Parsing] Decorated function: {}. Expecting {} input(s) and {} output(s). Optional inputs: {}. Optional outputs: {}"
                          .format(func.__name__, input_args, output_args, optional_inputs, optional_outputs))
             
             try:
                 inputs, outputs = Parser.parse(line, input_args, output_args, optional_inputs, optional_outputs)
                 logging.debug("[Parsing] Received inputs: {}. Received outputs: {}".format(inputs, outputs))
+            except ParsingError as e:
+                handle_parsing_error(func, "parsing the command line")
             except Exception as e:
-                error_msg = "Error while parsing primitive '{}': {}".format(func.__name__, e)
-                logging.error("[Parsing] " + error_msg)
-                raise RuntimeError(error_msg)
+                handle_parsing_error(func, f"parsing the command line '{e}'")
+            
             try:
                 return func(inputs, outputs, variable_dict)
+            except ParsingError as e:
+                handle_parsing_error(func, "executing the function")
             except Exception as e:
-                error_msg = "Error while executing primitive {}".format(func.__name__)
-                logging.error("[Parsing] " + error_msg)
-                raise RuntimeError(error_msg)
-            
+                logging.error("[Execution] " + str(e))
+                handle_parsing_error(func, "executing the function")
+
         return wrapper
-    
+
     return decorator

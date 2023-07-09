@@ -45,12 +45,12 @@ def parsing_decorator(input_args, output_args, optional_inputs=False, optional_o
             Raises:
                 ParsingError: If an error occurs while parsing or executing the function.
             """
-            logging.debug("[Parsing] Decorated function: {}. Expecting {} input(s) and {} output(s). Optional inputs: {}. Optional outputs: {}"
+            logging.debug("[Parsing] [Primitive - {}] Expecting {} input(s) and {} output(s). Optional inputs: {}. Optional outputs: {}"
                          .format(func.__name__, input_args, output_args, optional_inputs, optional_outputs))
             
             try:
                 inputs, outputs = Parser.parse(line, input_args, output_args, optional_inputs, optional_outputs)
-                logging.debug("[Parsing] Received inputs: {}. Received outputs: {}".format(inputs, outputs))
+                logging.debug("[Parsing] [Primitive - {}] Received inputs: {}. Received outputs: {}".format(func.__name__, inputs, outputs))
             except ParsingError as e:
                 handle_parsing_error(func, "parsing the command line")
             except Exception as e:

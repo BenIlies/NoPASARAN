@@ -30,21 +30,20 @@ class StateMachine:
         self.root_state_machine = self if root_state_machine is None else root_state_machine
         self.returned_value = None
         self.actions = ActionQueue()
-        logging.info('Parameters received: {}'.format(parameters))
-        logging.debug('Machine ID: {}. Initialized.'.format(self.machine_id))
+        logging.info('[State Machine - {}] Parameters received: {}'.format(self.machine_id, parameters))
+        logging.debug('[State Machine - {}] Initialized.'.format(self.machine_id))
 
     def start(self):
         """
         Start the state machine and execute actions.
         """
-        logging.debug('Machine ID: {}. Starting machine.'.format(self.machine_id))
+        logging.debug('[State Machine - {}] Starting machine.'.format(self.machine_id))
         self.trigger_event(EventNames.STARTED.name)
         while True:
             next_action = self.actions.dequeue_next_action()
             if next_action is None:
-                logging.warning('Machine ID: {}. Dequeue returned None. Stopping.'.format(self.machine_id))
+                logging.warning('[State Machine - {}] Dequeue returned None. Stopping.'.format(self.machine_id))
                 break
-            logging.debug('Executing action: {}'.format(next_action))
             self.execute_action(next_action)
 
     def execute_action(self, action):
@@ -54,12 +53,12 @@ class StateMachine:
         Args:
             action (dict): The action to execute.
         """
-        logging.debug('Machine ID: {}: Executing action: {}'.format(self.machine_id, action))
+        logging.debug('[State Machine - {}] Executing action: {}'.format(self.machine_id, action))
         if Command.EXECUTE_ACTION.name in action:
             ActionInterpreter.evaluate(action[Command.EXECUTE_ACTION.name], self)
         elif Command.ASSIGN_VARIABLES.name in action:
             self.assign_variables(action[Command.ASSIGN_VARIABLES.name])
-            logging.info('Machine ID: {}: Variables assigned: {}'.format(self.machine_id, self.variables))
+            logging.info('[State Machine - {}] Variables assigned: {}'.format(self.machine_id, self.variables))
         elif Command.SET_STATE.name in action:
             self.update_state(action[Command.SET_STATE.name])
 
@@ -74,7 +73,7 @@ class StateMachine:
         Returns:
             StateMachine: The nested state machine.
         """
-        logging.debug('Machine ID: {}: Getting nested finite state machine.'.format(self.machine_id))
+        logging.debug('[State Machine - {}] Getting nested finite state machine.'.format(self.machine_id))
         nested_machine = StateMachine(state_json=nested_state_json, parameters=parameters, root_state_machine=self.root_state_machine)
         return nested_machine
 
@@ -85,7 +84,7 @@ class StateMachine:
         Args:
             state (str): The new state.
         """
-        logging.debug('Machine ID: {}: Setting state to: {}'.format(self.machine_id, state))
+        logging.debug('[State Machine - {}] Setting state to: {}'.format(self.machine_id, state))
         self.current_state = state
 
     def start_sniffer(self):
@@ -109,7 +108,7 @@ class StateMachine:
         Args:
             variables (dict): The variables to assign.
         """
-        logging.debug('Machine ID: {}: Setting variables: {}'.format(self.machine_id, variables))
+        logging.debug('[State Machine - {}] Setting variables: {}'.format(self.machine_id, variables))
         self.variables = variables
 
     def set_variable_value(self, name, new_value):
@@ -120,7 +119,7 @@ class StateMachine:
             name (str): The name of the variable.
             new_value: The new value for the variable.
         """
-        logging.info('Machine ID: {}: Setting variable {} to: {}'.format(self.machine_id, name, new_value))
+        logging.info('[State Machine - {}] Setting variable {} to: {}'.format(self.machine_id, name, new_value))
         self.variables[name] = new_value
 
     def get_variable_value(self, variable_name):
@@ -134,7 +133,7 @@ class StateMachine:
             The value of the variable.
         """
         if variable_name not in self.variables:
-            logging.error('Machine ID: {}: Variable {} does not exist.'.format(self.machine_id, variable_name))
+            logging.error('[State Machine - {}] Variable {} does not exist.'.format(self.machine_id, variable_name))
         return self.variables[variable_name]
 
     def update_variable_value(self, variable_name, new_value):
@@ -145,7 +144,7 @@ class StateMachine:
             variable_name (str): The name of the variable.
             new_value: The new value for the variable.
         """
-        logging.info('Machine ID: {}: Updating variable {} to: {}'.format(self.machine_id, variable_name, new_value))
+        logging.info('[State Machine - {}] Updating variable {} to: {}'.format(self.machine_id, variable_name, new_value))
         self.variables[variable_name] = new_value
 
     def update_sniffer_filter(self, filter):
@@ -174,7 +173,7 @@ class StateMachine:
             event (str): The event to redirect.
             state (str): The state to redirect to.
         """
-        logging.debug('Machine ID: {}: Adding redirection from event {} to state {}.'.format(self.machine_id, event, state))
+        logging.debug('[State Machine - {}] Adding redirection from event {} to state {}.'.format(self.machine_id, event, state))
         self.redirections[event] = state
 
     def trigger_event(self, event):
@@ -184,14 +183,14 @@ class StateMachine:
         Args:
             event (str): The event to trigger.
         """
-        logging.debug('Machine ID: {}: Event {} triggered'.format(self.machine_id, event))
+        logging.debug('[State Machine - {}] Event {} triggered'.format(self.machine_id, event))
         next_states = self.state_machine_parser.get_next_states_on_event(self.current_state, event)
         if next_states is not None:
             self.make_transition(next_states)
         elif event in self.redirections:
             self.add_transition_actions(self.redirections[event])
         else:
-            logging.warning('Machine ID: {}: No matching event for {}. Skipping.'.format(self.machine_id, event))
+            logging.warning('[State Machine - {}] No matching event for {}. Skipping.'.format(self.machine_id, event))
 
     def add_transition_actions(self, next_state_name, assignable=False, state=None):
         """

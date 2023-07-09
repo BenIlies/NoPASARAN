@@ -1,5 +1,11 @@
 import uuid
 
+def patch_xstate(array_to_to_parse, field):
+            actions = ArrayParser.get_safe_array(array_to_to_parse, [field])
+            types = [action['type'] for action in actions]
+            print(types)
+            return types
+
 
 class ArrayParser:
     """
@@ -83,7 +89,9 @@ class StateMachineParser:
             list or None: The list of entry actions, or None if no entry actions are defined.
         """
         if 'entry' in self.states[state]:
-            return ArrayParser.get_safe_array(self.states[state]['entry'])
+            # Patching the changement of xstate discovered on th 9th of July 2023
+            #return ArrayParser.get_safe_array(self.states[state]['entry'])
+            return patch_xstate(self.states[state], 'entry')
         return None
 
     def get_exit_actions(self, state):
@@ -97,7 +105,9 @@ class StateMachineParser:
             list or None: The list of exit actions, or None if no exit actions are defined.
         """
         if 'exit' in self.states[state]:
-            return ArrayParser.get_safe_array(self.states[state]['exit'])
+            # Patching the changement of xstate discovered on th 9th of July 2023
+            #return ArrayParser.get_safe_array(self.states[state]['exit'])
+            return patch_xstate(self.states[state], 'exit')
         return None
 
     def get_next_states_on_event(self, state, event):
@@ -154,5 +164,7 @@ class StateMachineParser:
             list or None: The list of transition actions, or None if no transition actions are defined.
         """
         if 'actions' in next_state:
-            return ArrayParser.get_safe_array(next_state['actions'])
+            # Patching the changement of xstate discovered on th 9th of July 2023
+            #return ArrayParser.get_safe_array(next_state['actions'])
+            return patch_xstate(next_state, 'actions')
         return None

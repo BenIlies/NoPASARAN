@@ -8,6 +8,7 @@ from nopasaran.primitives.action_primitives.io_primitives import IOPrimitives
 from nopasaran.primitives.action_primitives.ip_primitives import IPPrimitives
 from nopasaran.primitives.action_primitives.tcp_primitives import TCPPrimitives
 from nopasaran.primitives.action_primitives.udp_primitives import UDPPrimitives
+from nopasaran.primitives.action_primitives.dns_primitives import DNSPrimitives
 
 class ActionPrimitives(Primitives):
     """
@@ -22,5 +23,6 @@ class ActionPrimitives(Primitives):
         IOPrimitives, 
         IPPrimitives, 
         TCPPrimitives, 
-        UDPPrimitives
+        UDPPrimitives,
+        DNSPrimitives
         ]

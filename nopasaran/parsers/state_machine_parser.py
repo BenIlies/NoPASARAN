@@ -1,9 +1,8 @@
 import uuid
 
 def patch_xstate(array_to_to_parse, field):
-            actions = ArrayParser.get_safe_array(array_to_to_parse, [field])
+            actions = ArrayParser.get_safe_array(array_to_to_parse[field])
             types = [action['type'] for action in actions]
-            print(types)
             return types
 
 

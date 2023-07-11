@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 # Update and upgrade packages
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y nano iputils-ping git python3 wget
+    apt-get install -y nano iputils-ping git python3 wget libpcap-dev
 
 # Create symbolic link to set python3 as python
 RUN ln -s /usr/bin/python3 /usr/bin/python

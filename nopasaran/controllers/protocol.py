@@ -1,5 +1,7 @@
 import json
 import logging
+import base64
+import pickle
 
 from twisted.internet.protocol import Protocol
 
@@ -45,8 +47,14 @@ class WorkerProtocol(Protocol):
             if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
                 self.is_active = False
                 self.transport.loseConnection()
+        if JSONMessage.SYNC.name in data:
+            encoded_data = data[JSONMessage.SYNC.name]
+            serialized_data = base64.b64decode(encoded_data)
+            content = pickle.loads(serialized_data)
+            self.queue.append(content)
         logging.info("[Control Channel] Status: %s, %s", self.local_status, self.remote_status)
         logging.info("[Control Channel] Received: %s", data)
+        
 
     def disconnecting(self):
         """
@@ -79,7 +87,9 @@ class WorkerProtocol(Protocol):
         Args:
             content: The content of the sync message.
         """
-        self.transport.write(json.dumps({JSONMessage.SYNC.name: content}).encode())
+        serialized_data = pickle.dumps(content)
+        encoded_data = base64.b64encode(serialized_data).decode("utf-8")
+        self.transport.write(json.dumps({JSONMessage.SYNC.name: encoded_data}).encode())
         logging.info("[Control Channel] Sync message sent: %s", content)
 
 

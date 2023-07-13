@@ -1,4 +1,4 @@
-from scapy.all import IP, UDP, DNS, DNSQR
+from scapy.all import IP, UDP, DNS, DNSQR, DNSRR
 from nopasaran.decorators import parsing_decorator
 
 
@@ -36,7 +36,7 @@ class DNSPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def disable_rd_flag(inputs, outputs, state_machine):
+    def disable_DNS_rd_flag(inputs, outputs, state_machine):
         """
         Disable the recursion desired (rd) flag in the DNS packet.
 
@@ -64,7 +64,7 @@ class DNSPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def enable_rd_flag(inputs, outputs, state_machine):
+    def enable_DNS_rd_flag(inputs, outputs, state_machine):
         """
         Enable the recursion desired (rd) flag in the DNS packet.
 
@@ -92,7 +92,69 @@ class DNSPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def get_transaction_id(inputs, outputs, state_machine):
+    def set_DNS_packet_query(inputs, outputs, state_machine):
+        """
+        Set the DNS packet as a query packet.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the DNS packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the modified DNS packet.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        dns_packet[DNS].qr = 0
+        state_machine.set_variable_value(outputs[0], dns_packet)
+
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def set_DNS_packet_response(inputs, outputs, state_machine):
+        """
+        Set the DNS packet as a response packet.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the DNS packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the modified DNS packet.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        dns_packet[DNS].qr = 1
+        state_machine.set_variable_value(outputs[0], dns_packet)
+
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_DNS_transaction_id(inputs, outputs, state_machine):
         """
         Get the transaction ID from the DNS packet.
 
@@ -120,7 +182,7 @@ class DNSPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def set_transaction_id(inputs, outputs, state_machine):
+    def set_DNS_transaction_id(inputs, outputs, state_machine):
         """
         Set the transaction ID in the DNS packet.
 
@@ -299,3 +361,226 @@ class DNSPrimitives:
         new_query_class = state_machine.get_variable_value(inputs[1])
         dns_query.qclass = new_query_class
         state_machine.set_variable_value(outputs[0], dns_query)
+
+    @staticmethod
+    @parsing_decorator(input_args=0, output_args=1)
+    def create_DNS_resource_record(inputs, outputs, state_machine):
+        """
+        Create a DNS resource record without input arguments and store it in an output variable in the machine's state.
+
+        Number of input arguments: 0
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the created DNS resource record.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_resource_record = DNSRR()
+        state_machine.set_variable_value(outputs[0], dns_resource_record)
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def set_DNS_resource_record_domain(inputs, outputs, state_machine):
+        """
+        Set the domain name for a DNS resource record.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the DNS resource record.
+                - The name of the variable containing the domain name to set.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the modified DNS resource record.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_resource_record = state_machine.get_variable_value(inputs[0])
+        domain_name = state_machine.get_variable_value(inputs[1])
+
+        dns_resource_record.rrname = domain_name
+
+        state_machine.set_variable_value(outputs[0], dns_resource_record)
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def set_DNS_resource_record_value(inputs, outputs, state_machine):
+        """
+        Set the value for a DNS resource record.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the DNS resource record.
+                - The name of the variable containing the value to set.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the modified DNS resource record.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_resource_record = state_machine.get_variable_value(inputs[0])
+        value = state_machine.get_variable_value(inputs[1])
+
+        dns_resource_record.rdata = value
+
+        state_machine.set_variable_value(outputs[0], dns_resource_record)
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def set_DNS_resource_record_type(inputs, outputs, state_machine):
+        """
+        Set the record type for a DNS resource record.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the DNS resource record.
+                - The name of the variable containing the record type to set.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the modified DNS resource record.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_resource_record = state_machine.get_variable_value(inputs[0])
+        record_type = state_machine.get_variable_value(inputs[1])
+
+        dns_resource_record.type = record_type
+
+        state_machine.set_variable_value(outputs[0], dns_resource_record)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def add_DNS_response_to_answer(inputs, outputs, state_machine):
+        """
+        Add a DNS response packet to the answer section of a DNS packet.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the DNS packet.
+                - The name of the variable containing the DNS response packet to be added to the answer section.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the modified DNS packet.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        response_packet = state_machine.get_variable_value(inputs[1])
+
+        dns_packet[DNS].an = response_packet[DNS].an
+
+        state_machine.set_variable_value(outputs[0], dns_packet)
+
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def add_DNS_response_to_additional(inputs, outputs, state_machine):
+        """
+        Add a DNS response packet to the additional answer section of a DNS packet.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the DNS packet.
+                - The name of the variable containing the DNS response packet to be added to the additional answer section.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is
+                the name of the variable to store the modified DNS packet.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        response_packet = state_machine.get_variable_value(inputs[1])
+
+        dns_packet[DNS].ar = response_packet[DNS].an
+
+        state_machine.set_variable_value(outputs[0], dns_packet)

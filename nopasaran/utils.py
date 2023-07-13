@@ -81,69 +81,8 @@ def set_TCP_payload(packet, payload):
 def remove_TCP_payload(packet):
 	packet['TCP'].remove_payload()
 
-def not_(boolean):
-	boolean = not(boolean)
-
 def set_random_int(min, max):
 	return random.randint(int(min), int(max))
 
 def set_random_float(min, max):
 	return random.uniform(int(min), int(max))
-
-def add_TLS_payload(packet, tls_version):
-	version = 0x00
-	if tls_version == "0":
-		version = 0x300
-	elif tls_version == "1":
-		version = 0x301
-	elif tls_version == "2":
-		version = 0x302
-	elif tls_version == "3":
-		version = 0x303
-	elif tls_version == "4":
-		version = 0x304
-	else:
-		raise Exception('Unknown TLS version.')
-	packet = packet/TLS(version=version)
-	return packet
-
-def add_TLS_handshake(packet):
-	packet['TLS'].type=22
-	return packet
-
-def add_TLS_client_hello(packet):
-	payload = TLSClientHello(ciphers=[0])
-	length = len(payload) 
-	if packet['TLS'].len == None:
-		packet['TLS'].len = length
-	else:
-		packet['TLS'].len = packet['TLS'].len + length
-	packet = packet/payload
-	return packet
-
-def add_TLS_server_hello(packet):
-	payload = TLSServerHello(cipher=0)
-	length = len(payload) 
-	if packet['TLS'].len == None:
-		packet['TLS'].len = length
-	else:
-		packet['TLS'].len = packet['TLS'].len + length
-	packet = packet/payload
-	return packet
-
-def add_TLS_application_data(packet, data):
-	packet['TLS'].type=23
-	payload = TLSApplicationData(data=data)
-	length = len(payload) 
-	if packet['TLS'].len == None:
-		packet['TLS'].len = length
-	else:
-		packet['TLS'].len = packet['TLS'].len + length
-	packet = packet/payload
-	return packet
-
-def get_TCP_payload_length(packet):
-	if packet['TCP'].payload != None:
-		return len(packet['TCP'].payload)
-	else:
-		return 0

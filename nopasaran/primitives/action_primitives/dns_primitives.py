@@ -492,30 +492,6 @@ class DNSPrimitives:
 
         state_machine.set_variable_value(outputs[0], dns_resource_record)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
     def add_DNS_response_to_answer(inputs, outputs, state_machine):

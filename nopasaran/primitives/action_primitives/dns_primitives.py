@@ -522,7 +522,7 @@ class DNSPrimitives:
         dns_packet = state_machine.get_variable_value(inputs[0])
         response_packet = state_machine.get_variable_value(inputs[1])
 
-        dns_packet[DNS].an = response_packet[DNS].an
+        dns_packet[DNS].an = response_packet
 
         state_machine.set_variable_value(outputs[0], dns_packet)
 

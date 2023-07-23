@@ -9,74 +9,96 @@ Consider the following JSON representation of our main FSM and a nested FSM:
 
 .. code-block:: json
 
-   {
-     "id": "MAIN-FSM",
-     "initial": "Init",
-     "states": {
-       "Init": {
-         "on": {
-           "STARTED": {
-             "target": "Intermediate State"
-           }
-         }
-       },
-       "Intermediate State": {
-         "entry": [
-           "set (ping) (input-arg1)",
-           "set (pong) (input-arg2)",
-           "call (NESTED-FSM input-arg1 input-arg2) (event output-arg1 output-arg2)",
-           "trigger (event)"
-         ],
-         "on": {
-           "EVENT_FROM_NESTED_FSM": {
-             "target": "End",
-             "cond": "equal (input-arg1 output-arg2)",
-             "actions": "assign (output-arg1) (output-arg1)"
-           }
-         }
-       },
-       "End": {}
-     }
-   }
+    {
+      "id": "MAIN-FSM",
+      "initial": "Init",
+      "states": {
+        "Init": {
+          "on": {
+            "STARTED": {
+              "target": "Intermediate State"
+            }
+          }
+        },
+        "Intermediate State": {
+          "entry": [
+            {
+              "type": "set (ping) (input-arg1)"
+            },
+            {
+              "type": "set (pong) (input-arg2)"
+            },
+            {
+              "type": "call (NESTED-FSM input-arg1 input-arg2) (event output-arg1 output-arg2)"
+            },
+            {
+              "type": "trigger (event)"
+            }
+          ],
+          "on": {
+            "EVENT_FROM_NESTED_FSM": {
+              "target": "End",
+              "cond": "equal (input-arg1 output-arg2)",
+              "actions": {
+                "type": "assign (output-arg1) (output-arg1)"
+              }
+            }
+          }
+        },
+        "End": {}
+      }
+    }
 
 **Nested FSM:**
 
 .. code-block:: json
 
-   {
-     "id": "NESTED-FSM",
-     "initial": "Init",
-     "states": {
-       "Init": {
-         "on": {
-           "STARTED": {
-             "target": "Catch FSM Input Arguments"
-           }
-         }
-       },
-       "Catch FSM Input Arguments": {
-         "entry": [
-           "get_parameters (fsm-arg1 fsm-arg2)",
-           "done"
-         ],
-         "on": {
-           "DONE": {
-             "target": "End",
-             "actions": [
-               "assign (fsm-arg2) (return-val1)",
-               "assign (fsm-arg1) (return-val2)"
-             ]
-           }
-         }
-       },
-       "End": {
-         "entry": [
-           "set (EVENT_FROM_NESTED_FSM) (event)",
-           "return_values (event return-val1 return-val2)"
-         ]
-       }
-     }
-   }
+    {
+      "id": "NESTED-FSM",
+      "initial": "Init",
+      "states": {
+        "Init": {
+          "on": {
+            "STARTED": {
+              "target": "Catch FSM Input Arguments"
+            }
+          }
+        },
+        "Catch FSM Input Arguments": {
+          "entry": [
+            {
+              "type": "get_parameters (fsm-arg1 fsm-arg2)"
+            },
+            {
+              "type": "done"
+            }
+          ],
+          "on": {
+            "DONE": {
+              "target": "End",
+              "actions": [
+                {
+                  "type": "assign (fsm-arg2) (return-val1)"
+                },
+                {
+                  "type": "assign (fsm-arg1) (return-val2)"
+                }
+              ]
+            }
+          }
+        },
+        "End": {
+          "entry": [
+            {
+              "type": "set (EVENT_FROM_NESTED_FSM) (event)"
+            },
+            {
+              "type": "return_values (event return-val1 return-val2)"
+            }
+          ]
+        }
+      }
+    }
 
 The JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 

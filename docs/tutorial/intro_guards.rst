@@ -7,39 +7,45 @@ Consider the following JSON representation of our FSM:
 
 .. code-block:: json
 
-   {
-     "id": "Tutorial",
-     "initial": "Init",
-     "states": {
-       "Init": {
-         "on": {
-           "STARTED": {
-             "target": "State Before Guards"
-           }
-         }
-       },
-       "State Before Guards": {
-         "entry": [
-           "set (true) (value-A)",
-           "set (false) (value-B)",
-           "done"
-         ],
-         "on": {
-           "DONE": [
-             {
-               "target": "State Not Reached",
-               "cond": "equal (value-A value-B)"
-             },
-             {
-               "target": "State Reached"
-             }
-           ]
-         }
-       },
-       "State Not Reached": {},
-       "State Reached": {}
-     }
-   }
+    {
+        "id": "Tutorial",
+        "initial": "First state",
+        "states": {
+            "First state": {
+                "on": {
+                    "STARTED": {
+                        "target": "State Before Guards"
+                    }
+                }
+            },
+            "State Before Guards": {
+                "entry": [
+                    {
+                        "type": "set (true) (value-A)"
+                    },
+                    {
+                        "type": "set (false) (value-B)"
+                    },
+                    {
+                        "type": "done"
+                    }
+                ],
+                "on": {
+                    "DONE": [
+                        {
+                            "target": "State Not Reached",
+                            "cond": "equal (value-A value-B)"
+                        },
+                        {
+                            "target": "State Reached"
+                        }
+                    ]
+                }
+            },
+            "State Not Reached": {},
+            "State Reached": {}
+        }
+    }
 
 The JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 

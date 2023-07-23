@@ -5,28 +5,31 @@ The JSON file below represents a Finite State Machine (FSM) named `scenario.json
 
 .. code-block:: json
 
-   {
-     "id": "Tutorial",
-     "initial": "First state",
-     "states": {
-       "First state": {
-         "on": {
-           "STARTED": {
-             "target": "Second State"
-           }
-         }
-       },
-       "Second State": {
-         "entry": "done",
-         "on": {
-           "DONE": {
-             "target": "Last state"
-           }
-         }
-       },
-       "Last state": {}
-     }
-   }
+    {
+      "id": "Tutorial",
+      "initial": "First state",
+      "states": {
+        "First state": {
+          "on": {
+            "STARTED": {
+              "target": "Second State"
+            }
+          }
+        },
+        "Second State": {
+          "entry": {
+            "params": {},
+            "type": "done"
+          },
+          "on": {
+            "DONE": {
+              "target": "Last state"
+            }
+          }
+        },
+        "Last state": {}
+      }
+    }
 
 This JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 

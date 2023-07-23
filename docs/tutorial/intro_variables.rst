@@ -8,43 +8,45 @@ Here's the JSON file that represents our FSM:
 .. code-block:: json
 
    {
-     "id": "Tutorial",
-     "initial": "Init",
-     "states": {
-       "Init": {
-         "on": {
-           "STARTED": {
-             "target": "Variables Creation"
-           }
-         }
-       },
-       "Variables Creation": {
-         "entry": [
-           "get_from_file (variables ip-server) (ip-old-state)",
-           "get_from_file (variables port-server) (port-old-state)",
-           "done"
-         ],
-         "on": {
-           "DONE": {
-             "target": "Variables Reception",
-             "actions": [
-               "assign (ip-old-state) (ip-new-state)",
-               "assign (port-old-state) (port-new-state)"
-             ]
-           }
-         }
-       },
-       "End": {},
-       "Variables Reception": {
-         "entry": "done",
-         "on": {
-           "DONE": {
-             "target": "End"
-           }
-         }
-       }
-     }
-   }
+    "id": "Tutorial",
+    "initial": "Init",
+    "states": {
+        "Init": {
+            "on": {
+                "STARTED": {
+                    "target": "Variables Creation"
+                }
+            }
+        },
+        "Variables Creation": {
+            "entry": [
+                {
+                    "type": "get_from_file (variables ip-server) (ip-old-state)"
+                },
+                {
+                    "type": "get_from_file (variables port-server) (port-old-state)"
+                },
+                {
+                    "type": "done"
+                }
+            ],
+            "on": {
+                "DONE": {
+                    "target": "Variables Reception",
+                    "actions": [
+                        {
+                            "type": "assign (ip-old-state) (ip-new-state)"
+                        },
+                        {
+                            "type": "assign (port-old-state) (port-new-state)"
+                        }
+                    ]
+                }
+            }
+        },
+        "Variables Reception": {}
+    }
+  }
 
 The JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 

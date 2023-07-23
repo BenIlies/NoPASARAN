@@ -8,7 +8,7 @@ Here's the JSON file that represents our FSM:
 .. code-block:: json
 
    {
-    "id": "Tutorial",
+    "id": "VARIABLES-FSM",
     "initial": "Init",
     "states": {
         "Init": {
@@ -50,7 +50,7 @@ Here's the JSON file that represents our FSM:
 
 The JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 
-- `id`: An identifier for the FSM. In this example, the id is "Tutorial".
+- `id`: An identifier for the FSM. In this example, the id is "VARIABLES-FSM".
 - `initial`: Specifies the name of the initial state of the FSM, which is "Init". Note that every FSM will automatically trigger a "STARTED" event when initiated.
 - `states`: Contains an object, where each key-value pair represents a state in the FSM.
 

@@ -8,7 +8,7 @@ Consider the following JSON representation of our FSM:
 .. code-block:: json
 
     {
-        "id": "Tutorial",
+        "id": "GUARDS-FSM",
         "initial": "First state",
         "states": {
             "First state": {
@@ -49,7 +49,7 @@ Consider the following JSON representation of our FSM:
 
 The JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 
-- `id`: An identifier for the FSM. In this example, the id is "Tutorial".
+- `id`: An identifier for the FSM. In this example, the id is "GUARDS-FSM".
 - `initial`: Specifies the name of the initial state of the FSM, which in this case is "Init". Note that every FSM will automatically trigger a "STARTED" event when initiated, leading to the execution of the first state.
 - `states`: Contains an object, where each key-value pair represents a state in the FSM.
 

@@ -6,7 +6,7 @@ The JSON file below represents a Finite State Machine (FSM) named `scenario.json
 .. code-block:: json
 
     {
-      "id": "Tutorial",
+      "id": "SCENARIOS-FSM",
       "initial": "First state",
       "states": {
         "First state": {
@@ -33,7 +33,7 @@ The JSON file below represents a Finite State Machine (FSM) named `scenario.json
 
 This JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 
-- `id`: An identifier for the FSM. In this example, the id is "Tutorial".
+- `id`: An identifier for the FSM. In this example, the id is "SCENARIOS-FSM".
 - `initial`: Specifies the name of the initial state of the FSM, which is "First state". Note that every FSM will automatically trigger a "STARTED" event when initiated.
 - `states`: Contains an object, where each key-value pair represents a state in the FSM.
 

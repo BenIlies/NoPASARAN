@@ -199,7 +199,7 @@ The "CONTROL-CHANNEL-SET-UP" FSM operates as follows:
 
 5. **Server Control Channel Setup**: Similarly, in the "STARTING SERVER CONTROL CHANNEL" state, the FSM loads the control channel configuration for the server and performs the necessary setup actions before transitioning to the "SYNCHRONIZATION OF THE TWO PARTIES" state.
 
-6. **Synchronization**: In the "SYNCHRONIZATION OF THE TWO PARTIES" state, the FSM sets a timeout value of 10 units using the "set" action and waits for a ready signal from the control channel. If the ready signal is received before the timeout, it transitions to the "CONTROL CHANNEL IS READY" state; otherwise, it transitions to the "TIMEOUT ENDING" state.
+6. **Synchronization**: In the "SYNCHRONIZATION OF THE TWO PARTIES" state, the FSM sets a timeout value of 10 seconds using the "set" action and waits for a ready signal from the control channel. If the ready signal is received before the timeout, it transitions to the "CONTROL CHANNEL IS READY" state; otherwise, it transitions to the "TIMEOUT ENDING" state.
 
 7. **Timeout Handling**: In the "TIMEOUT ENDING" state, the FSM sets the "TIMEOUT" event and still returns the "controller_channel" that was attempted for the establishment.
 
@@ -208,5 +208,3 @@ The "CONTROL-CHANNEL-SET-UP" FSM operates as follows:
 **Conclusion**
 
 In this tutorial, we have explored the practical implementation of a nested Finite State Machine, the "CONTROL-CHANNEL-SET-UP," designed to establish control channels as a client or as a server. The FSM provides a higher level of abstraction and reusability, making it an efficient solution for control channel setup in various scenarios.
-
-By utilizing the power of nested FSMs and understanding the required input and possible output variables, developers can seamlessly establish control channels and enhance the efficiency of communication in their projects.

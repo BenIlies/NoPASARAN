@@ -4,7 +4,7 @@ import time
 from twisted.internet.threads import deferToThread
 
 from nopasaran.controllers.controller import ClientController, ServerController
-from nopasaran.definitions.control_channel import JSONMessage, Status, Configuration
+from nopasaran.definitions.control_channel import Status, Configuration
 from nopasaran.definitions.events import EventNames
 from nopasaran.decorators import parsing_decorator
 
@@ -29,7 +29,7 @@ class ControlChannelPrimitives:
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the file path, and one mandatory output argument, which is the name of the variable to store the loaded configuration.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable that contains the file path, and one mandatory output argument, which is the name of the variable to store the loaded configuration.
             
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable where the loaded configuration will be stored.
             
@@ -38,7 +38,7 @@ class ControlChannelPrimitives:
         Returns:
             None
         """
-        controller_configuration = json.load(open('.'.join((inputs[0], 'json'))))
+        controller_configuration = json.load(open(state_machine.get_variable_value(inputs[0])))
         state_machine.set_variable_value(outputs[0], controller_configuration)
 
     @staticmethod

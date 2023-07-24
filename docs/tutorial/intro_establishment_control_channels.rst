@@ -1,162 +1,11 @@
 Introduction to the Establishment of Control Channels
 =====================================================
 
-This tutorial focuses on the establishment of control channels using nested Finite State Machines (FSMs). This nested FSM allows for higher-level abstraction and reusability across different scenarios, similar to traditional programming libraries. 
-
-Here, we will walk through the JSON representation of our main FSM named "MAIN-FSM-CONTROL-CHANNEL" and a nested FSM named "CONTROL-CHANNEL-SET-UP".
-
-**Main FSM: MAIN-FSM-CONTROL-CHANNEL**
-
-.. code-block:: json
-
-    {
-    "id": "CONTROL-CHANNEL-SET-UP",
-    "initial": "INITIALIZING",
-    "states": {
-        "INITIALIZING": {
-        "on": {
-            "STARTED": {
-            "target": "LOADING THE VARIABLES"
-            }
-        }
-        },
-        "LOADING THE VARIABLES": {
-        "entry": [
-            {
-            "params": {},
-            "type": "get_parameters (role client server)"
-            },
-            {
-            "type": "done"
-            }
-        ],
-        "on": {
-            "DONE": [
-            {
-                "target": "STARTING CLIENT CONTROL CHANNEL",
-                "cond": "equal (role client)"
-            },
-            {
-                "target": "STARTING SERVER CONTROL CHANNEL",
-                "cond": "equal (role server)"
-            }
-            ]
-        }
-        },
-        "STARTING CLIENT CONTROL CHANNEL": {
-        "entry": [
-            {
-            "params": {},
-            "type": "load_control_channel_configuration (control_client) (controller_conf)"
-            },
-            {
-            "params": {},
-            "type": "configure_client_control_channel (controller_conf) (controller controller_protocol)"
-            },
-            {
-            "params": {},
-            "type": "start_control_channel (controller)"
-            },
-            {
-            "params": {},
-            "type": "done"
-            }
-        ],
-        "on": {
-            "DONE": {
-            "target": "SYNCHRONIZATION OF THE TWO PARTIES",
-            "actions": {
-                "params": {},
-                "type": "assign (controller_protocol) (controller_protocol)"
-            }
-            }
-        }
-        },
-        "STARTING SERVER CONTROL CHANNEL": {
-        "entry": [
-            {
-            "params": {},
-            "type": "load_control_channel_configuration (control_server) (controller_conf)"
-            },
-            {
-            "params": {},
-            "type": "configure_server_control_channel (controller_conf) (controller controller_protocol)"
-            },
-            {
-            "params": {},
-            "type": "start_control_channel (controller)"
-            },
-            {
-            "params": {},
-            "type": "done"
-            }
-        ],
-        "on": {
-            "DONE": {
-            "target": "SYNCHRONIZATION OF THE TWO PARTIES",
-            "actions": {
-                "params": {},
-                "type": "assign (controller_protocol) (controller_protocol)"
-            }
-            }
-        }
-        },
-        "SYNCHRONIZATION OF THE TWO PARTIES": {
-        "entry": [
-            {
-            "params": {},
-            "type": "set (10) (timeout)"
-            },
-            {
-            "params": {},
-            "type": "wait_ready_signal (controller_protocol timeout)"
-            }
-        ],
-        "on": {
-            "TIMEOUT": {
-            "target": "TIMEOUT ENDING",
-            "actions": {
-                "params": {},
-                "type": "assign (controller_protocol) (controller_protocol)"
-            }
-            },
-            "READY": {
-            "target": "CONTROL CHANNEL IS READY",
-            "actions": {
-                "params": {},
-                "type": "assign (controller_protocol) (controller_protocol)"
-            }
-            }
-        }
-        },
-        "TIMEOUT ENDING": {
-        "entry": [
-            {
-            "params": {},
-            "type": "set (TIMEOUT) (event)"
-            },
-            {
-            "params": {},
-            "type": "return_values (event controller_protocol)"
-            }
-        ]
-        },
-        "CONTROL CHANNEL IS READY": {
-        "entry": [
-            {
-            "params": {},
-            "type": "set (CONTROL_CHANNEL_READY) (event)"
-            },
-            {
-            "params": {},
-            "type": "return_values (event controller_protocol)"
-            }
-        ]
-        }
-    }
-    }
+This tutorial focuses on the establishment of control channels using a nested Finite State Machine (FSM). The nested FSM presented here allows for higher-level abstraction and reusability across different scenarios. It serves as a practical implementation to facilitate the establishment of control channels, be it as a client or as a server.
 
 **Nested FSM: CONTROL-CHANNEL-SET-UP**
+
+Below is the JSON representation of the nested FSM named "CONTROL-CHANNEL-SET-UP." It is designed to establish control channels, either as a client or as a server, based on the role passed from the environment. This FSM requires two mandatory input variables, "role" and "controller_conf_filename."
 
 .. code-block:: json
 
@@ -175,7 +24,14 @@ Here, we will walk through the JSON representation of our main FSM named "MAIN-F
                 "entry": [
                     {
                         "params": {},
-                        "type": "get_parameters (role client server)"
+                        "type": "get_parameters (role controller_conf_filename)"
+                    },
+                    {
+                        "params": {},
+                        "type": "set (client) (client)"
+                    },
+                    {
+                        "type": "set (server) (server)"
                     },
                     {
                         "type": "done"
@@ -185,11 +41,17 @@ Here, we will walk through the JSON representation of our main FSM named "MAIN-F
                     "DONE": [
                         {
                             "target": "STARTING CLIENT CONTROL CHANNEL",
-                            "cond": "equal (role client)"
+                            "cond": "equal (role client)",
+                            "actions": {
+                                "type": "assign (controller_conf_filename) (controller_conf_filename)"
+                            }
                         },
                         {
                             "target": "STARTING SERVER CONTROL CHANNEL",
-                            "cond": "equal (role server)"
+                            "cond": "equal (role server)",
+                            "actions": {
+                                "type": "assign (controller_conf_filename) (controller_conf_filename)"
+                            }
                         }
                     ]
                 }
@@ -198,7 +60,7 @@ Here, we will walk through the JSON representation of our main FSM named "MAIN-F
                 "entry": [
                     {
                         "params": {},
-                        "type": "load_control_channel_configuration (control_client) (controller_conf)"
+                        "type": "load_control_channel_configuration (controller_conf_filename) (controller_conf)"
                     },
                     {
                         "params": {},
@@ -227,7 +89,7 @@ Here, we will walk through the JSON representation of our main FSM named "MAIN-F
                 "entry": [
                     {
                         "params": {},
-                        "type": "load_control_channel_configuration (control_server) (controller_conf)"
+                        "type": "load_control_channel_configuration (controller_conf_filename) (controller_conf)"
                     },
                     {
                         "params": {},
@@ -306,38 +168,45 @@ Here, we will walk through the JSON representation of our main FSM named "MAIN-F
             }
         }
     }
-  
 
-The JSON files starts with three key-value pairs: `id`, `initial`, and `states`.
+**Input Variables**
 
-For the main FSM, the `states` object defines four states:
+The "CONTROL-CHANNEL-SET-UP" FSM expects the following input variables:
 
-1. `INIT`: This is the initial state of the FSM. It includes an `on` key, indicating the possible transitions from this state. In this case, the "STARTED" event causes a transition to the "CREATING_CONTROL_CHANNEL" state.
+1. "role": Specifies the role of the control channel, which can be either "client" or "server".
 
-2. `CREATING_CONTROL_CHANNEL`: This state reads the role, client, and server information from the file and sets them up. It then calls the nested FSM, "CONTROL-CHANNEL-SET-UP", with the acquired parameters. After executing the nested FSM, it triggers the returned event, which could be either "CONTROL_CHANNEL_READY" or "TIMEOUT".
+2. "controller_conf_filename": The filename containing the configuration settings required for establishing the control channel.
 
-3. `SUCCESS ESTABLISHING CONTROL CHANNEL`: This is the final state if the control channel setup is successful. It does not define any further actions or transitions, marking the end of a successful FSM scenario.
+**Output Variables**
 
-4. `TIMEOUT`: This is the final state if a timeout occurs during the control channel setup. It also does not define any further actions or transitions.
+The "CONTROL-CHANNEL-SET-UP" FSM can produce different output variables based on its ending:
 
-The nested FSM, "CONTROL-CHANNEL-SET-UP", establishes a control channel, either as a client or a server, based on the role passed from the main FSM. It includes multiple states from "INITIALIZING" to "CONTROL CHANNEL IS READY", or "TIMEOUT ENDING" in case of a timeout. 
+1. If the FSM ends successfully after establishing the control channel, it triggers the "CONTROL_CHANNEL_READY" event and provides the "controller_channel" variable to be used for successful communication.
 
-Each of these states performs specific tasks, like loading variables, starting the control channel, and synchronizing the two parties. Depending on the outcome, it either transitions to the "CONTROL CHANNEL IS READY" state, indicating a successful setup, or to the "TIMEOUT ENDING" state, indicating a failure due to timeout.
+2. If the FSM ends with a timeout before the control channel is established, it triggers the "TIMEOUT" event and still returns the "controller_channel" that was attempted for the establishment.
 
-The FSMs operate as follows:
+**Operation of the FSM**
 
-1. The main FSM, "MAIN-FSM-CONTROL-CHANNEL," is initiated and starts in the "INIT" state.
-2. Upon initiation, the main FSM triggers the "STARTED" event, causing a transition to the "CREATING_CONTROL_CHANNEL" state.
-3. In the "CREATING_CONTROL_CHANNEL" state of the main FSM, it reads the role, client, and server information from a file and sets them up. It then calls the nested FSM, "CONTROL-CHANNEL-SET-UP," with the acquired parameters.
-4. The nested FSM, "CONTROL-CHANNEL-SET-UP," begins in the "INITIALIZING" state upon being called from the main FSM. The "STARTED" event is triggered, leading to a transition to the "LOADING THE VARIABLES" state.
-5. In the "LOADING THE VARIABLES" state of the nested FSM, it retrieves the role information (client or server) passed from the main FSM using the get_parameters action. After this, the "done" action is executed, triggering the "DONE" event.
-6. The "DONE" event in the nested FSM leads to different transitions based on the role acquired. If the role is "client," it transitions to the "STARTING CLIENT CONTROL CHANNEL" state, and if the role is "server," it transitions to the "STARTING SERVER CONTROL CHANNEL" state.
-7. In the "STARTING CLIENT CONTROL CHANNEL" state of the nested FSM, it loads the control channel configuration for the client and configures the client control channel using the load_control_channel_configuration and configure_client_control_channel actions, respectively. Then, it starts the control channel using the start_control_channel action and triggers the "done" event.
-8. The "done" event in the "STARTING CLIENT CONTROL CHANNEL" state transitions to the "SYNCHRONIZATION OF THE TWO PARTIES" state in the nested FSM.
-9. In the "SYNCHRONIZATION OF THE TWO PARTIES" state, the FSM sets a timeout value of 10 units using the set action. Then, it waits for a ready signal from the control channel, using the wait_ready_signal action with the timeout as a parameter.
-10. Depending on whether the ready signal is received before the timeout, the nested FSM either transitions to the "CONTROL CHANNEL IS READY" state or the "TIMEOUT ENDING" state.
-11. In the "CONTROL CHANNEL IS READY" state, the nested FSM sets the "CONTROL_CHANNEL_READY" event using the set action and returns the controller_protocol value back to the main FSM using the return_values action.
-12. In the "TIMEOUT ENDING" state, the nested FSM sets the "TIMEOUT" event using the set action and returns the controller_protocol value back to the main FSM using the return_values action.
+The "CONTROL-CHANNEL-SET-UP" FSM operates as follows:
 
+1. **Initialization**: The FSM starts in the "INITIALIZING" state, awaiting the "STARTED" event to be triggered.
 
-The modular nature of the "CONTROL-CHANNEL-SET-UP" FSM allows it to be reused in various scenarios, highlighting the modularity and reusability of nested FSMs in different contexts.
+2. **Loading Variables**: In the "LOADING THE VARIABLES" state, the FSM fetches the "role" and "controller_conf_filename" from the environment using the "get_parameters" action. It then sets "client" to the "client" variable and "server" to the "server" variable using the "set" action.
+
+3. **Starting Control Channel**: Based on the acquired role, the FSM transitions either to the "STARTING CLIENT CONTROL CHANNEL" or the "STARTING SERVER CONTROL CHANNEL" state. The transitions are determined by "cond" conditions based on the role, and the FSM stores the "controller_conf_filename" using the "assign" action before transitioning.
+
+4. **Client Control Channel Setup**: In the "STARTING CLIENT CONTROL CHANNEL" state, the FSM loads the control channel configuration for the client using the "load_control_channel_configuration" action with "controller_conf_filename" as a parameter. It then configures the client control channel and starts it using appropriate actions. Upon successful completion, the FSM triggers the "DONE" event, leading to the "SYNCHRONIZATION OF THE TWO PARTIES" state.
+
+5. **Server Control Channel Setup**: Similarly, in the "STARTING SERVER CONTROL CHANNEL" state, the FSM loads the control channel configuration for the server and performs the necessary setup actions before transitioning to the "SYNCHRONIZATION OF THE TWO PARTIES" state.
+
+6. **Synchronization**: In the "SYNCHRONIZATION OF THE TWO PARTIES" state, the FSM sets a timeout value of 10 units using the "set" action and waits for a ready signal from the control channel. If the ready signal is received before the timeout, it transitions to the "CONTROL CHANNEL IS READY" state; otherwise, it transitions to the "TIMEOUT ENDING" state.
+
+7. **Timeout Handling**: In the "TIMEOUT ENDING" state, the FSM sets the "TIMEOUT" event and still returns the "controller_channel" that was attempted for the establishment.
+
+8. **Control Channel Ready**: In the "CONTROL CHANNEL IS READY" state, the FSM triggers the "CONTROL_CHANNEL_READY" event and provides the "controller_channel" value.
+
+**Conclusion**
+
+In this tutorial, we have explored the practical implementation of a nested Finite State Machine, the "CONTROL-CHANNEL-SET-UP," designed to establish control channels as a client or as a server. The FSM provides a higher level of abstraction and reusability, making it an efficient solution for control channel setup in various scenarios.
+
+By utilizing the power of nested FSMs and understanding the required input and possible output variables, developers can seamlessly establish control channels and enhance the efficiency of communication in their projects.

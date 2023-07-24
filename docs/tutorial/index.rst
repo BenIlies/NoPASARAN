@@ -16,6 +16,7 @@ Here are some example scenarios that demonstrate the basic usage of NoPASARAN.
    Introduction to Guards <intro_guards.rst>
    Introduction to Nested State Machines <intro_nested_finite_state_machines.rst>
    Introduction to the Establishment of Control Channels <intro_establishment_control_channels.rst>
+   Introduction to Sync Messages <intro_sync_messages.rst>
 
 Control Channel
 ---------------

@@ -65,7 +65,7 @@ class UDPPrimitives:
         udp_packet = state_machine.get_variable_value(inputs[0])
         sport = state_machine.get_variable_value(inputs[1])
 
-        udp_packet.sport = sport
+        udp_packet['UDP'].sport = sport
 
         state_machine.set_variable_value(outputs[0], udp_packet)
 
@@ -100,7 +100,7 @@ class UDPPrimitives:
         udp_packet = state_machine.get_variable_value(inputs[0])
         dport = state_machine.get_variable_value(inputs[1])
 
-        udp_packet.dport = dport
+        udp_packet['UDP'].dport = dport
 
         state_machine.set_variable_value(outputs[0], udp_packet)
 
@@ -132,7 +132,7 @@ class UDPPrimitives:
             None
         """
         udp_packet = state_machine.get_variable_value(inputs[0])
-        sport = udp_packet.sport
+        sport = udp_packet['UDP'].sport
 
         state_machine.set_variable_value(outputs[0], sport)
 
@@ -164,6 +164,6 @@ class UDPPrimitives:
             None
         """
         udp_packet = state_machine.get_variable_value(inputs[0])
-        dport = udp_packet.dport
+        dport = udp_packet['UDP'].dport
 
         state_machine.set_variable_value(outputs[0], dport)

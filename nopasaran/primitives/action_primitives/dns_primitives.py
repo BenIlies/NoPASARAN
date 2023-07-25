@@ -59,7 +59,7 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        dns_packet[DNS].rd = 0
+        dns_packet['DNS'].rd = 0
         state_machine.set_variable_value(outputs[0], dns_packet)
 
     @staticmethod
@@ -87,7 +87,7 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        dns_packet[DNS].rd = 1
+        dns_packet['DNS'].rd = 1
         state_machine.set_variable_value(outputs[0], dns_packet)
 
     @staticmethod
@@ -117,7 +117,7 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        dns_packet[DNS].qr = 0
+        dns_packet['DNS'].qr = 0
         state_machine.set_variable_value(outputs[0], dns_packet)
 
 
@@ -148,7 +148,7 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        dns_packet[DNS].qr = 1
+        dns_packet['DNS'].qr = 1
         state_machine.set_variable_value(outputs[0], dns_packet)
 
 
@@ -177,7 +177,7 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        transaction_id = dns_packet[DNS].id
+        transaction_id = dns_packet['DNS'].id
         state_machine.set_variable_value(outputs[0], transaction_id)
 
     @staticmethod
@@ -206,7 +206,7 @@ class DNSPrimitives:
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
         new_transaction_id = state_machine.get_variable_value(inputs[1])
-        dns_packet[DNS].id = new_transaction_id
+        dns_packet['DNS'].id = new_transaction_id
         state_machine.set_variable_value(outputs[0], dns_packet)
 
     @staticmethod
@@ -265,9 +265,39 @@ class DNSPrimitives:
         dns_packet = state_machine.get_variable_value(inputs[0])
         dns_query = state_machine.get_variable_value(inputs[1])
 
-        dns_packet[DNS].qd = dns_query
+        dns_packet['DNS'].qd = dns_query
 
         state_machine.set_variable_value(outputs[0], dns_packet)
+
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_DNS_query_from_DNS_packet(inputs, outputs, state_machine):
+        """
+        Get the DNS query field (DNSQR) from a DNS packet.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable containing the DNS packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the DNS query.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        dns_query = dns_packet.qd
+
+        state_machine.set_variable_value(outputs[0], dns_query)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -299,6 +329,35 @@ class DNSPrimitives:
         new_query_name = state_machine.get_variable_value(inputs[1])
         dns_query.qname = new_query_name
         state_machine.set_variable_value(outputs[0], dns_query)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_query_name(inputs, outputs, state_machine):
+        """
+        Get the domain name (qname) of a DNS query (DNSQR).
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable containing the DNS query.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the qualified domain name.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_query = state_machine.get_variable_value(inputs[0])
+        qname = dns_query.qname.decode()
+
+        state_machine.set_variable_value(outputs[0], qname)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -522,7 +581,7 @@ class DNSPrimitives:
         dns_packet = state_machine.get_variable_value(inputs[0])
         response_packet = state_machine.get_variable_value(inputs[1])
 
-        dns_packet[DNS].an = response_packet
+        dns_packet['DNS'].an = response_packet
 
         state_machine.set_variable_value(outputs[0], dns_packet)
 
@@ -557,6 +616,6 @@ class DNSPrimitives:
         dns_packet = state_machine.get_variable_value(inputs[0])
         response_packet = state_machine.get_variable_value(inputs[1])
 
-        dns_packet[DNS].ar = response_packet[DNS].an
+        dns_packet['DNS'].ar = response_packet['DNS'].an
 
         state_machine.set_variable_value(outputs[0], dns_packet)

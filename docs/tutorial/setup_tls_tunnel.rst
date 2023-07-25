@@ -78,15 +78,34 @@ The root CA has now signed the CSRs and provided you with the signed certificate
 Step 3: Configuration for Each Endpoint
 ---------------------------------------
 
-With the root CA certificate and the endpoint's private certificate generated, you can configure each endpoint using a JSON configuration file, as shown below:
+With the root CA certificate and the endpoint's private certificate generated, you can configure each endpoint using a JSON configuration file (conf_endpointX.json), as shown below:
 
 .. code-block:: json
 
    {
 	"ROOT_CERTIFICATE": "root_ca.crt",
-	"PRIVATE_CERTIFICATE": "endpoint1.pem",
+	"PRIVATE_CERTIFICATE": "endpointX.pem",
 	"DESTINATION_IP": "192.168.122.247",
 	"SERVER_PORT": "443"
    }
 
-Replace "endpoint1.pem" with the respective filename for each endpoint, and adjust "destination_ip" and "server_port" as necessary for your network configuration.
+**Note:** The endpoint acting as the server doesn't need to specify an IP address in the configuration file. The server endpoint will automatically listen for incoming connections on all available network interfaces, making it accessible to other endpoints in the network without explicitly specifying an IP address. Replace "X" with the respective endpoint number (e.g., endpoint1, endpoint2) in the filename and adjust "SERVER_PORT" as necessary for your network configuration.
+
+
+Inventory of Files on Each Machine
+----------------------------------
+
+To guarantee that you possess all the necessary files for each TLS endpoint, the following list outlines the required files across your various machines:
+
+Root CA Machine:
+~~~~~~~~~~~~~~~~
+
+1. `root_ca.key`: The private key for the root CA.
+2. `root_ca.crt`: The self-signed root CA certificate that was generated in Step 1. This certificate was used to sign certificates for TLS endpoints.
+
+Endpoint Machines (e.g., `endpoint1`, `endpoint2`, etc.):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. `endpointX.pem`: A combined file containing both the private key and the signed certificate for the respective TLS endpoint (e.g., `endpoint1.pem` for `endpoint1`). This file is used by the program that requires both the private key and certificate in a single file.
+2. `conf_endpointX.json`: The JSON configuration file for each endpoint, specifying the root CA certificate, the file containing the private key and the certificate of the endpoint, destination IP, and server port (e.g., `conf_endpoint1.json` for `endpoint1`).
+3. `root_ca.crt`: The self-signed root CA certificate that was generated in Step 1. This certificate is used to trust other endpoint certificates.

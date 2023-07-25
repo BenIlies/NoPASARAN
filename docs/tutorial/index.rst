@@ -27,3 +27,28 @@ To establish an end-to-end control channel in NoPASARAN, you can follow the step
    :maxdepth: 1
 
    TLS Mutual Authenticated End-to-End Tunnel <setup_tls_tunnel>
+
+
+Temporary Section: Unaddressed Problems
+---------------------------------------
+
+This section deals with problems that have not been addressed yet.
+
+Handling Kernel Packets After Receiving Raw Packets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using raw packets in NoPASARAN, the kernel might still send certain packets that are not intended to be part of the scenarios. To prevent these unwanted packets from affecting the testing environment, we can drop specific types of packets using `iptables`:
+
+1. Drop output ICMP packets for UDP with "host unreachable" message:
+
+.. code-block:: bash
+
+   iptables -A OUTPUT -p icmp --icmp-type destination-unreachable -j DROP
+
+2. Drop output TCP packets with the "RST" (reset) flag set:
+
+.. code-block:: bash
+
+   iptables -A OUTPUT -p tcp --tcp-flags RST RST -j DROP
+
+These rules ensure that the kernel does not send unwanted packets, maintaining the integrity and predictability of the scenarios involving raw packets.

@@ -35,7 +35,7 @@ class IPPrimitives:
         ip_packet = state_machine.get_variable_value(inputs[0])
         src_ip = state_machine.get_variable_value(inputs[1])
 
-        ip_packet.src = src_ip
+        ip_packet[IP].src = src_ip
 
         state_machine.set_variable_value(outputs[0], ip_packet)
 
@@ -70,7 +70,7 @@ class IPPrimitives:
         ip_packet = state_machine.get_variable_value(inputs[0])
         dst_ip = state_machine.get_variable_value(inputs[1])
 
-        ip_packet.dst = dst_ip
+        ip_packet[IP].dst = dst_ip
 
         state_machine.set_variable_value(outputs[0], ip_packet)
 
@@ -102,7 +102,7 @@ class IPPrimitives:
             None
         """
         ip_packet = state_machine.get_variable_value(inputs[0])
-        src_ip = ip_packet.src
+        src_ip = ip_packet[IP].src
 
         state_machine.set_variable_value(outputs[0], src_ip)
 
@@ -134,7 +134,7 @@ class IPPrimitives:
             None
         """
         ip_packet = state_machine.get_variable_value(inputs[0])
-        dst_ip = ip_packet.dst
+        dst_ip = ip_packet[IP].dst
 
         state_machine.set_variable_value(outputs[0], dst_ip)
 
@@ -169,7 +169,7 @@ class IPPrimitives:
         ip_packet = state_machine.get_variable_value(inputs[0])
         ttl_value = state_machine.get_variable_value(inputs[1])
 
-        ip_packet.ttl = ttl_value
+        ip_packet[IP].ttl = ttl_value
 
         state_machine.set_variable_value(outputs[0], ip_packet)
 
@@ -201,6 +201,6 @@ class IPPrimitives:
             None
         """
         ip_packet = state_machine.get_variable_value(inputs[0])
-        ttl_value = ip_packet.ttl
+        ttl_value = ip_packet[IP].ttl
 
         state_machine.set_variable_value(outputs[0], ttl_value)

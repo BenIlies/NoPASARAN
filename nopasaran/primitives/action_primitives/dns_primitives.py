@@ -614,8 +614,8 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        response_packet = state_machine.get_variable_value(inputs[1])
+        additional_response = state_machine.get_variable_value(inputs[1])
 
-        dns_packet['DNS'].ar = response_packet['DNS'].an
+        dns_packet['DNS'].ar = additional_response
 
         state_machine.set_variable_value(outputs[0], dns_packet)

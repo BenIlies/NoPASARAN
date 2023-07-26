@@ -585,6 +585,35 @@ class DNSPrimitives:
 
         state_machine.set_variable_value(outputs[0], dns_packet)
 
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_DNS_answer_from_DNS_packet(inputs, outputs, state_machine):
+        """
+        Get the DNS answer field from a DNS packet.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable containing the DNS packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the DNS answer.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        dns_answer = dns_packet.an
+
+        state_machine.set_variable_value(outputs[0], dns_answer)
+
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -619,3 +648,32 @@ class DNSPrimitives:
         dns_packet['DNS'].ar = additional_response
 
         state_machine.set_variable_value(outputs[0], dns_packet)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_DNS_additional_answer_from_DNS_packet(inputs, outputs, state_machine):
+        """
+        Get the DNS additional answer field from a DNS packet.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable containing the DNS packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the DNS additional answer.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        dns_additional_answer = dns_packet.ar
+
+        state_machine.set_variable_value(outputs[0], dns_additional_answer)

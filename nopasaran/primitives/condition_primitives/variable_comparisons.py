@@ -137,7 +137,7 @@ class VariableComparisons:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)
-    def empty(inputs, outputs, state_variables):
+    def no_value(inputs, outputs, state_variables):
         """
         Check if the variable from the machine, whose name is provided as input, is None.
 

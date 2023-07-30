@@ -166,3 +166,67 @@ class DataManipulationPrimitives:
         input_list = state_machine.get_variable_value(inputs[0])
         first_element = input_list[0]
         state_machine.set_variable_value(outputs[0], first_element)
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def increment(inputs, outputs, state_machine):
+        """
+        Increment the value of a variable stored in the machine's state by a specified amount.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of a variable representing the value to be incremented.
+                - The amount by which the value should be incremented.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
+                The name of the variable to store the result of the increment operation.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        old_value = state_machine.get_variable_value(inputs[0])
+        increment_amount = inputs[1]
+        incremented_value = old_value + increment_amount
+        state_machine.set_variable_value(outputs[0], incremented_value)
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def decrement(inputs, outputs, state_machine):
+        """
+        Decrement the value of a variable stored in the machine's state by a specified amount.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                1. The name of a variable representing the value to be decremented.
+                2. The amount by which the value should be decremented.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
+                The name of the variable to store the result of the decrement operation.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        old_value = state_machine.get_variable_value(inputs[0])
+        decrement_amount = inputs[1]
+        decremented_value = old_value - decrement_amount
+        state_machine.set_variable_value(outputs[0], decremented_value)

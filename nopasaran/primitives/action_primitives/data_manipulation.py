@@ -194,8 +194,8 @@ class DataManipulationPrimitives:
         Returns:
             None
         """
-        old_value = state_machine.get_variable_value(inputs[0])
-        increment_amount = inputs[1]
+        old_value = int(state_machine.get_variable_value(inputs[0]))
+        increment_amount = int(inputs[1])
         incremented_value = old_value + increment_amount
         state_machine.set_variable_value(outputs[0], incremented_value)
 
@@ -215,8 +215,8 @@ class DataManipulationPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
-                1. The name of a variable representing the value to be decremented.
-                2. The amount by which the value should be decremented.
+                - The name of a variable representing the value to be decremented.
+                - The amount by which the value should be decremented.
             
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
                 The name of the variable to store the result of the decrement operation.
@@ -226,7 +226,7 @@ class DataManipulationPrimitives:
         Returns:
             None
         """
-        old_value = state_machine.get_variable_value(inputs[0])
-        decrement_amount = inputs[1]
+        old_value = int(state_machine.get_variable_value(inputs[0]))
+        decrement_amount = int(inputs[1])
         decremented_value = old_value - decrement_amount
         state_machine.set_variable_value(outputs[0], decremented_value)

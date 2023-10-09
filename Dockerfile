@@ -22,5 +22,8 @@ RUN git clone https://github.com/BenIlies/NoPASARAN.git
 # Set working directory to NoPASARAN
 WORKDIR /NoPASARAN
 
+### Temporary checkout branch
+RUN git checkout deploy-nopasaran
+
 # Install Python dependencies
 RUN python -m pip install -r requirements.txt

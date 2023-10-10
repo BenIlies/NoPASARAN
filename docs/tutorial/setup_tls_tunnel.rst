@@ -104,7 +104,7 @@ Root CA Machine:
 2. `root_ca.crt`: The self-signed root CA certificate that was generated in Step 1. This certificate was used to sign certificates for TLS endpoints.
 
 Endpoint Machines (e.g., `endpoint1`, `endpoint2`, etc.):
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. `endpointX.pem`: A combined file containing both the private key and the signed certificate for the respective TLS endpoint (e.g., `endpoint1.pem` for `endpoint1`). This file is used by the program that requires both the private key and certificate in a single file.
 2. `conf_endpointX.json`: The JSON configuration file for each endpoint, specifying the root CA certificate, the file containing the private key and the certificate of the endpoint, destination IP, and server port (e.g., `conf_endpoint1.json` for `endpoint1`).

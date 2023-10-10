@@ -32,6 +32,8 @@ To establish an end-to-end control channel in NoPASARAN, you can follow the step
 Node Certificates
 -----------------
 
+SSH authentication are used to enhance security through mutual authentication. These certificates are issued by a certification authority for key management.
+
 .. toctree::
    :maxdepth: 1
 

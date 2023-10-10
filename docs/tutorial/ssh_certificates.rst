@@ -66,7 +66,13 @@ Then, restart sshd:
 
 2. **On the SSH client**:
 
-For the ssh client to use the certificate, append the CA's public key to the ``known_hosts`` file.
+To trust the server's certificate, append the host CA's public key to the ``known_hosts`` file using the `@cert-authority` pattern. This pattern tells the SSH client to trust any host certificate signed by the given CA for hosts matching the pattern `*.example-host.com`:
+
+.. code-block:: bash
+
+   echo "@cert-authority *.example-host.com $(cat host_ca.pub)" >> ~/.ssh/known_hosts
+
+This means that any SSH server whose domain matches `*.example-host.com` and presents a certificate signed by the host CA will be automatically trusted by the client without the need to verify its public key individually.
 
 Issuing User Certificates
 -------------------------
@@ -96,6 +102,15 @@ For user authentication, you'll add the CA's public key to the SSH server. Place
 
     TrustedUserCAKeys /etc/ssh/user_ca.pub
 
+To increase security, disable password and challenge-response authentication:
+
+.. code-block:: bash
+
+   PasswordAuthentication no
+   ChallengeResponseAuthentication no
+
+This ensures that only key-based or certificate-based authentication methods are permitted.
+
 Then, restart sshd:
 
 .. code-block:: bash
@@ -122,4 +137,4 @@ You should now be able to SSH into the server using certificate-based authentica
 
 .. code-block:: bash
 
-    $ ssh -vv [your-server] 2>&1 | grep certificate
+    ssh -vv [your-server] 2>&1 | grep certificate

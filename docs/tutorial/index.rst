@@ -29,6 +29,14 @@ To establish an end-to-end control channel in NoPASARAN, you can follow the step
 
    TLS Mutual Authenticated End-to-End Tunnel <setup_tls_tunnel>
 
+Node Certificates
+-----------------
+
+.. toctree::
+   :maxdepth: 1
+
+   SSH Certificates & Node Authentication <ssh_certificates>
+
 
 Temporary Section: Unaddressed Problems
 ---------------------------------------

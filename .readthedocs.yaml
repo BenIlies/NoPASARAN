@@ -8,6 +8,8 @@ version: 2
 # Set the building environment
 build:
   os: ubuntu-22.04
+  tools:
+    python: "3.10"
 
 # Build from the docs/ directory with Sphinx
 sphinx:

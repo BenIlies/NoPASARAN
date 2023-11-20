@@ -35,6 +35,19 @@ You may cite this work as follows:
      publisher={Index Copernicus}
    }
 
+.. note::
+   
+   .. raw:: html
+
+      <div style="background-color: #ffebe9; padding: 10px;">
+         <p>
+            <strong>Temporary Documentation:</strong> 
+            <a href="https://nopasaran-cheatsheet.readthedocs.io">https://nopasaran-cheatsheet.readthedocs.io</a>
+            <br>
+            Note: This temporary documentation will be integrated soon. NoPASARAN is currently under active development.
+         </p>
+      </div>
+
 Join the discussion on `Gitter <https://app.gitter.im/#/room/#nopasaran:gitter.im>`_.
 
 Contents

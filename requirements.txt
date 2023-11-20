@@ -3,5 +3,3 @@ Twisted
 pyOpenSSL
 service_identity
 ipsecparse
-ansible
-certbot

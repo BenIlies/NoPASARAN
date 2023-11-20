@@ -5,6 +5,10 @@
 # Required
 version: 2
 
+# Set the building environment
+build:
+  os: ubuntu-22.04
+
 # Build from the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py

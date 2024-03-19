@@ -32,6 +32,12 @@ def set_UDP_sport(packet, sport):
 def set_UDP_dport(packet, dport):
 	packet['UDP'].dport = int(dport)
 
+def get_UDP_sport(packet):
+	return packet['UDP'].sport
+
+def get_UDP_dport(packet):
+	return packet['UDP'].sport
+
 def get_TCP_sport(packet):
 	return packet['TCP'].sport
 
@@ -86,3 +92,6 @@ def set_random_int(min, max):
 
 def set_random_float(min, max):
 	return random.uniform(int(min), int(max))
+
+def get_ICMP_payload(packet):
+	return packet[ICMP].payload

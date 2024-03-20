@@ -36,7 +36,7 @@ def get_UDP_sport(packet):
 	return packet['UDP'].sport
 
 def get_UDP_dport(packet):
-	return packet['UDP'].sport
+	return packet['UDP'].dport
 
 def get_TCP_sport(packet):
 	return packet['TCP'].sport

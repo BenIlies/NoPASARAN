@@ -1,4 +1,4 @@
-from scapy.all import IP, TCP, UDP
+from scapy.all import IP, TCP, UDP, ICMP
 import random
 from scapy.layers.tls.all import *
 

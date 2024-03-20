@@ -31,8 +31,7 @@ class UDPPrimitives:
         Returns:
             None
         """
-        udp_packet = UDP()
-        state_machine.set_variable_value(outputs[0], udp_packet)
+        state_machine.set_variable_value(outputs[0], utils.create_UDP_packet())
 
 
     @staticmethod

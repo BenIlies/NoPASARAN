@@ -93,5 +93,8 @@ def set_random_int(min, max):
 def set_random_float(min, max):
 	return random.uniform(int(min), int(max))
 
+def create_ICMP_packet():
+	return IP()/ICMP()
+
 def get_ICMP_payload(packet):
 	return packet[ICMP].payload

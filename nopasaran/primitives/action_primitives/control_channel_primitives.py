@@ -197,7 +197,7 @@ class ControlChannelPrimitives:
         controller_protocol = state_machine.get_variable_value(inputs[0])
         if controller_protocol:
             data_to_send = [state_machine.get_variable_value(input_value) for input_value in inputs[1:]]
-            controller_protocol.send_sync(data_to_send)
+            deferToThread(controller_protocol.send_sync, data_to_send)
             state_machine.trigger_event(EventNames.SYNC_SENT.name)
 
     @staticmethod

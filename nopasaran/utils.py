@@ -1,6 +1,5 @@
 from scapy.all import IP, TCP, UDP, ICMP
 import random
-from scapy.layers.tls.all import *
 
 def create_TCP_packet():
 	return IP()/TCP()

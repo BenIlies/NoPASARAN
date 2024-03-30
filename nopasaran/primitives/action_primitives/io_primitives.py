@@ -60,4 +60,4 @@ class IOPrimitives:
         """
 
         with open(inputs[0], 'a') as file:
-            file.write(inputs[0] + "\n")
+            file.write(inputs[1] + "\n")

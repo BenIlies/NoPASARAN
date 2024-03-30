@@ -259,14 +259,14 @@ class DataManipulationPrimitives:
         print(state_machine.get_variable_value(inputs[0]))
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=0)
+    @parsing_decorator(input_args=1, output_args=1)
     def print_packet(inputs, outputs, state_machine):
         """
         Print a packet.
 
         Number of input arguments: 1
 
-        Number of output arguments: 0
+        Number of output arguments: 1
 
         Optional input arguments: No
 
@@ -276,11 +276,12 @@ class DataManipulationPrimitives:
             inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
                 - The name of a variable whose value is the packet to be printed.
             
-            outputs (List[str]): The list of output variable names.
+            outputs (List[str]): The list of output variable names.  It contains one mandatory output argument:
+                - The name of a variable to store the packet information.
             
             state_machine: The state machine object.
 
         Returns:
             None
         """
-        utils.print_packet(state_machine.get_variable_value(inputs[0]))
+        return utils.print_packet(state_machine.get_variable_value(inputs[0]))

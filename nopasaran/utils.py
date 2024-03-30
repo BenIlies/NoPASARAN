@@ -101,4 +101,4 @@ def get_ICMP_payload(packet):
 
 def print_packet(packet):
 	# Packet.show(packet)
-	packet.show(dump=True)
+	return packet.show(dump=True)

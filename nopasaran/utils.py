@@ -1,4 +1,4 @@
-from scapy.all import IP, TCP, UDP, ICMP
+from scapy.all import IP, TCP, UDP, ICMP, Packet
 import random
 from scapy.layers.tls.all import *
 
@@ -98,3 +98,6 @@ def create_ICMP_packet():
 
 def get_ICMP_payload(packet):
 	return packet[ICMP].payload
+
+def print_packet(packet):
+	Packet.show(packet)

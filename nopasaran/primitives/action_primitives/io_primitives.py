@@ -115,4 +115,5 @@ class IOPrimitives:
         Returns:
             None
         """
-        return utils.print_packet(state_machine.get_variable_value(inputs[0]))
+        output = utils.print_packet(state_machine.get_variable_value(inputs[0]))
+        state_machine.set_variable_value(outputs[0], output)

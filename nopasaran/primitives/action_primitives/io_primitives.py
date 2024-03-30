@@ -59,8 +59,8 @@ class IOPrimitives:
             None
         """
 
-        with open(inputs[0], 'a') as file:
-            file.write(inputs[1] + "\n")
+        with open(state_machine.get_variable_value(inputs[0]), 'a') as file:
+            file.write(state_machine.get_variable_value(inputs[1]) + "\n")
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)

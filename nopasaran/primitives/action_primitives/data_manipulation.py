@@ -230,3 +230,31 @@ class DataManipulationPrimitives:
         decrement_amount = int(inputs[1])
         decremented_value = old_value - decrement_amount
         state_machine.set_variable_value(outputs[0], decremented_value)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=0)
+    def print(inputs, outputs, state_machine):
+        """
+        Print a variable.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 0
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of a variable to be printed.
+            
+            outputs (List[str]): The list of output variable names.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        print(state_machine.get_variable_value(inputs[0]))
+        

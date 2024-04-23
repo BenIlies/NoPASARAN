@@ -144,7 +144,7 @@ class IOPrimitives:
         Returns:
             None
         """
-        os.system(state_machine.get_variable_value(inputs[0])
+        os.system(state_machine.get_variable_value(inputs[0]))
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)

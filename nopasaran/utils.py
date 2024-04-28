@@ -1,4 +1,5 @@
 from scapy.all import IP, TCP, UDP, ICMP, Packet
+from scapy.utils import rdpcap
 import random
 from scapy.layers.tls.all import *
 
@@ -102,3 +103,8 @@ def get_ICMP_payload(packet):
 def print_packet(packet):
 	# Packet.show(packet)
 	return packet.show(dump=True)
+
+def get_packet_from_capture(capture_file, index):
+	pkts = rdpcap(capture_file)
+	return pkts[index]
+

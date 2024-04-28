@@ -172,3 +172,33 @@ class IOPrimitives:
             None
         """
         os.system('./' + state_machine.get_variable_value(inputs[0]))
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def get_packet_from_capture(inputs, outputs, state_machine):
+        """
+        Returns an indexed packet from a pcap capture.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input argument:
+                - The name of the pcap capture file.
+                - The index of the packet to extract from the pcap capture.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
+                - The extracted packet.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        output = utils.get_packet_from_capture(state_machine.get_variable_value(inputs[0]), state_machine.get_variable_value(inputs[1]))
+        state_machine.set_variable_value(outputs[0], output)

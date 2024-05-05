@@ -135,6 +135,37 @@ class UDPPrimitives:
 
         state_machine.set_variable_value(outputs[0], sport)
 
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_UDPerror_sport(inputs, outputs, state_machine):
+        """
+        Get the source port from the UDP layer of an ICMP error message.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the UDP packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the source port.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        packet = state_machine.get_variable_value(inputs[0])
+        sport = packet['UDPerror'].sport
+
+        state_machine.set_variable_value(outputs[0], sport)
+
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

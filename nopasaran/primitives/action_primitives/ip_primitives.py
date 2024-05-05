@@ -106,6 +106,37 @@ class IPPrimitives:
 
         state_machine.set_variable_value(outputs[0], src_ip)
 
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_IPerror_src(inputs, outputs, state_machine):
+        """
+        Get the source IP address from the IP layer of an ICMP error message.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the IP packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the source IP address.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        packet = state_machine.get_variable_value(inputs[0])
+        src_ip = packet['IPerror'].src
+
+        state_machine.set_variable_value(outputs[0], src_ip)
+
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

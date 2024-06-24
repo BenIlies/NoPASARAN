@@ -10,6 +10,8 @@ from nopasaran.primitives.action_primitives.tcp_primitives import TCPPrimitives
 from nopasaran.primitives.action_primitives.udp_primitives import UDPPrimitives
 from nopasaran.primitives.action_primitives.dns_primitives import DNSPrimitives
 from nopasaran.primitives.action_primitives.icmp_primitives import ICMPPrimitives
+from nopasaran.primitives.action_primitives.certificate_primitives import CertificatePrimitives
+from nopasaran.primitives.action_primitives.tls_primitives import TLSPrimitives
 
 class ActionPrimitives(Primitives):
     """
@@ -26,5 +28,7 @@ class ActionPrimitives(Primitives):
         TCPPrimitives, 
         UDPPrimitives,
         DNSPrimitives,
-        ICMPPrimitives
+        ICMPPrimitives,
+        CertificatePrimitives,
+        TLSPrimitives
         ]

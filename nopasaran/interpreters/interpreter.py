@@ -1,4 +1,5 @@
 import cmd
+import logging
 
 
 class Interpreter(cmd.Cmd):
@@ -52,7 +53,8 @@ class Interpreter(cmd.Cmd):
                     return func(arg, variable)
                 except AttributeError:
                     continue
-            return self.default(line, variable)
+            logging.error('[Interpreter] Primitive not recognized: "{}"'.format(cmd))
+            exit()
 
     def default(self, line, variable):
         """

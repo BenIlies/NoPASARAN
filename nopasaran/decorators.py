@@ -23,7 +23,7 @@ def parsing_decorator(input_args, output_args, optional_inputs=False, optional_o
         ParsingError: If an error occurs while parsing or executing the function.
     """
     def handle_parsing_error(func, message):
-        error_msg = f"Error while {message} '{func.__name__}':"
+        error_msg = f"Error while {message} '{func.__name__}'"
         logging.error("[Parsing] " + error_msg)
         raise ParsingError(error_msg)
 

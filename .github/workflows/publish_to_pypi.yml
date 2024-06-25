@@ -10,36 +10,36 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
-    - name: Install pip
-      run: python -m pip install --upgrade pip
+      - name: Install pip
+        run: python -m pip install --upgrade pip
 
-    - name: Install wheel
-      run: pip install wheel
+      - name: Install wheel
+        run: pip install wheel
 
-    - name: Install requests
-      run: pip install requests
-      
-    - name: Install packaging
-      run: pip install packaging
+      - name: Install requests
+        run: pip install requests
 
-    - name: Fetch current version, increment patch version, and update setup.py
-      run: |
-        VERSION=$(python -c "import requests; from packaging.version import Version; print(requests.get('https://pypi.org/pypi/nopasaran/json').json()['info']['version'])")
-        NEW_VERSION=$(python -c "from packaging.version import Version; v = Version('$VERSION'); new_version = str(Version('.'.join(map(str, [v.release[0], v.release[1], v.release[2] + 1])))); print(new_version)")
-        sed -i "s/version=.*/version='$NEW_VERSION',/" setup.py
+      - name: Install packaging
+        run: pip install packaging
 
-    - name: Build a binary wheel and a source tarball
-      run: python setup.py sdist bdist_wheel
+      - name: Fetch current version, increment patch version, and update setup.py
+        run: |
+          VERSION=$(python -c "import requests; from packaging.version import Version; print(requests.get('https://pypi.org/pypi/nopasaran/json').json()['info']['version'])")
+          NEW_VERSION=$(python -c "from packaging.version import Version; v = Version('$VERSION'); new_version = str(Version('.'.join(map(str, [v.release[0], v.release[1], v.release[2] + 1])))); print(new_version)")
+          sed -i "s/version=.*/version='$NEW_VERSION',/" setup.py
 
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Build a binary wheel and a source tarball
+        run: python setup.py sdist bdist_wheel
+
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}

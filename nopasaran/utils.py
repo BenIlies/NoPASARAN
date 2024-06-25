@@ -1,5 +1,3 @@
-import logging
-import ssl
 import random
 
 from scapy.all import IP, TCP, UDP, ICMP

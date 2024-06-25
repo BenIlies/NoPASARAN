@@ -13,7 +13,9 @@ class EventNames(Enum):
     PACKET_SENT = 2
     PACKET_AVAILABLE = 3
     DONE = 4
-    TIMEOUT = 5
-    READY = 6
-    SYNC_SENT = 7
-    SYNC_AVAILABLE = 8
+    ERROR = 5
+    TIMEOUT = 6
+    READY = 7
+    SYNC_SENT = 8
+    SYNC_AVAILABLE = 9
+    CONNECTION_ENDING = 10

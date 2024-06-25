@@ -1,5 +1,8 @@
-from scapy.all import IP, TCP, UDP, ICMP
+import logging
+import ssl
 import random
+
+from scapy.all import IP, TCP, UDP, ICMP
 
 def create_TCP_packet():
 	return IP()/TCP()
@@ -97,3 +100,9 @@ def create_ICMP_packet():
 
 def get_ICMP_payload(packet):
 	return packet[ICMP].payload
+
+def handle_client_connection(client_socket):
+    try:
+        client_socket.recv(1024)
+    except Exception as e:
+        raise(e)

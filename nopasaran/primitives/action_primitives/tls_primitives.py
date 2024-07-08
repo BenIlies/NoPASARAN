@@ -106,8 +106,8 @@ class TLSPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names. It contains five mandatory input arguments:
-                - The name of the variable containing the certificate string.
-                - The name of the variable containing the key string.
+                - The name of the variable containing the certificate bytes.
+                - The name of the variable containing the key bytes.
                 - The name of the variable containing the host.
                 - The name of the variable containing the port.
                 - The name of the variable containing the timeout.
@@ -119,8 +119,8 @@ class TLSPrimitives:
         Returns:
             None
         """
-        cert_str = state_machine.get_variable_value(inputs[0])
-        key_str = state_machine.get_variable_value(inputs[1])
+        cert_bytes = state_machine.get_variable_value(inputs[0])
+        key_bytes = state_machine.get_variable_value(inputs[1])
         host = state_machine.get_variable_value(inputs[2])
         port = int(state_machine.get_variable_value(inputs[3]))
         timeout = float(state_machine.get_variable_value(inputs[4]))
@@ -133,9 +133,9 @@ class TLSPrimitives:
 
         # Create temporary files for the certificate and key
         with tempfile.NamedTemporaryFile(delete=True) as cert_tempfile, tempfile.NamedTemporaryFile(delete=True) as key_tempfile:
-            cert_tempfile.write(cert_str.encode('utf-8'))
+            cert_tempfile.write(cert_bytes)
             cert_tempfile.flush()
-            key_tempfile.write(key_str.encode('utf-8'))
+            key_tempfile.write(key_bytes)
             key_tempfile.flush()
 
             # Wrap the socket with SSL
@@ -155,5 +155,4 @@ class TLSPrimitives:
             finally:
                 # Close the server socket
                 server_socket.close()
-            
-            
+                

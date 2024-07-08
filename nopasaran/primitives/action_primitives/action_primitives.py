@@ -1,5 +1,6 @@
 from nopasaran.primitives.primitives import Primitives
 from nopasaran.primitives.action_primitives.data_manipulation import DataManipulationPrimitives
+from nopasaran.primitives.action_primitives.timing_primitives import TimingPrimitives
 from nopasaran.primitives.action_primitives.nested_machine_utils import NestedMachinePrimitives
 from nopasaran.primitives.action_primitives.data_channel_primitives import DataChannelPrimitives
 from nopasaran.primitives.action_primitives.control_channel_primitives import ControlChannelPrimitives
@@ -19,6 +20,7 @@ class ActionPrimitives(Primitives):
     """
     classes = [
         DataManipulationPrimitives, 
+        TimingPrimitives,
         NestedMachinePrimitives, 
         DataChannelPrimitives, 
         ControlChannelPrimitives, 

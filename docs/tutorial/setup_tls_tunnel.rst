@@ -24,7 +24,7 @@ Step 1: Generate the Root CA Certificate
 
    This command creates a self-signed certificate (root_ca.crt) using the private key generated in the previous step.
 
-   Provide the required information when prompted. The information typically includes the Common Name (CN), organization details, and other details related to your root CA.
+   Provide the required information when prompted. The information typically includes organization details and other relevant details related to your root CA.
 
    The root CA certificate (root_ca.crt) is now created and ready to be used to sign certificates for TLS endpoints.
 

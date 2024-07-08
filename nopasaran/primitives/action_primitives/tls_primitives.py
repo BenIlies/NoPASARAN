@@ -14,12 +14,12 @@ class TLSPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=1)
+    @parsing_decorator(input_args=3, output_args=1)
     def get_certificate(inputs, outputs, state_machine):
         """
-        Retrieve the certificate from a given hostname and port, and store it in an output variable in the machine's state.
+        Retrieve the certificate from a given IP address, port, and hostname, and store it in an output variable in the machine's state.
 
-        Number of input arguments: 2
+        Number of input arguments: 3
 
         Number of output arguments: 1
 
@@ -28,7 +28,7 @@ class TLSPrimitives:
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments (hostname and port).
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments (IP address, port, and hostname).
 
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the retrieved certificate.
 
@@ -37,15 +37,16 @@ class TLSPrimitives:
         Returns:
             None
         """
-        hostname = state_machine.get_variable_value(inputs[0])
+        ip_address = state_machine.get_variable_value(inputs[0])
         port = int(state_machine.get_variable_value(inputs[1]))
+        hostname = state_machine.get_variable_value(inputs[2])
 
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
         conn = context.wrap_socket(socket.socket(socket.AF_INET), server_hostname=hostname)
-        conn.connect((hostname, port))
+        conn.connect((ip_address, port))
         cert_bin = conn.getpeercert(True)
         conn.close()
 

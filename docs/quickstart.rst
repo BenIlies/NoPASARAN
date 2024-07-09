@@ -56,31 +56,17 @@ Installing as a Python Package:
 Usage
 -----
 
-NoPASARAN can be run in either the WORKER or PROXY role:
+To run NoPASARAN:
 
-- To run as a WORKER:
+.. code-block:: bash
 
-  .. code-block:: bash
+python main.py --scenario=<path-to-json-scenario-file>
 
-     python main.py WORKER --scenario=<path-to-json-scenario-file>
+Or using the Python package:
 
-  Or using the Python package:
+.. code-block:: bash
 
-  .. code-block:: bash
-
-     nopasaran WORKER --scenario=<path-to-json-scenario-file>
-
-- To run as a PROXY:
-
-  .. code-block:: bash
-
-     python main.py PROXY
-
-  Or using the Python package:
-
-  .. code-block:: bash
-
-     nopasaran PROXY
+nopasaran --scenario=<path-to-json-scenario-file>
 
 Replace <path-to-json-scenario-file> with the path to your actual JSON scenario file.
 

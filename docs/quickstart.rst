@@ -60,13 +60,13 @@ To run NoPASARAN:
 
 .. code-block:: bash
 
-python main.py --scenario=<path-to-json-scenario-file>
+   python main.py --scenario=<path-to-json-scenario-file>
 
 Or using the Python package:
 
 .. code-block:: bash
 
-nopasaran --scenario=<path-to-json-scenario-file>
+   nopasaran --scenario=<path-to-json-scenario-file>
 
 Replace <path-to-json-scenario-file> with the path to your actual JSON scenario file.
 

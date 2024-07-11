@@ -28,7 +28,7 @@ class StateMachine:
         self.redirections = {}
         self.parameters = parameters
         self.root_state_machine = self if root_state_machine is None else root_state_machine
-        self.returned_value = None
+        self.returned = None
         self.actions = ActionQueue()
         logging.info('[State Machine - {}] Parameters received: {}'.format(self.machine_id, parameters))
         logging.debug('[State Machine - {}] Initialized.'.format(self.machine_id))
@@ -45,6 +45,9 @@ class StateMachine:
                 logging.warning('[State Machine - {}] Dequeue returned None. Stopping.'.format(self.machine_id))
                 break
             self.execute_action(next_action)
+        if self.root_state_machine == self:
+            for returned in self.returned:
+                print(returned)
 
     def execute_action(self, action):
         """

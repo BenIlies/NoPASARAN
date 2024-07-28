@@ -13,6 +13,7 @@ from nopasaran.primitives.action_primitives.dns_primitives import DNSPrimitives
 from nopasaran.primitives.action_primitives.icmp_primitives import ICMPPrimitives
 from nopasaran.primitives.action_primitives.certificate_primitives import CertificatePrimitives
 from nopasaran.primitives.action_primitives.tls_primitives import TLSPrimitives
+from nopasaran.primitives.action_primitives.http_1_primitives import HTTP1Primitives
 
 class ActionPrimitives(Primitives):
     """
@@ -32,5 +33,6 @@ class ActionPrimitives(Primitives):
         DNSPrimitives,
         ICMPPrimitives,
         CertificatePrimitives,
-        TLSPrimitives
+        TLSPrimitives,
+        HTTP1Primitives
         ]

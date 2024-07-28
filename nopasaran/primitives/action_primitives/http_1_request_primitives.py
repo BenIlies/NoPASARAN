@@ -9,25 +9,32 @@ class HTTP1RequestPrimitives:
     Class containing HTTP/1.1 action primitives for the state machine.
     """
 
+class HTTP1Primitives:
+    """
+    Class containing HTTP/1.1 action primitives for the state machine.
+    """
+
     @staticmethod
-    @parsing_decorator(input_args=3, output_args=1)
+    @parsing_decorator(input_args=4, output_args=1)
     def construct_request_packet(inputs, outputs, state_machine):
         """
-        Construct an HTTP/1.1 GET request packet.
+        Construct an HTTP/1.1 request packet with a specified method.
 
-        Number of input arguments: 3
+        Number of input arguments: 4
             - The host
             - The path
             - The protocol ('http' or 'https')
+            - The HTTP method (e.g., 'GET', 'POST')
 
         Number of output arguments: 1
             - The request packet
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
+            inputs (List[str]): The list of input variable names. It contains four mandatory input arguments:
                 - The name of the variable containing the host.
                 - The name of the variable containing the path.
                 - The name of the variable containing the protocol.
+                - The name of the variable containing the HTTP method.
 
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
                 which is the name of the variable to store the constructed request packet.
@@ -40,9 +47,10 @@ class HTTP1RequestPrimitives:
         host = state_machine.get_variable_value(inputs[0])
         path = state_machine.get_variable_value(inputs[1])
         protocol = state_machine.get_variable_value(inputs[2])
+        method = state_machine.get_variable_value(inputs[3])
         
         port = 443 if protocol.lower() == 'https' else 80
-        request_packet = f"GET {path} HTTP/1.1\r\nHost: {host}\r\n\r\n".encode()
+        request_packet = f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n\r\n".encode()
 
         state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port))
 

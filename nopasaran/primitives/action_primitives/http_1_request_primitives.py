@@ -227,7 +227,7 @@ class HTTP1RequestPrimitives:
         """
         response = state_machine.get_variable_value(inputs[0])
         
-        body = response.content.split(b'\r\n\r\n', 1)[1].decode()
+        body = response.content.decode()
 
         state_machine.set_variable_value(outputs[0], body)
 

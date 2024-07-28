@@ -10,7 +10,7 @@ class HTTP1RequestPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=4, output_args=1)
+    @parsing_decorator(input_args=5, output_args=1)
     def construct_request_packet(inputs, outputs, state_machine):
         """
         Construct an HTTP/1.1 request packet with a specified method.

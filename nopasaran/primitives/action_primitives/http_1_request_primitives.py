@@ -15,8 +15,9 @@ class HTTP1RequestPrimitives:
         """
         Construct an HTTP/1.1 request packet with a specified method.
 
-        Number of input arguments: 4
+        Number of input arguments: 5
             - The host
+            - The port
             - The path
             - The protocol ('http' or 'https')
             - The HTTP method (e.g., 'GET', 'POST')
@@ -27,6 +28,7 @@ class HTTP1RequestPrimitives:
         Args:
             inputs (List[str]): The list of input variable names. It contains four mandatory input arguments:
                 - The name of the variable containing the host.
+                - The name of the variable containing the port.
                 - The name of the variable containing the path.
                 - The name of the variable containing the protocol.
                 - The name of the variable containing the HTTP method.
@@ -40,11 +42,11 @@ class HTTP1RequestPrimitives:
             None
         """
         host = state_machine.get_variable_value(inputs[0])
-        path = state_machine.get_variable_value(inputs[1])
-        protocol = state_machine.get_variable_value(inputs[2])
-        method = state_machine.get_variable_value(inputs[3])
-        
-        port = 443 if protocol.lower() == 'https' else 80
+        port = int(state_machine.get_variable_value(inputs[1]))
+        path = state_machine.get_variable_value(inputs[2])
+        protocol = state_machine.get_variable_value(inputs[3])
+        method = state_machine.get_variable_value(inputs[4])
+    
         request_packet = f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n\r\n".encode()
 
         state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port))

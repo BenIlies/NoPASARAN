@@ -9,11 +9,6 @@ class HTTP1RequestPrimitives:
     Class containing HTTP/1.1 action primitives for the state machine.
     """
 
-class HTTP1Primitives:
-    """
-    Class containing HTTP/1.1 action primitives for the state machine.
-    """
-
     @staticmethod
     @parsing_decorator(input_args=4, output_args=1)
     def construct_request_packet(inputs, outputs, state_machine):

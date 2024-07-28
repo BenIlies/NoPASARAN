@@ -1,3 +1,5 @@
+from nopasaran.definitions.events import EventNames
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from twisted.internet import threads
 
@@ -5,6 +7,7 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1' 
     
     routes = {}
+    state_machine = None
 
     def __getattr__(self, name):
         if name.startswith('do_'):
@@ -34,6 +37,10 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
 
         # Write the response body
         self.write_response_body(response_body)
+
+        # Trigger the DONE event
+        if self.state_machine:
+            self.state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
 
     def write_response_body(self, response_body):
         # Encode the response body
@@ -85,6 +92,7 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
 
 def run_server_in_thread(state_machine, port=8000):
     server_address = ('', port)
+    HTTP1ResponseHandler.state_machine = state_machine
     httpd_instance = HTTPServer(server_address, HTTP1ResponseHandler)
 
     # Running the server in a separate thread to allow Twisted to run concurrently

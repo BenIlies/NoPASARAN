@@ -1,4 +1,5 @@
 from nopasaran.decorators import parsing_decorator
+from nopasaran.definitions.events import EventNames
 
 from datetime import datetime, timedelta
 from email.utils import formatdate
@@ -200,6 +201,7 @@ class HTTP1RequestPrimitives:
         response = requests_raw.raw(url=url, data=request_packet)
 
         state_machine.set_variable_value(outputs[0], response)
+        state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from email.utils import formatdate
 import requests_raw
 
-class HTTP1Primitives:
+class HTTP1RequestPrimitives:
     """
     Class containing HTTP/1.1 action primitives for the state machine.
     """

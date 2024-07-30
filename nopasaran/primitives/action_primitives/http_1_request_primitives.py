@@ -45,7 +45,7 @@ class HTTP1RequestPrimitives:
             None
         """
         host = state_machine.get_variable_value(inputs[0])
-        port = int(state_machine.get_variable_value(inputs[1]))
+        port = str(state_machine.get_variable_value(inputs[1]))
         path = state_machine.get_variable_value(inputs[2])
         protocol = state_machine.get_variable_value(inputs[3])
         method = state_machine.get_variable_value(inputs[4])

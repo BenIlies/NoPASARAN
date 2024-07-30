@@ -108,11 +108,14 @@ def run_server_in_thread(state_machine, port, timeout):
         if httpd_instance:
             httpd_instance.shutdown()
             httpd_instance.server_close()
+            state_machine.set_variable_value('httpd_instance', None)
             state_machine.trigger_event(EventNames.TIMEOUT.name)
 
     # Running the server in a separate thread to allow Twisted to run concurrently
     def serve_forever():
         httpd_instance.serve_forever()
+
+    state_machine.set_variable_value('httpd_instance', httpd_instance)
 
     server_thread = threads.deferToThread(serve_forever)
     
@@ -121,7 +124,7 @@ def run_server_in_thread(state_machine, port, timeout):
         if not request_received.wait(timeout):
             on_timeout()
     
-    return httpd_instance, server_thread
+    return server_thread
 
 def stop_server(state_machine):
     httpd_instance = state_machine.get_variable_value('httpd_instance')

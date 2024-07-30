@@ -1,15 +1,14 @@
-from nopasaran.definitions.events import EventNames
-
 import threading
-
+from nopasaran.definitions.events import EventNames
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from twisted.internet import threads
 
 class HTTP1ResponseHandler(BaseHTTPRequestHandler):
-    protocol_version = 'HTTP/1.1' 
+    protocol_version = 'HTTP/1.1'
     
     routes = {}
     state_machine = None
+    request_received = None
 
     def __getattr__(self, name):
         if name.startswith('do_'):
@@ -40,7 +39,12 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         # Write the response body
         self.write_response_body(response_body)
 
-        # Trigger the DONE event
+        # Notify that a request has been received
+        if self.request_received:
+            with self.request_received:
+                self.request_received.notify_all()
+
+        # Trigger the REQUEST_RECEIVED event
         if self.state_machine:
             self.state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
 
@@ -94,7 +98,9 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
 
 def run_server_in_thread(state_machine, port, timeout):
     server_address = ('', port)
+    request_received = threading.Condition()
     HTTP1ResponseHandler.state_machine = state_machine
+    HTTP1ResponseHandler.request_received = request_received
     httpd_instance = HTTPServer(server_address, HTTP1ResponseHandler)
 
     # Function to stop the server and trigger TIMEOUT event
@@ -110,25 +116,14 @@ def run_server_in_thread(state_machine, port, timeout):
         httpd_instance.serve_forever()
 
     state_machine.set_variable_value('httpd_instance', httpd_instance)
-    state_machine.trigger_event(EventNames.SERVER_STARTED.name)
 
     server_thread = threads.deferToThread(serve_forever)
     
-    # Setup the timeout timer if a timeout is specified
-    if timeout:
-        timer = threading.Timer(timeout, on_timeout)
-        timer.start()
-
-    # Define a function to stop the timer if the server stops or is interrupted
-    def stop_timer():
-        if timer.is_alive():
-            timer.cancel()
-        if state_machine:
-            state_machine.trigger_event(EventNames.SERVER_STOPPED.name)
+    # Block until a request is received or the timeout occurs
+    with request_received:
+        if not request_received.wait(timeout):
+            on_timeout()
     
-    # Attach the stop_timer function to the server_thread's deferred object
-    server_thread.addBoth(lambda _: stop_timer())
-
     return server_thread
 
 def stop_server(state_machine):

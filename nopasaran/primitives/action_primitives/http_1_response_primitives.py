@@ -123,7 +123,7 @@ class HTTP1ResponsePrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=4, output_args=0)
-    def add_http_1_header(inputs, outputs, state_machine):
+    def add_http_1_response_header(inputs, outputs, state_machine):
         """
         Add a header to a route on the HTTP server.
 
@@ -158,7 +158,7 @@ class HTTP1ResponsePrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=3, output_args=0)
-    def remove_http_1_header(inputs, outputs, state_machine):
+    def remove_http_1_response_header(inputs, outputs, state_machine):
         """
         Remove a header from a route on the HTTP server.
 
@@ -190,7 +190,7 @@ class HTTP1ResponsePrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)
-    def add_content_length_header(inputs, outputs, state_machine):
+    def add_http_1_response_content_length_header(inputs, outputs, state_machine):
         """
         Add a Content-Length header to a route on the HTTP server.
 

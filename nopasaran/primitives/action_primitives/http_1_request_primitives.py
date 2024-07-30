@@ -136,6 +136,84 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
+    def add_headers(inputs, outputs, state_machine):
+        """
+        Add multiple headers to an HTTP/1.1 request packet.
+
+        Number of input arguments: 2
+            - The request packet
+            - The headers (dictionary of header name-value pairs)
+
+        Number of output arguments: 1
+            - The modified request packet
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the request packet.
+                - The name of the variable containing the headers dictionary.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the modified request packet.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        headers = state_machine.get_variable_value(inputs[1])
+        
+        request_str = request_packet.decode()
+        insert_pos = request_str.find("\r\n\r\n")
+        if insert_pos != -1:
+            headers_str = ''.join([f"\r\n{header_name}: {header_value}" for header_name, header_value in headers.items()])
+            request_str = request_str[:insert_pos] + headers_str + request_str[insert_pos:]
+        request_packet = request_str.encode()
+
+        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def remove_headers(inputs, outputs, state_machine):
+        """
+        Remove multiple headers from an HTTP/1.1 request packet.
+
+        Number of input arguments: 2
+            - The request packet
+            - The headers (list of header names to be removed)
+
+        Number of output arguments: 1
+            - The modified request packet
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the request packet.
+                - The name of the variable containing the list of header names.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the modified request packet.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        headers = state_machine.get_variable_value(inputs[1])
+        
+        request_str = request_packet.decode()
+        for header_name in headers:
+            header_line = f"{header_name}: "
+            start_pos = request_str.find(header_line)
+            if start_pos != -1:
+                end_pos = request_str.find("\r\n", start_pos) + 2
+                request_str = request_str[:start_pos] + request_str[end_pos:]
+        request_packet = request_str.encode()
+
+        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
     def calculate_if_modified_since(inputs, outputs, state_machine):
         """
         Calculate the 'If-Modified-Since' header value for an HTTP/1.1 request packet.

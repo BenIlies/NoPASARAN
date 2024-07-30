@@ -75,7 +75,7 @@ class HTTP1ResponsePrimitives:
         HTTP1ResponseHandler.remove_route(path, method)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=0)
+    @parsing_decorator(input_args=2, output_args=1)
     def start_http_1_server(inputs, outputs, state_machine):
         """
         Start the HTTP server.

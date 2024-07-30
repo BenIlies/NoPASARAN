@@ -1,5 +1,7 @@
 from nopasaran.definitions.events import EventNames
 
+import threading
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from twisted.internet import threads
 
@@ -90,17 +92,44 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             content_length = len(response_body.encode())
             cls.routes[route_key]['headers']['Content-Length'] = content_length
 
-def run_server_in_thread(state_machine, port=8000):
+def run_server_in_thread(state_machine, port, timeout):
     server_address = ('', port)
     HTTP1ResponseHandler.state_machine = state_machine
     httpd_instance = HTTPServer(server_address, HTTP1ResponseHandler)
+
+    # Function to stop the server and trigger TIMEOUT event
+    def on_timeout():
+        if httpd_instance:
+            httpd_instance.shutdown()
+            httpd_instance.server_close()
+            state_machine.set_variable_value('httpd_instance', None)
+            state_machine.trigger_event(EventNames.TIMEOUT.name)
 
     # Running the server in a separate thread to allow Twisted to run concurrently
     def serve_forever():
         httpd_instance.serve_forever()
 
     state_machine.set_variable_value('httpd_instance', httpd_instance)
-    return threads.deferToThread(serve_forever)
+    state_machine.trigger_event(EventNames.SERVER_STARTED.name)
+
+    server_thread = threads.deferToThread(serve_forever)
+    
+    # Setup the timeout timer if a timeout is specified
+    if timeout:
+        timer = threading.Timer(timeout, on_timeout)
+        timer.start()
+
+    # Define a function to stop the timer if the server stops or is interrupted
+    def stop_timer():
+        if timer.is_alive():
+            timer.cancel()
+        if state_machine:
+            state_machine.trigger_event(EventNames.SERVER_STOPPED.name)
+    
+    # Attach the stop_timer function to the server_thread's deferred object
+    server_thread.addBoth(lambda _: stop_timer())
+
+    return server_thread
 
 def stop_server(state_machine):
     httpd_instance = state_machine.get_variable_value('httpd_instance')

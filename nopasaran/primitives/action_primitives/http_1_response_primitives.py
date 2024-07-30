@@ -75,19 +75,21 @@ class HTTP1ResponsePrimitives:
         HTTP1ResponseHandler.remove_route(path, method)
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=0)
+    @parsing_decorator(input_args=2, output_args=0)
     def start_http_1_server(inputs, outputs, state_machine):
         """
         Start the HTTP server.
 
-        Number of input arguments: 1
+        Number of input arguments: 2
             - The port to run the server on.
+            - The timeout duration in seconds.
 
         Number of output arguments: 0
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
                 - The name of the variable containing the port.
+                - The name of the variable containing the timeout duration.
 
             outputs (List[str]): The list of output variable names. No output arguments for this method.
 
@@ -97,7 +99,8 @@ class HTTP1ResponsePrimitives:
             None
         """
         port = int(state_machine.get_variable_value(inputs[0]))
-        run_server_in_thread(state_machine, port=port)
+        timeout = state_machine.get_variable_value(inputs[1])
+        run_server_in_thread(state_machine, port=port, timeout=timeout)
 
     @staticmethod
     @parsing_decorator(input_args=0, output_args=0)

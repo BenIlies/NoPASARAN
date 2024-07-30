@@ -12,7 +12,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=6, output_args=1)
-    def construct_request_packet(inputs, outputs, state_machine):
+    def construct_http_1_request_packet(inputs, outputs, state_machine):
         """
         Construct an HTTP/1.1 request packet with a specified method.
 
@@ -57,7 +57,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=3, output_args=1)
-    def add_header(inputs, outputs, state_machine):
+    def add_http_1_request_header(inputs, outputs, state_machine):
         """
         Add a header to an HTTP/1.1 request packet.
 
@@ -97,7 +97,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def remove_header(inputs, outputs, state_machine):
+    def remove_http_1_request_header(inputs, outputs, state_machine):
         """
         Remove a header from an HTTP/1.1 request packet.
 
@@ -136,7 +136,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def add_headers(inputs, outputs, state_machine):
+    def add_http_1_request_headers(inputs, outputs, state_machine):
         """
         Add multiple headers to an HTTP/1.1 request packet.
 
@@ -174,7 +174,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def remove_headers(inputs, outputs, state_machine):
+    def remove_http_1_request_headers(inputs, outputs, state_machine):
         """
         Remove multiple headers from an HTTP/1.1 request packet.
 
@@ -214,7 +214,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def calculate_if_modified_since(inputs, outputs, state_machine):
+    def calculate_http_1_request_if_modified_since(inputs, outputs, state_machine):
         """
         Calculate the 'If-Modified-Since' header value for an HTTP/1.1 request packet.
 
@@ -254,7 +254,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def make_request(inputs, outputs, state_machine):
+    def make_http_1_request(inputs, outputs, state_machine):
         """
         Make an HTTP/1.1 request using the request packet.
 
@@ -286,7 +286,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def get_body_from_response(inputs, outputs, state_machine):
+    def get_body_from_http_1_response(inputs, outputs, state_machine):
         """
         Extract the body from an HTTP/1.1 response.
 
@@ -316,7 +316,7 @@ class HTTP1RequestPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def get_header_from_response(inputs, outputs, state_machine):
+    def get_header_from_http_1_response(inputs, outputs, state_machine):
         """
         Get a header value from an HTTP/1.1 response.
 

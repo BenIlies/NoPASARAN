@@ -98,7 +98,7 @@ class HTTP1ResponsePrimitives:
         Returns:
             None
         """
-        port = state_machine.get_variable_value(inputs[0])
+        port = int(state_machine.get_variable_value(inputs[0]))
         timeout = int(state_machine.get_variable_value(inputs[1]))
         run_server_in_thread(state_machine, port=port, timeout=timeout)
 

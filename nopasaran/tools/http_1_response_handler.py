@@ -53,10 +53,6 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             with self.request_received:
                 self.request_received.notify_all()
 
-        # Trigger the REQUEST_RECEIVED event
-        if self.state_machine:
-            self.state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
-
     def write_response_body(self, response_body):
         # Encode the response body
         response_body_bytes = response_body.encode()
@@ -116,12 +112,11 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
 
         httpd_instance = HTTPServer(server_address, cls)
 
-        # Function to stop the server and trigger TIMEOUT event
+        # Function to stop the server
         def on_timeout():
             if httpd_instance:
                 httpd_instance.shutdown()
                 httpd_instance.server_close()
-                state_machine.trigger_event(EventNames.TIMEOUT.name)
                 cls.timeout_event_triggered = True
 
         # Run the server in the current thread
@@ -140,5 +135,5 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         httpd_instance.shutdown()
         httpd_instance.server_close()
         if cls.timeout_event_triggered:
-            return None
-        return cls.received_request_data
+            return None, EventNames.TIMEOUT.name
+        return cls.received_request_data, EventNames.REQUEST_RECEIVED.name

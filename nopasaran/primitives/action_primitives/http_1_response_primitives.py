@@ -102,8 +102,9 @@ class HTTP1ResponsePrimitives:
         """
         port = int(state_machine.get_variable_value(inputs[0]))
         timeout = int(state_machine.get_variable_value(inputs[1]))
-        received_request_data = HTTP1ResponseHandler.wait_for_request(state_machine, port=port, timeout=timeout)
+        received_request_data, event = HTTP1ResponseHandler.wait_for_request(state_machine, port=port, timeout=timeout)
         state_machine.set_variable_value(outputs[0], received_request_data)
+        state_machine.trigger_event(event)
 
     @staticmethod
     @parsing_decorator(input_args=4, output_args=0)

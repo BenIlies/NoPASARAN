@@ -6,7 +6,6 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     
     routes = {}
-    state_machine = None
     request_received = None
     timeout_event_triggered = False
     received_request_data = None
@@ -102,10 +101,9 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             cls.routes[route_key]['headers']['Content-Length'] = content_length
 
     @classmethod
-    def wait_for_request(cls, state_machine, port, timeout):
+    def wait_for_request(cls, port, timeout):
         server_address = ('', port)
         request_received = threading.Condition()
-        cls.state_machine = state_machine
         cls.request_received = request_received
         cls.timeout_event_triggered = False
         cls.received_request_data = None

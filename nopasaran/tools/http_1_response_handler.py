@@ -9,6 +9,7 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     state_machine = None
     request_received = None
     timeout_event_triggered = False
+    received_request_data = None
 
     def __getattr__(self, name):
         if name.startswith('do_'):
@@ -38,6 +39,14 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
 
         # Write the response body
         self.write_response_body(response_body)
+
+        # Store the received request data
+        self.received_request_data = {
+            'path': self.path,
+            'method': method,
+            'headers': self.headers,
+            'body': self.rfile.read(int(self.headers.get('Content-Length', 0))).decode('utf-8') if 'Content-Length' in self.headers else None
+        }
 
         # Notify that a request has been received
         if self.request_received:
@@ -103,6 +112,7 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         cls.state_machine = state_machine
         cls.request_received = request_received
         cls.timeout_event_triggered = False
+        cls.received_request_data = None
 
         httpd_instance = HTTPServer(server_address, cls)
 
@@ -126,8 +136,9 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             if not request_received.wait(timeout):
                 on_timeout()
 
-        # Cleanup and trigger the appropriate event if not already triggered by timeout
-        if not cls.timeout_event_triggered:
-            httpd_instance.shutdown()
-            httpd_instance.server_close()
-            state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
+        # Cleanup and return the appropriate response
+        httpd_instance.shutdown()
+        httpd_instance.server_close()
+        if cls.timeout_event_triggered:
+            return None
+        return cls.received_request_data

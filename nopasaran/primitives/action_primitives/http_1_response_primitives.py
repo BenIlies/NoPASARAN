@@ -75,7 +75,7 @@ class HTTP1ResponsePrimitives:
         HTTP1ResponseHandler.remove_route(path, method)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=0)
+    @parsing_decorator(input_args=2, output_args=1)
     def wait_for_http_1_request(inputs, outputs, state_machine):
         """
         Wait for an HTTP request.
@@ -84,14 +84,16 @@ class HTTP1ResponsePrimitives:
             - The port to run the server on.
             - The timeout duration in seconds.
 
-        Number of output arguments: 0
+        Number of output arguments: 1
+            - The received request data or None if a timeout occurs.
 
         Args:
             inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
                 - The name of the variable containing the port.
                 - The name of the variable containing the timeout duration.
 
-            outputs (List[str]): The list of output variable names. No output arguments for this method.
+            outputs (List[str]): The list of output variable names. It contains one output argument:
+                - The name of the variable to store the received request data.
 
             state_machine: The state machine object.
 
@@ -100,8 +102,8 @@ class HTTP1ResponsePrimitives:
         """
         port = int(state_machine.get_variable_value(inputs[0]))
         timeout = int(state_machine.get_variable_value(inputs[1]))
-        
-        HTTP1ResponseHandler.wait_for_request(state_machine, port=port, timeout=timeout)
+        received_request_data = HTTP1ResponseHandler.wait_for_request(state_machine, port=port, timeout=timeout)
+        state_machine.set_variable_value(outputs[0], received_request_data)
 
     @staticmethod
     @parsing_decorator(input_args=4, output_args=0)

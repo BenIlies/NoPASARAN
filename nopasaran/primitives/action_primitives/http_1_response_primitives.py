@@ -1,6 +1,6 @@
 from nopasaran.decorators import parsing_decorator
 
-from nopasaran.tools.http_1_response_handler import HTTP1ResponseHandler, run_server_in_thread, stop_server
+from nopasaran.tools.http_1_response_handler import HTTP1ResponseHandler
 
 class HTTP1ResponsePrimitives:
     """
@@ -76,9 +76,9 @@ class HTTP1ResponsePrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)
-    def start_http_1_server(inputs, outputs, state_machine):
+    def wait_for_http_1_request(inputs, outputs, state_machine):
         """
-        Start the HTTP server.
+        Wait for an HTTP request.
 
         Number of input arguments: 2
             - The port to run the server on.
@@ -100,29 +100,8 @@ class HTTP1ResponsePrimitives:
         """
         port = int(state_machine.get_variable_value(inputs[0]))
         timeout = int(state_machine.get_variable_value(inputs[1]))
-        run_server_in_thread(state_machine, port=port, timeout=timeout)
-
-    @staticmethod
-    @parsing_decorator(input_args=0, output_args=0)
-    def stop_http_1_server(inputs, outputs, state_machine):
-        """
-        Stop the HTTP server.
-
-        Number of input arguments: 0
-
-        Number of output arguments: 0
-
-        Args:
-            inputs (List[str]): The list of input variable names.
-
-            outputs (List[str]): The list of output variable names.
-
-            state_machine: The state machine object.
-
-        Returns:
-            None
-        """
-        stop_server(state_machine)
+        
+        HTTP1ResponseHandler.wait_for_request(state_machine, port=port, timeout=timeout)
 
     @staticmethod
     @parsing_decorator(input_args=4, output_args=0)

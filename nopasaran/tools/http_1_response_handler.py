@@ -1,7 +1,6 @@
-import threading
 from nopasaran.definitions.events import EventNames
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from twisted.internet import threads
+import threading
 
 class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
@@ -9,6 +8,7 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     routes = {}
     state_machine = None
     request_received = None
+    timeout_event_triggered = False
 
     def __getattr__(self, name):
         if name.startswith('do_'):
@@ -96,39 +96,38 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             content_length = len(response_body.encode())
             cls.routes[route_key]['headers']['Content-Length'] = content_length
 
-def run_server_in_thread(state_machine, port, timeout):
-    server_address = ('', port)
-    request_received = threading.Condition()
-    HTTP1ResponseHandler.state_machine = state_machine
-    HTTP1ResponseHandler.request_received = request_received
-    httpd_instance = HTTPServer(server_address, HTTP1ResponseHandler)
+    @classmethod
+    def wait_for_request(cls, state_machine, port, timeout):
+        server_address = ('', port)
+        request_received = threading.Condition()
+        cls.state_machine = state_machine
+        cls.request_received = request_received
+        cls.timeout_event_triggered = False
 
-    # Function to stop the server and trigger TIMEOUT event
-    def on_timeout():
-        if httpd_instance:
+        httpd_instance = HTTPServer(server_address, cls)
+
+        # Function to stop the server and trigger TIMEOUT event
+        def on_timeout():
+            if httpd_instance:
+                httpd_instance.shutdown()
+                httpd_instance.server_close()
+                state_machine.trigger_event(EventNames.TIMEOUT.name)
+                cls.timeout_event_triggered = True
+
+        # Run the server in the current thread
+        def serve_forever():
+            httpd_instance.serve_forever()
+
+        server_thread = threading.Thread(target=serve_forever)
+        server_thread.start()
+
+        # Block until a request is received or the timeout occurs
+        with request_received:
+            if not request_received.wait(timeout):
+                on_timeout()
+
+        # Cleanup and trigger the appropriate event if not already triggered by timeout
+        if not cls.timeout_event_triggered:
             httpd_instance.shutdown()
             httpd_instance.server_close()
-            state_machine.set_variable_value('httpd_instance', None)
-            state_machine.trigger_event(EventNames.TIMEOUT.name)
-
-    # Running the server in a separate thread to allow Twisted to run concurrently
-    def serve_forever():
-        httpd_instance.serve_forever()
-
-    state_machine.set_variable_value('httpd_instance', httpd_instance)
-
-    server_thread = threads.deferToThread(serve_forever)
-    
-    # Block until a request is received or the timeout occurs
-    with request_received:
-        if not request_received.wait(timeout):
-            on_timeout()
-    
-    return server_thread
-
-def stop_server(state_machine):
-    httpd_instance = state_machine.get_variable_value('httpd_instance')
-    if httpd_instance:
-        httpd_instance.shutdown()
-        httpd_instance.server_close()
-        state_machine.set_variable_value('httpd_instance', None)
+            state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)

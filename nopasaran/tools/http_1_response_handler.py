@@ -39,8 +39,8 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         # Write the response body
         self.write_response_body(response_body)
 
-        # Store the received request data
-        self.received_request_data = {
+        # Store the received request data at the class level
+        HTTP1ResponseHandler.received_request_data = {
             'path': self.path,
             'method': method,
             'headers': self.headers,

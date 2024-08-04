@@ -127,6 +127,21 @@ class ControlChannelPrimitives:
         """
         deferToThread(state_machine.get_variable_value(inputs[0]).start)
 
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=0)
+    def stop_control_channel(inputs, outputs, state_machine):
+        """
+        Stop the control channel using the specified variable's value from the machine's state.
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable storing the control channel object.
+            outputs (List[str]): The list of output variable names.
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        state_machine.get_variable_value(inputs[0]).stop()
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)

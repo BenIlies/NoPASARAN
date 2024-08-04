@@ -97,7 +97,6 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
 
     def wait_for_request(self, port, timeout):
         server_instance = HTTPServer(('', port), self)
-        request_received = self.request_received
 
         def on_timeout():
             if server_instance:
@@ -111,8 +110,8 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         server_thread = threading.Thread(target=serve_forever)
         server_thread.start()
 
-        with request_received:
-            if not request_received.wait(timeout):
+        with self.request_received:
+            if not self.request_received.wait(timeout):
                 on_timeout()
 
         server_instance.shutdown()

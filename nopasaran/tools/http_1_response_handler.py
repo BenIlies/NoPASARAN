@@ -44,7 +44,7 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             'path': self.path,
             'method': method,
             'headers': self.headers,
-            'body': self.rfile.read(int(self.headers.get('Content-Length', 0))).decode('utf-8') if 'Content-Length' in self.headers else None
+            'body': "hello"  # Example placeholder for body content
         }
 
         # Notify that a request has been received
@@ -103,19 +103,16 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     @classmethod
     def wait_for_request(cls, port, timeout):
         server_address = ('', port)
-        request_received = threading.Condition()
-        cls.request_received = request_received
+        cls.request_received = threading.Condition()
         cls.timeout_event_triggered = False
         cls.received_request_data = None
 
         httpd_instance = HTTPServer(server_address, cls)
 
-        # Function to stop the server
+        # Function to stop the server after timeout
         def on_timeout():
-            if httpd_instance:
-                httpd_instance.shutdown()
-                httpd_instance.server_close()
-                cls.timeout_event_triggered = True
+            cls.timeout_event_triggered = True
+            httpd_instance.shutdown()
 
         # Run the server in the current thread
         def serve_forever():
@@ -124,13 +121,16 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         server_thread = threading.Thread(target=serve_forever)
         server_thread.start()
 
+        # Start timer for timeout
+        timer = threading.Timer(timeout, on_timeout)
+        timer.start()
+
         # Block until a request is received or the timeout occurs
-        with request_received:
-            if not request_received.wait(timeout):
-                on_timeout()
+        with cls.request_received:
+            cls.request_received.wait()
 
         # Cleanup and return the appropriate response
-        httpd_instance.shutdown()
+        timer.cancel()  # Cancel the timer if request is received
         httpd_instance.server_close()
         if cls.timeout_event_triggered:
             return None, EventNames.TIMEOUT.name

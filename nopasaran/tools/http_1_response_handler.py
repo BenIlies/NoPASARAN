@@ -98,20 +98,18 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             content_length = len(response_body.encode())
             self.routes[route_key]['headers']['Content-Length'] = content_length
 
-    def wait_for_request(self, timeout):
+    def wait_for_request(self, port, timeout):
+        server_instance = HTTPServer(('', port), self)
         request_received = threading.Condition()
-        self.request_received = request_received
-        self.timeout_event_triggered = False
-        self.received_request_data = None
 
         def on_timeout():
-            if self:
-                self.shutdown()
-                self.server_close()
-                HTTP1ResponseHandler.timeout_event_triggered = True
+            if server_instance:
+                server_instance.shutdown()
+                server_instance.server_close()
+                self.timeout_event_triggered = True
 
         def serve_forever():
-            self.serve_forever()
+            server_instance.serve_forever()
 
         server_thread = threading.Thread(target=serve_forever)
         server_thread.start()
@@ -120,8 +118,8 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
             if not request_received.wait(timeout):
                 on_timeout()
 
-        self.shutdown()
-        self.server_close()
-        if HTTP1ResponseHandler.timeout_event_triggered:
+        server_instance.shutdown()
+        server_instance.server_close()
+        if self.timeout_event_triggered:
             return None, EventNames.TIMEOUT.name
-        return HTTP1ResponseHandler.received_request_data, EventNames.REQUEST_RECEIVED.name
+        return self.received_request_data, EventNames.REQUEST_RECEIVED.name

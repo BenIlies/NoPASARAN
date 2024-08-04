@@ -1,10 +1,7 @@
 import logging
-
 from twisted.internet import reactor
 from twisted.internet.ssl import Certificate, PrivateCertificate
-
 from nopasaran.controllers.factory import WorkerClientFactory, WorkerServerFactory
-
 
 class Controller:
     """
@@ -95,6 +92,7 @@ class ClientController(Controller):
         """
         super().__init__(root_certificate_file, client_private_certificate_file)
         self.factory = WorkerClientFactory(state_machine, variable)
+        self.connection = None  # Reference to the connection
 
     def configure(self, dst_ip, dst_port):
         """
@@ -116,7 +114,7 @@ class ClientController(Controller):
             RuntimeError: If an error occurs while starting the client.
         """
         try:
-            reactor.connectSSL(
+            self.connection = reactor.connectSSL(
                 self.__dst_ip,
                 self.__dst_port,
                 self.factory,
@@ -128,6 +126,15 @@ class ClientController(Controller):
             logging.error("[Control Channel] " + error_msg)
             raise RuntimeError(error_msg)
 
+    def stop(self):
+        """
+        Stop the client controller and the associated connection.
+        """
+        if self.connection:
+            self.connection.disconnect()
+            logging.info("[Control Channel] Client connection stopped.")
+        else:
+            logging.warning("[Control Channel] No active client connection to stop.")
 
 class ServerController(Controller):
     """
@@ -148,6 +155,7 @@ class ServerController(Controller):
         """
         super().__init__(root_certificate_file, server_private_certificate_file)
         self.factory = WorkerServerFactory(state_machine, variable)
+        self.listener = None  # Reference to the listener
 
     def configure(self, src_port):
         """
@@ -167,7 +175,7 @@ class ServerController(Controller):
             RuntimeError: If an error occurs while starting the server.
         """
         try:
-            reactor.listenSSL(
+            self.listener = reactor.listenSSL(
                 self.__src_port,
                 self.factory,
                 self._own_private_certificate.options(self._trusted_authority_certificate)
@@ -177,3 +185,13 @@ class ServerController(Controller):
             error_msg = f"Error starting server. Control channel failed on the server side: {str(e)}"
             logging.error("[Control Channel] " + error_msg)
             raise RuntimeError(error_msg)
+
+    def stop(self):
+        """
+        Stop the server controller and the associated listener.
+        """
+        if self.listener:
+            self.listener.stopListening()
+            logging.info("[Control Channel] Server listener stopped.")
+        else:
+            logging.warning("[Control Channel] No active server listener to stop.")

@@ -5,9 +5,10 @@ import threading
 class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.routes = {}
-        self.request_received = None
+        self.request_received = threading.Condition()
         self.timeout_event_triggered = False
         self.received_request_data = None
 
@@ -49,9 +50,8 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         }
 
         # Notify that a request has been received
-        if self.request_received:
-            with self.request_received:
-                self.request_received.notify_all()
+        with self.request_received:
+            self.request_received.notify_all()
 
     def write_response_body(self, response_body):
         # Encode the response body
@@ -98,7 +98,7 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
 
     def wait_for_request(self, port, timeout):
         server_instance = HTTPServer(('', port), self)
-        request_received = threading.Condition()
+        request_received = self.request_received
 
         def on_timeout():
             if server_instance:

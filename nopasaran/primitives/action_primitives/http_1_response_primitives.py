@@ -124,7 +124,8 @@ class HTTP1ResponsePrimitives:
             None
         """
         handler = state_machine.get_variable_value(inputs[0])
-        timeout = int(state_machine.get_variable_value(inputs[1]))
+        port = int(state_machine.get_variable_value(inputs[1]))
+        timeout = int(state_machine.get_variable_value(inputs[2]))
         received_request_data, event = handler.wait_for_request(port=port, timeout=timeout)
         state_machine.set_variable_value(outputs[0], received_request_data)
         state_machine.trigger_event(event)

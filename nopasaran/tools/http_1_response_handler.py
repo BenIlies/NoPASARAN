@@ -1,14 +1,17 @@
-from nopasaran.definitions.events import EventNames
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from nopasaran.definitions.events import EventNames
 import threading
 
 class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     
-    routes = {}
-    request_received = None
-    timeout_event_triggered = False
-    received_request_data = None
+    def __init__(self, request, client_address, server):
+        # Call the base class's init method
+        super().__init__(request, client_address, server)
+        self.routes = {}
+        self.request_received = None
+        self.timeout_event_triggered = False
+        self.received_request_data = None
 
     def __getattr__(self, name):
         if name.startswith('do_'):
@@ -39,11 +42,11 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         # Write the response body
         self.write_response_body(response_body)
 
-        # Store the received request data at the class level
-        HTTP1ResponseHandler.received_request_data = {
+        # Store the received request data at the instance level
+        self.received_request_data = {
             'path': self.path,
             'method': method,
-            'headers': self.headers,
+            'headers': dict(self.headers),
             'body': self.rfile.read(int(self.headers.get('Content-Length', 0))).decode('utf-8') if 'Content-Length' in self.headers else None
         }
 
@@ -62,76 +65,63 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         # Write the response body
         self.wfile.write(response_body_bytes)
 
-    @classmethod
-    def add_route(cls, path, method, response_body, status_code, headers):
+    def add_route(self, path, method, response_body, status_code, headers):
         if headers is None:
             headers = {}
         route_key = (path, method.upper())
-        cls.routes[route_key] = {
+        self.routes[route_key] = {
             'body': response_body,
             'status': status_code,
             'headers': headers
         }
 
-    @classmethod
-    def remove_route(cls, path, method):
+    def remove_route(self, path, method):
         route_key = (path, method.upper())
-        if route_key in cls.routes:
-            del cls.routes[route_key]
+        if route_key in self.routes:
+            del self.routes[route_key]
 
-    @classmethod
-    def add_header(cls, path, method, header_name, header_value):
+    def add_header(self, path, method, header_name, header_value):
         route_key = (path, method.upper())
-        if route_key in cls.routes:
-            cls.routes[route_key]['headers'][header_name] = header_value
+        if route_key in self.routes:
+            self.routes[route_key]['headers'][header_name] = header_value
 
-    @classmethod
-    def remove_header(cls, path, method, header_name):
+    def remove_header(self, path, method, header_name):
         route_key = (path, method.upper())
-        if route_key in cls.routes:
-            if header_name in cls.routes[route_key]['headers']:
-                del cls.routes[route_key]['headers'][header_name]
+        if route_key in self.routes:
+            if header_name in self.routes[route_key]['headers']:
+                del self.routes[route_key]['headers'][header_name]
 
-    @classmethod
-    def add_content_length_header(cls, path, method):
+    def add_content_length_header(self, path, method):
         route_key = (path, method.upper())
-        if route_key in cls.routes:
-            response_body = cls.routes[route_key]['body']
+        if route_key in self.routes:
+            response_body = self.routes[route_key]['body']
             content_length = len(response_body.encode())
-            cls.routes[route_key]['headers']['Content-Length'] = content_length
+            self.routes[route_key]['headers']['Content-Length'] = content_length
 
-    @classmethod
-    def wait_for_request(cls, port, timeout):
-        server_address = ('', port)
+    def wait_for_request(self, timeout):
         request_received = threading.Condition()
-        cls.request_received = request_received
-        cls.timeout_event_triggered = False
-        cls.received_request_data = None
+        self.request_received = request_received
+        self.timeout_event_triggered = False
+        self.received_request_data = None
 
-        httpd_instance = HTTPServer(server_address, cls)
-
-        # Function to stop the server
         def on_timeout():
-            if httpd_instance:
-                httpd_instance.shutdown()
-                httpd_instance.server_close()
-                cls.timeout_event_triggered = True
+            if self:
+                self.shutdown()
+                self.server_close()
+                HTTP1ResponseHandler.timeout_event_triggered = True
 
-        # Run the server in the current thread
         def serve_forever():
-            httpd_instance.serve_forever()
+            self.serve_forever()
 
         server_thread = threading.Thread(target=serve_forever)
         server_thread.start()
 
-        # Block until a request is received or the timeout occurs
         with request_received:
             if not request_received.wait(timeout):
                 on_timeout()
 
-        # Cleanup and return the appropriate response
-        httpd_instance.shutdown()
-        httpd_instance.server_close()
-        if cls.timeout_event_triggered:
+        self.shutdown()
+        self.server_close()
+        if HTTP1ResponseHandler.timeout_event_triggered:
             return None, EventNames.TIMEOUT.name
-        return cls.received_request_data, EventNames.REQUEST_RECEIVED.name
+        return HTTP1ResponseHandler.received_request_data, EventNames.REQUEST_RECEIVED.name

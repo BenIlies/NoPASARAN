@@ -7,7 +7,6 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     
     routes = {}
     request_received = None
-    timeout_event_triggered = False
     received_request_data = None
 
     def __getattr__(self, name):
@@ -104,14 +103,12 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     def wait_for_request(cls, port, timeout):
         server_address = ('', port)
         cls.request_received = threading.Condition()
-        cls.timeout_event_triggered = False
         cls.received_request_data = None
 
         httpd_instance = HTTPServer(server_address, cls)
 
         # Function to stop the server after timeout
-        def on_timeout():
-            cls.timeout_event_triggered = True
+        def shutdown():
             httpd_instance.shutdown()
 
         # Run the server in the current thread
@@ -122,16 +119,19 @@ class HTTP1ResponseHandler(BaseHTTPRequestHandler):
         server_thread.start()
 
         # Start timer for timeout
-        timer = threading.Timer(timeout, on_timeout)
+        timer = threading.Timer(timeout, shutdown)
         timer.start()
 
         # Block until a request is received or the timeout occurs
         with cls.request_received:
             cls.request_received.wait()
 
+        # Ensure the server is shut down after the wait
+        threading.Thread(target=shutdown).start()
+
         # Cleanup and return the appropriate response
         timer.cancel()  # Cancel the timer if request is received
         httpd_instance.server_close()
-        if cls.timeout_event_triggered:
+        if not cls.received_request_data:
             return None, EventNames.TIMEOUT.name
         return cls.received_request_data, EventNames.REQUEST_RECEIVED.name

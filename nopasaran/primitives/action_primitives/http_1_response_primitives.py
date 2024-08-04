@@ -7,7 +7,7 @@ class HTTP1ResponsePrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
+    @parsing_decorator(input_args=0, output_args=1)
     def create_http_1_handler(inputs, outputs, state_machine):
         """
         Create an HTTP1ResponseHandler instance as the request handler.

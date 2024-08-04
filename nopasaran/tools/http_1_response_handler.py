@@ -5,9 +5,7 @@ import threading
 class HTTP1ResponseHandler(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     
-    def __init__(self, request, client_address, server):
-        # Call the base class's init method
-        super().__init__(request, client_address, server)
+    def __init__(self):
         self.routes = {}
         self.request_received = None
         self.timeout_event_triggered = False

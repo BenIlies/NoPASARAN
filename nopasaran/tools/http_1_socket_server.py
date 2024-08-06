@@ -1,5 +1,7 @@
 import socket
+import select
 import threading
+import time
 from nopasaran.definitions.events import EventNames
 
 class HTTP1SocketServer:
@@ -72,33 +74,27 @@ class HTTP1SocketServer:
         HTTP1SocketServer.received_request_data = None
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             server_socket.bind(server_address)
             server_socket.listen(1)
+            server_socket.setblocking(False)
 
-            def shutdown():
-                server_socket.close()
+            # Initialize the timeout timer
+            start_time = time.time()
 
-            # Function to handle incoming connections
-            def serve_forever():
-                while HTTP1SocketServer.received_request_data is None:
+            while True:
+                # Check if the timeout has elapsed
+                elapsed_time = time.time() - start_time
+                if elapsed_time > timeout:
+                    return None, EventNames.TIMEOUT.name
+                
+                # Use select to wait for a connection with a timeout
+                ready_to_read, _, _ = select.select([server_socket], [], [], timeout - elapsed_time)
+                
+                if ready_to_read:
                     client_socket, _ = server_socket.accept()
                     HTTP1SocketServer.handle_client_connection(client_socket)
+                    return HTTP1SocketServer.received_request_data, EventNames.REQUEST_RECEIVED.name
 
-            server_thread = threading.Thread(target=serve_forever)
-            server_thread.start()
-
-            # Start timer for timeout
-            timer = threading.Timer(timeout, shutdown)
-            timer.start()
-
-            with HTTP1SocketServer.request_received:
-                HTTP1SocketServer.request_received.wait()
-
-            # Ensure the server is shut down after the wait
-            timer.cancel()  # Cancel the timer if request is received
-            server_socket.close()
-            server_thread.join()
-
-            if HTTP1SocketServer.received_request_data is None:
-                return None, EventNames.TIMEOUT.name
-            return HTTP1SocketServer.received_request_data, EventNames.REQUEST_RECEIVED.name
+            # If we exit the loop without returning, it means timeout
+            return None, EventNames.TIMEOUT.name

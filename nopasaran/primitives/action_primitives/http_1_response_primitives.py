@@ -33,7 +33,7 @@ class HTTP1ResponsePrimitives:
         
         path = route_params.get('path')
         method = route_params.get('method')
-        response_body = route_params.get('response_body')
+        response_body = route_params.get('body', '')
         status_code = int(route_params.get('status_code'))
         headers = route_params.get('headers', {})
 

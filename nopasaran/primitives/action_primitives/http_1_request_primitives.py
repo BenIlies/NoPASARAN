@@ -11,30 +11,20 @@ class HTTP1RequestPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=6, output_args=1)
+    @parsing_decorator(input_args=1, output_args=1)
     def construct_http_1_request_packet(inputs, outputs, state_machine):
         """
-        Construct an HTTP/1.1 request packet with a specified method.
+        Construct an HTTP/1.1 request packet from a dictionary of parameters.
 
-        Number of input arguments: 6
-            - The host
-            - The port
-            - The path
-            - The protocol ('http' or 'https')
-            - The HTTP method (e.g., 'GET', 'POST')
-            - The IP address
+        Number of input arguments: 1
+            - The dictionary with the request parameters
 
         Number of output arguments: 1
             - The request packet
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains six mandatory input arguments:
-                - The name of the variable containing the host.
-                - The name of the variable containing the port.
-                - The name of the variable containing the path.
-                - The name of the variable containing the protocol.
-                - The name of the variable containing the HTTP method.
-                - The name of the variable containing the IP address.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the dictionary with request parameters.
 
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
                 which is the name of the variable to store the constructed request packet.
@@ -44,16 +34,29 @@ class HTTP1RequestPrimitives:
         Returns:
             None
         """
-        host = state_machine.get_variable_value(inputs[0])
-        port = str(state_machine.get_variable_value(inputs[1]))
-        path = state_machine.get_variable_value(inputs[2])
-        protocol = state_machine.get_variable_value(inputs[3])
-        method = state_machine.get_variable_value(inputs[4])
-        ip = state_machine.get_variable_value(inputs[5])
+        params = state_machine.get_variable_value(inputs[0])
     
-        request_packet = f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n\r\n".encode()
+        host = params['host']
+        path = params['path']
+        protocol = params['protocol']
+        method = params['method']
+        ip = params['ip']
+        headers = params.get('headers', {})  # Extract headers if present
+        body = params.get('body', '')        # Extract body if present
 
-        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+        # Construct the initial request line
+        request_line = f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n"
+
+        # Add headers
+        headers_str = ''.join([f"{header_name}: {header_value}\r\n" for header_name, header_value in headers.items()])
+        
+        # Add the body
+        if body:
+            request_packet = f"{request_line}{headers_str}\r\n{body}".encode()
+        else:
+            request_packet = f"{request_line}{headers_str}\r\n".encode()
+
+        state_machine.set_variable_value(outputs[0], (request_packet, path, protocol, ip))
 
     @staticmethod
     @parsing_decorator(input_args=3, output_args=1)
@@ -83,7 +86,7 @@ class HTTP1RequestPrimitives:
         Returns:
             None
         """
-        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        request_packet, path, protocol, ip = state_machine.get_variable_value(inputs[0])
         header_name = state_machine.get_variable_value(inputs[1])
         header_value = state_machine.get_variable_value(inputs[2])
         
@@ -93,7 +96,7 @@ class HTTP1RequestPrimitives:
             request_str = request_str[:insert_pos] + f"\r\n{header_name}: {header_value}" + request_str[insert_pos:]
         request_packet = request_str.encode()
 
-        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+        state_machine.set_variable_value(outputs[0], (request_packet, path, protocol, ip))
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -121,7 +124,7 @@ class HTTP1RequestPrimitives:
         Returns:
             None
         """
-        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        request_packet, path, protocol, ip = state_machine.get_variable_value(inputs[0])
         header_name = state_machine.get_variable_value(inputs[1])
         
         request_str = request_packet.decode()
@@ -132,7 +135,7 @@ class HTTP1RequestPrimitives:
             request_str = request_str[:start_pos] + request_str[end_pos:]
         request_packet = request_str.encode()
 
-        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+        state_machine.set_variable_value(outputs[0], (request_packet, path, protocol, ip))
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -160,7 +163,7 @@ class HTTP1RequestPrimitives:
         Returns:
             None
         """
-        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        request_packet, path, protocol, ip = state_machine.get_variable_value(inputs[0])
         headers = state_machine.get_variable_value(inputs[1])
         
         request_str = request_packet.decode()
@@ -170,7 +173,7 @@ class HTTP1RequestPrimitives:
             request_str = request_str[:insert_pos] + headers_str + request_str[insert_pos:]
         request_packet = request_str.encode()
 
-        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+        state_machine.set_variable_value(outputs[0], (request_packet, path, protocol, ip))
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -198,7 +201,7 @@ class HTTP1RequestPrimitives:
         Returns:
             None
         """
-        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        request_packet, path, protocol, ip = state_machine.get_variable_value(inputs[0])
         headers = state_machine.get_variable_value(inputs[1])
         
         request_str = request_packet.decode()
@@ -210,7 +213,7 @@ class HTTP1RequestPrimitives:
                 request_str = request_str[:start_pos] + request_str[end_pos:]
         request_packet = request_str.encode()
 
-        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+        state_machine.set_variable_value(outputs[0], (request_packet, path, protocol, ip))
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -238,7 +241,7 @@ class HTTP1RequestPrimitives:
         Returns:
             None
         """
-        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        request_packet, path, protocol, ip = state_machine.get_variable_value(inputs[0])
         seconds_ago = state_machine.get_variable_value(inputs[1])
         
         time_ago = datetime.utcnow() - timedelta(seconds=seconds_ago)
@@ -250,23 +253,25 @@ class HTTP1RequestPrimitives:
             request_str = request_str[:insert_pos] + f"\r\nIf-Modified-Since: {if_modified_since}" + request_str[insert_pos:]
         request_packet = request_str.encode()
 
-        state_machine.set_variable_value(outputs[0], (request_packet, host, path, protocol, port, ip))
+        state_machine.set_variable_value(outputs[0], (request_packet, path, protocol, ip))
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
+    @parsing_decorator(input_args=2, output_args=1)
     def make_http_1_request(inputs, outputs, state_machine):
         """
         Make an HTTP/1.1 request using the request packet.
 
-        Number of input arguments: 1
+        Number of input arguments: 2
             - The request packet
+            - The port
 
         Number of output arguments: 1
             - The response
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
                 - The name of the variable containing the request packet.
+                - The name of the variable containing the port.
 
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
                 which is the name of the variable to store the response.
@@ -276,7 +281,8 @@ class HTTP1RequestPrimitives:
         Returns:
             None
         """
-        request_packet, host, path, protocol, port, ip = state_machine.get_variable_value(inputs[0])
+        request_packet, path, protocol, ip = state_machine.get_variable_value(inputs[0])
+        port = int(state_machine.get_variable_value(inputs[1]))
         
         url = f'{protocol}://{ip}:{port}{path}'
         response = requests_raw.raw(url=url, data=request_packet)

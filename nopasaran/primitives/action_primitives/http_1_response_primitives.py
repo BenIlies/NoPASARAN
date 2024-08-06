@@ -8,27 +8,19 @@ class HTTP1ResponsePrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=5, output_args=0)
+    @parsing_decorator(input_args=1, output_args=0)
     def add_http_1_route(inputs, outputs, state_machine):
         """
         Add a route to the HTTP server.
 
-        Number of input arguments: 5
-            - The path
-            - The method (e.g., 'GET', 'POST')
-            - The response body
-            - The status code (default: 200)
-            - The headers (optional, dictionary format)
+        Number of input arguments: 1
+            - The dictionary with route parameters
 
         Number of output arguments: 0
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains five mandatory input arguments:
-                - The name of the variable containing the path.
-                - The name of the variable containing the method.
-                - The name of the variable containing the response body.
-                - The name of the variable containing the status code.
-                - The name of the variable containing the headers.
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the dictionary with route parameters.
 
             outputs (List[str]): The list of output variable names. No output arguments for this method.
 
@@ -37,11 +29,13 @@ class HTTP1ResponsePrimitives:
         Returns:
             None
         """
-        path = state_machine.get_variable_value(inputs[0])
-        method = state_machine.get_variable_value(inputs[1])
-        response_body = state_machine.get_variable_value(inputs[2])
-        status_code = int(state_machine.get_variable_value(inputs[3]))
-        headers = state_machine.get_variable_value(inputs[4])
+        route_params = state_machine.get_variable_value(inputs[0])
+        
+        path = route_params.get('path')
+        method = route_params.get('method')
+        response_body = route_params.get('response_body')
+        status_code = int(route_params.get('status_code'))
+        headers = route_params.get('headers', {})
 
         HTTP1ResponseHandler.add_route(path, method, response_body, status_code, headers)
 

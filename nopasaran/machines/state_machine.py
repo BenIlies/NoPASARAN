@@ -1,3 +1,5 @@
+import json
+import base64
 import logging
 
 from nopasaran.utils import *
@@ -46,8 +48,10 @@ class StateMachine:
                 break
             self.execute_action(next_action)
         if self.root_state_machine == self:
-            for returned in self.returned:
-                print(returned)
+            log_data = {"State": self.current_state, "Variables": self.variables}
+            json_data = json.dumps(log_data)
+            encoded_data = base64.b64encode(json_data.encode('utf-8')).decode('utf-8')
+            logging.info('Result: {}'.format(encoded_data))
 
     def execute_action(self, action):
         """

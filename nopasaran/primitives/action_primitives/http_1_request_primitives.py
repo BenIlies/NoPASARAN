@@ -39,7 +39,6 @@ class HTTP1RequestPrimitives:
     
         host = params['host']
         path = params['path']
-        protocol = params['protocol']
         method = params['method']
         ip = params['ip']
         headers = params.get('headers', {})

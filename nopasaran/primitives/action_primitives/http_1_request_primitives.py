@@ -1,5 +1,3 @@
-import socket
-import select
 from datetime import datetime, timedelta
 from email.utils import formatdate
 from nopasaran import utils
@@ -40,14 +38,14 @@ class HTTP1RequestPrimitives:
         host = params['host']
         path = params['path']
         method = params['method']
-        headers = params.get('headers', {})
+        headers = params.get('headers', [])
         body = params.get('body', '')
 
         # Construct the initial request line
         request_line = f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n"
 
         # Add headers
-        headers_str = ''.join([f"{header_name}: {header_value}\r\n" for header_name, header_value in headers.items()])
+        headers_str = ''.join([f"{header[0]}: {header[1]}\r\n" for header in headers])
         
         # Add the body
         if body:
@@ -144,7 +142,7 @@ class HTTP1RequestPrimitives:
 
         Number of input arguments: 2
             - The request packet
-            - The headers (dictionary of header name-value pairs)
+            - The headers (list of header name-value pairs)
 
         Number of output arguments: 1
             - The modified request packet
@@ -152,7 +150,7 @@ class HTTP1RequestPrimitives:
         Args:
             inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
                 - The name of the variable containing the request packet.
-                - The name of the variable containing the headers dictionary.
+                - The name of the variable containing the headers list.
 
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
                 which is the name of the variable to store the modified request packet.
@@ -168,7 +166,7 @@ class HTTP1RequestPrimitives:
         request_str = request_packet.decode()
         insert_pos = request_str.find("\r\n\r\n")
         if insert_pos != -1:
-            headers_str = ''.join([f"\r\n{header_name}: {header_value}" for header_name, header_value in headers.items()])
+            headers_str = ''.join([f"\r\n{header[0]}: {header[1]}" for header in headers])
             request_str = request_str[:insert_pos] + headers_str + request_str[insert_pos:]
         request_packet = request_str.encode()
 
@@ -355,7 +353,14 @@ class HTTP1RequestPrimitives:
         response_str = response.decode()
         headers, _ = response_str.split("\r\n\r\n", 1)
         headers_lines = headers.split("\r\n")[1:]
-        headers_dict = dict(line.split(":", 1) for line in headers_lines if ":" in line)
-        header_value = headers_dict.get(header_name, None)
+        headers_list = [line.split(":", 1) for line in headers_lines if ":" in line]
+        headers_dict = {}
+        for header in headers_list:
+            key = header[0].strip()
+            value = header[1].strip()
+            if key not in headers_dict:
+                headers_dict[key] = []
+            headers_dict[key].append(value)
+        header_value = headers_dict.get(header_name, [None])
 
         state_machine.set_variable_value(outputs[0], header_value)

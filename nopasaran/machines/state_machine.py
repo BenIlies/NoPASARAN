@@ -48,7 +48,15 @@ class StateMachine:
                 break
             self.execute_action(next_action)
         if self.root_state_machine == self:
-            log_data = {"State": self.current_state, "Variables": self.variables}
+            def serialize_object(obj):
+                try:
+                    return json.dumps(obj, default=str)
+                except TypeError:
+                    return str(obj)
+            log_data = {
+                "State": serialize_object(self.current_state),
+                "Variables": serialize_object(self.variables)
+            }
             json_data = json.dumps(log_data)
             encoded_data = base64.b64encode(json_data.encode('utf-8')).decode('utf-8')
             logging.info('Result: {}'.format(encoded_data))

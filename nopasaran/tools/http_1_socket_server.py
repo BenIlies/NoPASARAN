@@ -16,11 +16,12 @@ class HTTP1SocketServer:
         """
         Handle a client connection by processing the incoming request and sending the appropriate response.
         """
-        request = client_socket.recv(4096).decode('utf-8')
-        
+        request = client_socket.recv(4096)
+        request_str = request.decode('utf-8')
+
         # Extract request line and headers
-        headers_end_index = request.find("\r\n\r\n")
-        headers_part = request[:headers_end_index] if headers_end_index != -1 else request
+        headers_end_index = request_str.find("\r\n\r\n")
+        headers_part = request_str[:headers_end_index] if headers_end_index != -1 else request_str
         request_line = headers_part.split("\r\n")[0]
         method, path, _ = request_line.split(" ", 2)
 
@@ -46,13 +47,8 @@ class HTTP1SocketServer:
         client_socket.sendall(response.encode())
         client_socket.close()
 
-        # Store the received request data
-        HTTP1SocketServer.received_request_data = {
-            'path': path,
-            'method': method,
-            'headers': headers_part,
-            'body': "hello"  # Placeholder for body content
-        }
+        # Store the raw received request data
+        HTTP1SocketServer.received_request_data = request
 
         # Notify that a request has been received
         if HTTP1SocketServer.request_received:
@@ -69,7 +65,7 @@ class HTTP1SocketServer:
             timeout (int): The timeout duration in seconds.
 
         Returns:
-            Tuple[dict, str]: The received request data or None if a timeout occurs, and the event name.
+            Tuple[bytes, str]: The raw received request data or None if a timeout occurs, and the event name.
         """
         server_address = ('', port)
         HTTP1SocketServer.request_received = threading.Condition()
@@ -103,6 +99,6 @@ class HTTP1SocketServer:
             server_socket.close()
             server_thread.join()
 
-            if not HTTP1SocketServer.received_request_data:
+            if HTTP1SocketServer.received_request_data is None:
                 return None, EventNames.TIMEOUT.name
             return HTTP1SocketServer.received_request_data, EventNames.REQUEST_RECEIVED.name

@@ -4,4 +4,3 @@ service_identity
 
 # Primitives Dependencies
 scapy
-requests_raw

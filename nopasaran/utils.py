@@ -1,4 +1,6 @@
 import random
+import socket
+import select
 
 from scapy.all import IP, TCP, UDP, ICMP
 
@@ -104,3 +106,26 @@ def handle_client_connection(client_socket):
         client_socket.recv(1024)
     except Exception as e:
         raise(e)
+
+
+def send_request(ip, port, request_packet):
+	"""
+	Send an HTTP/1.1 request using a socket and return the response.
+	"""
+	response = b""
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+		s.settimeout(0.5)
+		s.connect((ip, port))
+		s.sendall(request_packet)
+		
+		while True:
+			ready_to_read, _, _ = select.select([s], [], [], 0.5)
+			if ready_to_read:
+				chunk = s.recv(4096)
+				if not chunk:
+					break
+				response += chunk
+			else:
+				break
+	
+	return response

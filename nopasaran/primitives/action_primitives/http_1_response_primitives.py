@@ -1,6 +1,5 @@
 from nopasaran.decorators import parsing_decorator
-
-from nopasaran.tools.http_1_response_handler import HTTP1ResponseHandler
+from nopasaran.tools.http_1_socket_server import HTTP1SocketServer
 
 class HTTP1ResponsePrimitives:
     """
@@ -37,7 +36,11 @@ class HTTP1ResponsePrimitives:
         status_code = int(route_params.get('status_code'))
         headers = route_params.get('headers', {})
 
-        HTTP1ResponseHandler.add_route(path, method, response_body, status_code, headers)
+        HTTP1SocketServer.routes[(path, method.upper())] = {
+            'body': response_body,
+            'status': status_code,
+            'headers': headers
+        }
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)
@@ -66,7 +69,8 @@ class HTTP1ResponsePrimitives:
         path = state_machine.get_variable_value(inputs[0])
         method = state_machine.get_variable_value(inputs[1])
 
-        HTTP1ResponseHandler.remove_route(path, method)
+        if (path, method.upper()) in HTTP1SocketServer.routes:
+            del HTTP1SocketServer.routes[(path, method.upper())]
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -96,7 +100,7 @@ class HTTP1ResponsePrimitives:
         """
         port = int(state_machine.get_variable_value(inputs[0]))
         timeout = int(state_machine.get_variable_value(inputs[1]))
-        received_request_data, event = HTTP1ResponseHandler.wait_for_request(port=port, timeout=timeout)
+        received_request_data, event = HTTP1SocketServer.wait_for_request(port=port, timeout=timeout)
         state_machine.set_variable_value(outputs[0], received_request_data)
         state_machine.trigger_event(event)
 
@@ -133,7 +137,9 @@ class HTTP1ResponsePrimitives:
         header_name = state_machine.get_variable_value(inputs[2])
         header_value = state_machine.get_variable_value(inputs[3])
 
-        HTTP1ResponseHandler.add_header(path, method, header_name, header_value)
+        route_key = (path, method.upper())
+        if route_key in HTTP1SocketServer.routes:
+            HTTP1SocketServer.routes[route_key]['headers'][header_name] = header_value
 
     @staticmethod
     @parsing_decorator(input_args=3, output_args=0)
@@ -165,7 +171,10 @@ class HTTP1ResponsePrimitives:
         method = state_machine.get_variable_value(inputs[1])
         header_name = state_machine.get_variable_value(inputs[2])
 
-        HTTP1ResponseHandler.remove_header(path, method, header_name)
+        route_key = (path, method.upper())
+        if route_key in HTTP1SocketServer.routes:
+            if header_name in HTTP1SocketServer.routes[route_key]['headers']:
+                del HTTP1SocketServer.routes[route_key]['headers'][header_name]
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)
@@ -194,4 +203,8 @@ class HTTP1ResponsePrimitives:
         path = state_machine.get_variable_value(inputs[0])
         method = state_machine.get_variable_value(inputs[1])
 
-        HTTP1ResponseHandler.add_content_length_header(path, method)
+        route_key = (path, method.upper())
+        if route_key in HTTP1SocketServer.routes:
+            response_body = HTTP1SocketServer.routes[route_key]['body']
+            content_length = len(response_body.encode())
+            HTTP1SocketServer.routes[route_key]['headers']['Content-Length'] = content_length

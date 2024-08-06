@@ -9,12 +9,12 @@ class HTTP1SocketServer:
     A simple HTTP/1.1 server using sockets.
     """
 
-    routes = {}
-    request_received = None
-    received_request_data = None
+    def __init__(self):
+        self.routes = {}
+        self.request_received = None
+        self.received_request_data = None
 
-    @staticmethod
-    def handle_client_connection(client_socket):
+    def handle_client_connection(self, client_socket):
         """
         Handle a client connection by processing the incoming request and sending the appropriate response.
         """
@@ -28,7 +28,7 @@ class HTTP1SocketServer:
         method, path, _ = request_line.split(" ", 2)
 
         route_key = (path, method)
-        route_info = HTTP1SocketServer.routes.get(route_key)
+        route_info = self.routes.get(route_key)
         
         if route_info:
             response_body = route_info.get('body', '')
@@ -50,15 +50,14 @@ class HTTP1SocketServer:
         client_socket.close()
 
         # Store the raw received request data
-        HTTP1SocketServer.received_request_data = request
+        self.received_request_data = request
 
         # Notify that a request has been received
-        if HTTP1SocketServer.request_received:
-            with HTTP1SocketServer.request_received:
-                HTTP1SocketServer.request_received.notify_all()
+        if self.request_received:
+            with self.request_received:
+                self.request_received.notify_all()
 
-    @staticmethod
-    def wait_for_request(port, timeout):
+    def wait_for_request(self, port, timeout):
         """
         Wait for an HTTP request or timeout.
 
@@ -70,8 +69,8 @@ class HTTP1SocketServer:
             Tuple[bytes, str]: The raw received request data or None if a timeout occurs, and the event name.
         """
         server_address = ('', port)
-        HTTP1SocketServer.request_received = threading.Condition()
-        HTTP1SocketServer.received_request_data = None
+        self.request_received = threading.Condition()
+        self.received_request_data = None
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
             server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -93,5 +92,5 @@ class HTTP1SocketServer:
                 
                 if ready_to_read:
                     client_socket, _ = server_socket.accept()
-                    HTTP1SocketServer.handle_client_connection(client_socket)
-                    return HTTP1SocketServer.received_request_data, EventNames.REQUEST_RECEIVED.name
+                    self.handle_client_connection(client_socket)
+                    return self.received_request_data, EventNames.REQUEST_RECEIVED.name

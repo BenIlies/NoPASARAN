@@ -34,7 +34,7 @@ class HTTP1ResponsePrimitives:
         method = route_params.get('method')
         response_body = route_params.get('body', '')
         status_code = int(route_params.get('status_code'))
-        headers = route_params.get('headers', {})
+        headers = route_params.get('headers', [])
 
         HTTP1SocketServer.routes[(path, method.upper())] = {
             'body': response_body,
@@ -139,7 +139,8 @@ class HTTP1ResponsePrimitives:
 
         route_key = (path, method.upper())
         if route_key in HTTP1SocketServer.routes:
-            HTTP1SocketServer.routes[route_key]['headers'][header_name] = header_value
+            headers = HTTP1SocketServer.routes[route_key]['headers']
+            headers.append((header_name, header_value))
 
     @staticmethod
     @parsing_decorator(input_args=3, output_args=0)
@@ -173,8 +174,9 @@ class HTTP1ResponsePrimitives:
 
         route_key = (path, method.upper())
         if route_key in HTTP1SocketServer.routes:
-            if header_name in HTTP1SocketServer.routes[route_key]['headers']:
-                del HTTP1SocketServer.routes[route_key]['headers'][header_name]
+            headers = HTTP1SocketServer.routes[route_key]['headers']
+            headers = [header for header in headers if header[0] != header_name]
+            HTTP1SocketServer.routes[route_key]['headers'] = headers
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)
@@ -207,4 +209,5 @@ class HTTP1ResponsePrimitives:
         if route_key in HTTP1SocketServer.routes:
             response_body = HTTP1SocketServer.routes[route_key]['body']
             content_length = len(response_body.encode())
-            HTTP1SocketServer.routes[route_key]['headers']['Content-Length'] = content_length
+            headers = HTTP1SocketServer.routes[route_key]['headers']
+            headers.append(('Content-Length', str(content_length)))

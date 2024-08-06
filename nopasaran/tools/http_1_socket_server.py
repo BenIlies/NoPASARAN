@@ -33,15 +33,15 @@ class HTTP1SocketServer:
         if route_info:
             response_body = route_info.get('body', '')
             status_code = route_info.get('status', 200)
-            headers = route_info.get('headers', {})
+            headers = route_info.get('headers', [])
         else:
             response_body = 'NoPASARAN HTTP/1.1 Server'
             status_code = 404
-            headers = {}
+            headers = []
 
         # Construct the HTTP response
         response = f"HTTP/1.1 {status_code} OK\r\n"
-        for header_name, header_value in headers.items():
+        for header_name, header_value in headers:
             response += f"{header_name}: {header_value}\r\n"
         response += f"\r\n{response_body}"
         
@@ -95,6 +95,3 @@ class HTTP1SocketServer:
                     client_socket, _ = server_socket.accept()
                     HTTP1SocketServer.handle_client_connection(client_socket)
                     return HTTP1SocketServer.received_request_data, EventNames.REQUEST_RECEIVED.name
-
-            # If we exit the loop without returning, it means timeout
-            return None, EventNames.TIMEOUT.name

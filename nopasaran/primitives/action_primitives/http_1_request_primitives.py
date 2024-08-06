@@ -35,16 +35,20 @@ class HTTP1RequestPrimitives:
         """
         params = state_machine.get_variable_value(inputs[0])
     
-        host = params['host']
+        host = params.get('host', '')
         path = params['path']
         method = params['method']
         headers = params.get('headers', [])
         body = params.get('body', '')
 
         # Construct the initial request line
-        request_line = f"{method} {path} HTTP/1.1\r\nHost: {host}\r\n"
+        request_line = f"{method} {path} HTTP/1.1\r\n"
 
-        # Add headers
+        # Add the Host header if provided
+        if host:
+            request_line += f"Host: {host}\r\n"
+
+        # Add other headers
         headers_str = ''.join([f"{header[0]}: {header[1]}\r\n" for header in headers])
         
         # Add the body

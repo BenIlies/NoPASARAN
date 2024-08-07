@@ -71,6 +71,6 @@ The FSM operates as follows:
 3. Upon entering the "Variables Creation" state, the FSM executes the `get_from_file` actions, retrieving the values of the specified variables from the given file and assigning them to local state variables. After these actions, the "done" action is executed, triggering the "DONE" event.
 4. As a consequence of the "DONE" event, the FSM transitions to the "Variables Reception" state. During this transition, the values of the local variables in the previous state are assigned to new state variables.
 5. Upon entering the "Variables Reception" state, the "done" action is executed again, triggering another "DONE" event, leading the FSM to transition to the "End" state.
-6. The "End" state is the final state and marks the end of this FSM scenario, as it does not define any further actions or transitions.
+6. The "End" state is the final state and marks the end of this FSM test, as it does not define any further actions or transitions.
 
 This FSM illustrates the concept of creating, assigning, and transferring local state variables using the `get_from_file` and `assign` primitives. It shows how state machines can manipulate and pass data between states, an essential aspect of state machine functionality in complex systems.

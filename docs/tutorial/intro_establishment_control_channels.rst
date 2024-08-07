@@ -1,7 +1,7 @@
 Introduction to the Establishment of Control Channels
 =====================================================
 
-This tutorial focuses on the establishment of control channels using a nested Finite State Machine (FSM). The nested FSM presented here allows for higher-level abstraction and reusability across different scenarios. It serves as a practical implementation to facilitate the establishment of control channels, be it as a client or as a server.
+This tutorial focuses on the establishment of control channels using a nested Finite State Machine (FSM). The nested FSM presented here allows for higher-level abstraction and reusability across different tests. It serves as a practical implementation to facilitate the establishment of control channels, be it as a client or as a server.
 
 **Nested FSM: CONTROL-CHANNEL-SET-UP**
 
@@ -207,4 +207,4 @@ The "CONTROL-CHANNEL-SET-UP" FSM operates as follows:
 
 **Conclusion**
 
-In this tutorial, we have explored the practical implementation of a nested Finite State Machine, the "CONTROL-CHANNEL-SET-UP," designed to establish control channels as a client or as a server. The FSM provides a higher level of abstraction and reusability, making it an efficient solution for control channel setup in various scenarios.
+In this tutorial, we have explored the practical implementation of a nested Finite State Machine, the "CONTROL-CHANNEL-SET-UP," designed to establish control channels as a client or as a server. The FSM provides a higher level of abstraction and reusability, making it an efficient solution for control channel setup in various tests.

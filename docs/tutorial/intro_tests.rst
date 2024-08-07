@@ -1,12 +1,12 @@
-Introduction to Scenarios
+Introduction to Tests
 ==============================
 
-The JSON file below represents a Finite State Machine (FSM) named `scenario.json`:
+The JSON file below represents a Finite State Machine (FSM) named `test.json`:
 
 .. code-block:: json
 
     {
-      "id": "SCENARIOS-FSM",
+      "id": "TESTS-FSM",
       "initial": "First state",
       "states": {
         "First state": {
@@ -33,7 +33,7 @@ The JSON file below represents a Finite State Machine (FSM) named `scenario.json
 
 This JSON file starts with three key-value pairs: `id`, `initial`, and `states`.
 
-- `id`: An identifier for the FSM. In this example, the id is "SCENARIOS-FSM".
+- `id`: An identifier for the FSM. In this example, the id is "TESTS-FSM".
 - `initial`: Specifies the name of the initial state of the FSM, which is "First state". Note that every FSM will automatically trigger a "STARTED" event when initiated.
 - `states`: Contains an object, where each key-value pair represents a state in the FSM.
 
@@ -51,6 +51,6 @@ The FSM operates as follows:
 2. When the "STARTED" event is triggered, it transitions to the "Second State".
 3. Upon entering the "Second State", the "done" action is executed, which inherently triggers the "DONE" event.
 4. As a consequence of the "DONE" event, the FSM transitions to the "Last state".
-5. The "Last state" marks the end of this FSM scenario since it does not define any further actions or transitions.
+5. The "Last state" marks the end of this FSM test since it does not define any further actions or transitions.
 
 Please note that this is a basic representation of a state machine. In real-world applications, more states, events, and actions would likely be defined to accurately model complex behaviors.

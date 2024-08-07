@@ -18,7 +18,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
     parser.add_argument("-l", "--log", dest="log_file", default="conf.log", help="Path to the log file (default: %(default)s)")
     parser.add_argument("-ll", "--log-level", choices=["debug", "info", "warning", "error"], help="Log level for output")
-    parser.add_argument("-s", "--scenario", required=True, help="JSON scenario file for the state machine indicating the test campaign the Worker has to run")
+    parser.add_argument("-t", "--test", required=True, help="JSON file for the state machine indicating the test the Worker has to run")
 
     # Parse command line arguments
     args = parser.parse_args()
@@ -43,15 +43,15 @@ def main():
         console_handler.setFormatter(console_formatter)
         logging.getLogger().addHandler(console_handler)
 
-    logging.info('[Main] Loading JSON scenario file...')
+    logging.info('[Main] Loading JSON test file...')
     try:
-        with open(args.scenario) as f:
+        with open(args.test) as f:
             state_json = json.load(f)
     except Exception as e:
-        logging.error(f'[Main] Error loading JSON scenario file: {str(e)}')
+        logging.error(f'[Main] Error loading JSON test file: {str(e)}')
         return
 
-    logging.info('[Main] JSON scenario file loaded')
+    logging.info('[Main] JSON test file loaded')
     machine = StateMachine(state_json=state_json)
 
     logging.info('[Main] Starting the root machine')

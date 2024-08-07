@@ -31,7 +31,7 @@ NoPASARAN is an advanced network tool designed to detect, fingerprint, and locat
 - Utilization of finite state machines for test case description.
 - Network orchestration with Ansible.
 - Flexible roles for network nodes and proxies.
-- Support for JSON-based scenario files for state machine configurations.
+- Support for JSON-based test files for state machine configurations.
 
 ## Requirements
 
@@ -73,18 +73,18 @@ You can install and use NoPASARAN either by cloning the source code from GitHub 
 
 ## Usage
 
-To run NoPASARAN, you need to specify a JSON scenario file that indicates the test campaign the application has to run.
+To run NoPASARAN, you need to specify a JSON file for the state machine indicating the test the application has to run.
 
 - From the source code:
 
   ```bash
-  python main.py --scenario=<path-to-json-scenario-file>
+  python main.py --test=<path-to-json-test-file>
   ```
 
 - As a package:
 
   ```bash
-  nopasaran --scenario=<path-to-json-scenario-file>
+  nopasaran --test=<path-to-json-test-file>
   ```
 
 ### Additional Options
@@ -95,7 +95,7 @@ You can further customize the behavior of NoPASARAN with the following options:
 - `--log=<path-to-log-file>` or `-l=<path-to-log-file>`: Specify the path to the log file (default is "conf.log").
 - `--log-level=<log-level>` or `-ll=<log-level>`: Specify the log level for output. Valid choices are "debug", "info", "warning", and "error".
 
-Replace `<path-to-json-scenario-file>` with the path to your actual JSON scenario file.
+Replace `<path-to-json-test-file>` with the path to your actual JSON test file.
 
 For any further assistance, use the `--help` argument with any command for additional information.
 

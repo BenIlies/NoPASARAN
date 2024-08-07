@@ -9,9 +9,9 @@ Features
 - Detection, fingerprinting, and location of network middleboxes.
 - Utilization of finite state machines for test case description.
 - Flexible roles for machines in the architecture: Worker and Proxy.
-- Worker machines perform test campaigns defined by JSON scenario files.
+- Worker machines perform tests defined by JSON files.
 - Proxy machines are accessible to remote Workers, allowing communication when Workers are unreachable from the Internet.
-- Support for JSON-based scenario files for state machine configurations.
+- Support for JSON-based tests files for state machine configurations.
 
 Requirements
 ------------
@@ -60,15 +60,15 @@ To run NoPASARAN:
 
 .. code-block:: bash
 
-   python main.py --scenario=<path-to-json-scenario-file>
+   python main.py --test=<path-to-json-test-file>
 
 Or using the Python package:
 
 .. code-block:: bash
 
-   nopasaran --scenario=<path-to-json-scenario-file>
+   nopasaran --test=<path-to-json-test-file>
 
-Replace <path-to-json-scenario-file> with the path to your actual JSON scenario file.
+Replace <path-to-json-test-file> with the path to your actual JSON test file.
 
 Additional options:
 

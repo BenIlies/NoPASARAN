@@ -61,7 +61,7 @@ The `states` object defines four states:
 
 3. `State Not Reached`: This state is defined but, given the current setup of the FSM, will not be reached since the condition of the guard will always evaluate to false.
 
-4. `State Reached`: This state is the final state of the FSM. It doesn't define any actions or transitions, indicating the end of the FSM scenario.
+4. `State Reached`: This state is the final state of the FSM. It doesn't define any actions or transitions, indicating the end of the FSM test.
 
 The FSM operates as follows:
 
@@ -70,6 +70,6 @@ The FSM operates as follows:
 3. Upon entering the "State Before Guards" state, the "set" actions are executed, assigning `true` to "value-A" and `false` to "value-B". After these actions, the "done" action is executed, triggering the "DONE" event.
 4. The "DONE" event causes a check of the guard condition. The `equal` primitive compares "value-A" and "value-B". If they were equal, the FSM would transition to the "State Not Reached" state, but given the values we have set, they are not equal.
 5. Because the guard condition is not met, the FSM transitions to the "State Reached" state.
-6. The "State Reached" state is the final state and marks the end of this FSM scenario, as it does not define any further actions or transitions.
+6. The "State Reached" state is the final state and marks the end of this FSM test, as it does not define any further actions or transitions.
 
 This FSM demonstrates the use of guards in state transitions, which are essential for directing the flow of an FSM based on variable conditions.

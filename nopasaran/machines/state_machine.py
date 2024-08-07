@@ -51,7 +51,7 @@ class StateMachine:
                 "Variables": self.variables
             }
             base64_data = serialize_log_data(log_data)
-            logging.info('Result: {}'.format(base64_data))
+            logging.info('[Result - {}]'.format(base64_data))
 
     def execute_action(self, action):
         """

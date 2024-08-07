@@ -15,7 +15,6 @@ def serialize_log_data(log_data):
             base64_string = base64.b64encode(byte_stream).decode('utf-8')
             return base64_string
         except Exception as e:
-            print(f"Serialization error: {e}")
             return None
 
     def serialize_value(value):
@@ -38,7 +37,6 @@ def deserialize_log_data(base64_data):
             obj = pickle.loads(byte_stream)
             return obj
         except Exception as e:
-            print(f"Deserialization error: {e}")
             return None
 
     def deserialize_value(value):
@@ -55,7 +53,6 @@ def deserialize_log_data(base64_data):
         serialized_data = pickle.loads(byte_stream)
         return {k: deserialize_value(v) for k, v in serialized_data.items()}
     except Exception as e:
-        print(f"Deserialization error: {e}")
         return None
 
 def create_TCP_packet():

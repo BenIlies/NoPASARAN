@@ -1,8 +1,62 @@
+import base64
+import pickle
 import random
 import socket
 import select
 
 from scapy.all import IP, TCP, UDP, ICMP
+
+def serialize_log_data(log_data):
+    def serialize_object(obj):
+        try:
+            # Serialize the object to a byte stream
+            byte_stream = pickle.dumps(obj)
+            # Encode the byte stream to a base64 string
+            base64_string = base64.b64encode(byte_stream).decode('utf-8')
+            return base64_string
+        except Exception as e:
+            print(f"Serialization error: {e}")
+            return None
+
+    def serialize_value(value):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return {k: serialize_value(v) for k, v in value.items()}
+        return serialize_object(value)
+    
+    serialized_data = {k: serialize_value(v) for k, v in log_data.items()}
+    # Encode the final serialized data into a base64 string
+    return base64.b64encode(pickle.dumps(serialized_data)).decode('utf-8')
+
+def deserialize_log_data(base64_data):
+    def deserialize_object(base64_string):
+        try:
+            # Decode the base64 string to a byte stream
+            byte_stream = base64.b64decode(base64_string)
+            # Deserialize the byte stream to the original object
+            obj = pickle.loads(byte_stream)
+            return obj
+        except Exception as e:
+            print(f"Deserialization error: {e}")
+            return None
+
+    def deserialize_value(value):
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return {k: deserialize_value(v) for k, v in value.items()}
+        return deserialize_object(value)
+    
+    try:
+        # Decode the base64 data to a byte stream
+        byte_stream = base64.b64decode(base64_data)
+        # Deserialize the byte stream to the serialized data
+        serialized_data = pickle.loads(byte_stream)
+        return {k: deserialize_value(v) for k, v in serialized_data.items()}
+    except Exception as e:
+        print(f"Deserialization error: {e}")
+        return None
 
 def create_TCP_packet():
 	return IP()/TCP()

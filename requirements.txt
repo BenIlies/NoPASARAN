@@ -4,3 +4,4 @@ service_identity
 
 # Primitives Dependencies
 scapy
+h2 # For http2 primitives

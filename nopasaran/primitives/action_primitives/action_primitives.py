@@ -16,6 +16,7 @@ from nopasaran.primitives.action_primitives.tls_primitives import TLSPrimitives
 from nopasaran.primitives.action_primitives.http_1_request_primitives import HTTP1RequestPrimitives
 from nopasaran.primitives.action_primitives.http_1_response_primitives import HTTP1ResponsePrimitives
 from nopasaran.primitives.action_primitives.http_2_request_primitives import HTTP2RequestPrimitives
+from nopasaran.primitives.action_primitives.http_2_response_primitives import HTTP2ResponsePrimitives
 
 class ActionPrimitives(Primitives):
     """
@@ -38,5 +39,6 @@ class ActionPrimitives(Primitives):
         TLSPrimitives,
         HTTP1RequestPrimitives,
         HTTP1ResponsePrimitives,
-        HTTP2RequestPrimitives
+        HTTP2RequestPrimitives,
+        HTTP2ResponsePrimitives
         ]

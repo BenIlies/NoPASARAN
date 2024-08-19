@@ -267,3 +267,4 @@ class HTTP2RequestPrimitives:
         s.close()
 
         state_machine.set_variable_value(outputs[0], response_body)
+        state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)

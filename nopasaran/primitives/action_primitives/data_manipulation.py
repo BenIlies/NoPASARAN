@@ -230,3 +230,30 @@ class DataManipulationPrimitives:
         decrement_amount = int(inputs[1])
         decremented_value = old_value - decrement_amount
         state_machine.set_variable_value(outputs[0], decremented_value)
+
+
+    @staticmethod
+    @parsing_decorator(input_args=0, output_args=1)
+    def create_dict(inputs, outputs, state_machine):
+        """
+        Create an empty dictionary and store it in the machine's state.
+
+        Number of input arguments: 0
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): No input arguments.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the empty dictionary.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        state_machine.set_variable_value(outputs[0], {})

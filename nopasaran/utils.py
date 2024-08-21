@@ -109,6 +109,12 @@ def get_TCP_flags(packet):
 def set_TCP_ack(packet, ack):
     packet['TCP'].ack = int(ack)
 
+def get_TCP_seq(packet):
+    return packet['TCP'].seq
+
+def get_TCP_ack(packet):
+    return packet['TCP'].ack
+
 def set_TCP_automatic_packet_seq(packet):
 	increase = 0
 	if packet['TCP'].flags in ['S','F','SA','FA']:

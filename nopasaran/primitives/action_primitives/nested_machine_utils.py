@@ -102,7 +102,4 @@ class NestedMachinePrimitives:
         Returns:
             None
         """
-        if not isinstance(inputs, list):
-            inputs = [inputs]
-            
         state_machine.returned = inputs

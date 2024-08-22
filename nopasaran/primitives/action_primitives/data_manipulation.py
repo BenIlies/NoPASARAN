@@ -257,3 +257,70 @@ class DataManipulationPrimitives:
             None
         """
         state_machine.set_variable_value(outputs[0], {})
+
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def add_element_to_dict(inputs, outputs, state_machine):
+        """
+        Add an element to a dictionary stored in the machine's state.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the dictionary variable.
+                - The name of the variable whose value will be added as the value in the dictionary.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the dictionary variable to store the updated dictionary.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dictionary = state_machine.get_variable_value(inputs[0])
+        key = inputs[1]
+        value = state_machine.get_variable_value(key)
+        dictionary[key] = value
+        state_machine.set_variable_value(outputs[0], dictionary)
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def remove_element_from_dict(inputs, outputs, state_machine):
+        """
+        Remove an element from a dictionary stored in the machine's state.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the dictionary variable.
+                - The name of the variable whose value will be removed from the dictionary.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the dictionary variable to store the updated dictionary.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dictionary = state_machine.get_variable_value(inputs[0])
+        key = inputs[1]
+        
+        if key in dictionary:
+            del dictionary[key]
+        
+        state_machine.set_variable_value(outputs[0], dictionary)

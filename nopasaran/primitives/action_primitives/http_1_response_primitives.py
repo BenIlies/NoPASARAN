@@ -1,5 +1,6 @@
 from nopasaran.decorators import parsing_decorator
 from nopasaran.tools.http_1_socket_server import HTTP1SocketServer
+from nopasaran import utils
 
 class HTTP1ResponsePrimitives:
     """
@@ -137,6 +138,40 @@ class HTTP1ResponsePrimitives:
         received_request_data, event = server.wait_for_request(port=port, timeout=timeout)
         state_machine.set_variable_value(outputs[0], received_request_data)
         state_machine.trigger_event(event)
+        
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def wait_for_http1_response(inputs, outputs, state_machine):
+        """
+       Wait for an HTTP1 response.
+
+        Number of input arguments: 2
+            - The ip address to connect to
+            - The port to connect to
+
+        Number of output arguments: 1
+            - The HTTP response
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
+                - The name of the variable containing the ip address or hostname.
+                - The name of the variable containing the port number.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the HTTP response.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        ip = state_machine.get_variable_value(inputs[0])
+        port = int(state_machine.get_variable_value(inputs[1]))
+        
+        response = utils.get_response(ip, port)
+
+        state_machine.set_variable_value(outputs[0], response)
+        state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
 
     @staticmethod
     @parsing_decorator(input_args=5, output_args=0)

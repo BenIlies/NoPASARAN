@@ -141,7 +141,7 @@ class HTTP1ResponsePrimitives:
         
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def wait_for_http1_response(inputs, outputs, state_machine):
+    def wait_for_http_1_response(inputs, outputs, state_machine):
         """
        Wait for an HTTP1 response.
 

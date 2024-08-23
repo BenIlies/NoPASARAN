@@ -186,3 +186,24 @@ def send_request(ip, port, request_packet):
 				break
 	
 	return response
+
+def get_response(ip, port):
+	"""
+	Send an HTTP/1.1 request using a socket and return the response.
+	"""
+	response = b""
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+		s.settimeout(0.5)
+		s.connect((ip, port))
+		
+		while True:
+			ready_to_read, _, _ = select.select([s], [], [], 0.5)
+			if ready_to_read:
+				chunk = s.recv(4096)
+				if not chunk:
+					break
+				response += chunk
+			else:
+				break
+	
+	return response

@@ -171,7 +171,7 @@ class HTTP1ResponsePrimitives:
         response = utils.get_response(ip, port)
 
         state_machine.set_variable_value(outputs[0], response)
-        state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
+        state_machine.trigger_event(EventNames.RESPONSE_RECEIVED.name)
 
     @staticmethod
     @parsing_decorator(input_args=5, output_args=0)

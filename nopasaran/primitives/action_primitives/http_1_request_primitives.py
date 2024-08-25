@@ -289,9 +289,12 @@ class HTTP1RequestPrimitives:
         port = int(state_machine.get_variable_value(inputs[2]))
         
         response = utils.send_request(ip, port, request_packet)
-
         state_machine.set_variable_value(outputs[0], response)
-        state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
+
+        if response is not None:
+            state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
+        else:
+            state_machine.trigger_event(EventNames.REQUEST_ERROR.name)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

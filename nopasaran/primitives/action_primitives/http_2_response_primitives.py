@@ -58,10 +58,10 @@ class HTTP2ResponsePrimitives:
         server = state_machine.get_variable_value(inputs[0])
         route_params = state_machine.get_variable_value(inputs[1])
         
-        path = route_params.get('path')
-        method = route_params.get('method')
+        path = route_params.get(':path')
+        method = route_params.get(':method')
         response_body = route_params.get('body', '')
-        status_code = int(route_params.get('status_code'))
+        status_code = int(route_params.get(':status'))
         headers = route_params.get('headers', [])
 
         server.routes[(path, method.upper())] = {

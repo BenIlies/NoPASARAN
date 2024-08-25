@@ -222,49 +222,55 @@ class HTTP2RequestPrimitives:
         Returns:
             None
         """
-        request_headers, body = state_machine.get_variable_value(inputs[0])
-        ip = state_machine.get_variable_value(inputs[1])
-        port = int(state_machine.get_variable_value(inputs[2]))
+        try:
+            request_headers, body = state_machine.get_variable_value(inputs[0])
+            ip = state_machine.get_variable_value(inputs[1])
+            port = int(state_machine.get_variable_value(inputs[2]))
 
-        # Set up the socket and connection
-        s = socket.create_connection((ip, port))
-        c = h2.connection.H2Connection()
-        c.initiate_connection()
-        s.sendall(c.data_to_send())
-
-        # Send headers
-        c.send_headers(1, request_headers, end_stream=not bool(body))
-        s.sendall(c.data_to_send())
-
-        # Send body if exists
-        if body:
-            c.send_data(1, body, end_stream=True)
+            # Set up the socket and connection
+            s = socket.create_connection((ip, port))
+            c = h2.connection.H2Connection()
+            c.initiate_connection()
             s.sendall(c.data_to_send())
 
-        response_body = b''
-        response_stream_ended = False
+            # Send headers
+            c.send_headers(1, request_headers, end_stream=not bool(body))
+            s.sendall(c.data_to_send())
 
-        # Handle the response
-        while not response_stream_ended:
-            data = s.recv(65536 * 1024)
-            if not data:
-                break
+            # Send body if exists
+            if body:
+                c.send_data(1, body, end_stream=True)
+                s.sendall(c.data_to_send())
 
-            events = c.receive_data(data)
-            for event in events:
-                if isinstance(event, h2.events.DataReceived):
-                    c.acknowledge_received_data(event.flow_controlled_length, event.stream_id)
-                    response_body += event.data
-                if isinstance(event, h2.events.StreamEnded):
-                    response_stream_ended = True
+            response_body = b''
+            response_stream_ended = False
+
+            # Handle the response
+            while not response_stream_ended:
+                data = s.recv(65536 * 1024)
+                if not data:
                     break
 
+                events = c.receive_data(data)
+                for event in events:
+                    if isinstance(event, h2.events.DataReceived):
+                        c.acknowledge_received_data(event.flow_controlled_length, event.stream_id)
+                        response_body += event.data
+                    if isinstance(event, h2.events.StreamEnded):
+                        response_stream_ended = True
+                        break
+
+                s.sendall(c.data_to_send())
+
+            # Close the connection
+            c.close_connection()
             s.sendall(c.data_to_send())
+            s.close()
 
-        # Close the connection
-        c.close_connection()
-        s.sendall(c.data_to_send())
-        s.close()
+            state_machine.set_variable_value(outputs[0], response_body)
+            state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
 
-        state_machine.set_variable_value(outputs[0], response_body)
-        state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
+        except (socket.error, h2.exceptions.H2Error) as e:
+            # Handle errors and set output to None
+            state_machine.set_variable_value(outputs[0], None)
+            state_machine.trigger_event(EventNames.REQUEST_ERROR.name)

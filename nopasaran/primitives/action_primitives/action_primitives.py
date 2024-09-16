@@ -5,6 +5,7 @@ from nopasaran.primitives.action_primitives.nested_machine_utils import NestedMa
 from nopasaran.primitives.action_primitives.data_channel_primitives import DataChannelPrimitives
 from nopasaran.primitives.action_primitives.control_channel_primitives import ControlChannelPrimitives
 from nopasaran.primitives.action_primitives.event_primitives import EventPrimitives
+from nopasaran.primitives.action_primitives.signaling_primitive import SignalingPrimitives
 from nopasaran.primitives.action_primitives.io_primitives import IOPrimitives
 from nopasaran.primitives.action_primitives.ip_primitives import IPPrimitives
 from nopasaran.primitives.action_primitives.tcp_primitives import TCPPrimitives
@@ -28,7 +29,8 @@ class ActionPrimitives(Primitives):
         NestedMachinePrimitives, 
         DataChannelPrimitives, 
         ControlChannelPrimitives, 
-        EventPrimitives, 
+        EventPrimitives,
+        SignalingPrimitives,
         IOPrimitives, 
         IPPrimitives, 
         TCPPrimitives, 

@@ -292,7 +292,7 @@ class HTTP1RequestPrimitives:
         state_machine.set_variable_value(outputs[0], response)
 
         if response is not None:
-            state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
+            state_machine.trigger_event(EventNames.RESPONSE_RECEIVED.name)
         else:
             state_machine.trigger_event(EventNames.REQUEST_ERROR.name)
 

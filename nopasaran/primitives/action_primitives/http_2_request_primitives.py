@@ -268,7 +268,7 @@ class HTTP2RequestPrimitives:
             s.close()
 
             state_machine.set_variable_value(outputs[0], response_body)
-            state_machine.trigger_event(EventNames.REQUEST_RECEIVED.name)
+            state_machine.trigger_event(EventNames.RESPONSE_RECEIVED.name)
 
         except (socket.error, h2.exceptions.H2Error) as e:
             # Handle errors and set output to None

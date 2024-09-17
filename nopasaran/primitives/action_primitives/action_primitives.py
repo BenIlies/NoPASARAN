@@ -7,6 +7,7 @@ from nopasaran.primitives.action_primitives.control_channel_primitives import Co
 from nopasaran.primitives.action_primitives.event_primitives import EventPrimitives
 from nopasaran.primitives.action_primitives.signaling_primitive import SignalingPrimitives
 from nopasaran.primitives.action_primitives.io_primitives import IOPrimitives
+from nopasaran.primitives.action_primitives.socket_primitives import SocketPrimitives
 from nopasaran.primitives.action_primitives.ip_primitives import IPPrimitives
 from nopasaran.primitives.action_primitives.tcp_primitives import TCPPrimitives
 from nopasaran.primitives.action_primitives.udp_primitives import UDPPrimitives
@@ -31,7 +32,8 @@ class ActionPrimitives(Primitives):
         ControlChannelPrimitives, 
         EventPrimitives,
         SignalingPrimitives,
-        IOPrimitives, 
+        IOPrimitives,
+        SocketPrimitives,
         IPPrimitives, 
         TCPPrimitives, 
         UDPPrimitives,

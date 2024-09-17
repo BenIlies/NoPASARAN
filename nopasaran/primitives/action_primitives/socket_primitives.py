@@ -41,7 +41,7 @@ class SocketPrimitives:
                 try:
                     # Kill the process holding the port
                     process.terminate()
-                    process.wait(timeout=3)  # Wait for the process to terminate
+                    process.wait(timeout=0.5)  # Wait for the process to terminate
                     logging.info(f"[Socket] Process {conn.pid} using port {port} has been terminated.")
                     return
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired) as e:

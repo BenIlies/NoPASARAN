@@ -1,7 +1,5 @@
-import logging
+import time
 from nopasaran.decorators import parsing_decorator
-
-from twisted.internet import reactor
 
 class TimingPrimitives:
     """
@@ -33,12 +31,5 @@ class TimingPrimitives:
         Returns:
             None
         """
-        def callback_after_wait():
-            """
-            Function to be executed after the specified delay.
-            """
-            # Placeholder for action after the delay.
-            logging.info("[Delay] Wait is over. Proceeding with next state.")        
-        
         seconds = float(state_machine.get_variable_value(inputs[0]))
-        reactor.callLater(seconds, callback_after_wait)
+        time.sleep(seconds)

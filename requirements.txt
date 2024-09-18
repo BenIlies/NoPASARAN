@@ -1,6 +1,7 @@
 Twisted
 pyOpenSSL
 service_identity
+psutil
 
 # Primitives Dependencies
 scapy

@@ -27,7 +27,30 @@ class WorkerProtocol(Protocol):
         Returns:
             bytes: The JSON-encoded current state.
         """
-        return json.dumps({JSONMessage.STATUS.name: self.local_status}).encode()
+        try:
+            return json.dumps({JSONMessage.STATUS.name: self.local_status}).encode()
+        except (TypeError, json.JSONDecodeError) as e:
+            logging.error("[Control Channel] Error encoding current state to JSON: %s", e)
+            return b''
+
+    def send_encoded_data(self, data):
+        """
+        Send encoded data through the transport.
+        
+        This method encodes the provided data to JSON, base64, and sends it.
+        
+        Args:
+            data (dict): The data to encode and send.
+        """
+        try:
+            json_data = json.dumps(data).encode()
+            base64_data = base64.b64encode(json_data).decode("utf-8")
+            self.transport.getHandle().sendall(base64_data.encode())
+            logging.info("[Control Channel] Data sent: %s", data)
+        except (TypeError, json.JSONDecodeError) as e:
+            logging.error("[Control Channel] Error encoding data to JSON: %s", e)
+        except Exception as e:
+            logging.error("[Control Channel] Unexpected error in send_encoded_data: %s", e)
 
     def dataReceived(self, encoded_json_data):
         """
@@ -38,23 +61,32 @@ class WorkerProtocol(Protocol):
         Args:
             encoded_json_data (bytes): The received data as bytes.
         """
-        data = json.loads(encoded_json_data.decode())
-        if JSONMessage.STATUS.name in data:
-            self.remote_status = data[JSONMessage.STATUS.name]
-            if self.local_status == Status.CONNECTED.name and self.remote_status == Status.CONNECTED.name:
-                self.local_status = Status.READY.name
-                self.transport.write(self.get_current_state_json())
-            if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
-                self.is_active = False
-                self.transport.loseConnection()
-        if JSONMessage.SYNC.name in data:
-            encoded_data = data[JSONMessage.SYNC.name]
-            serialized_data = base64.b64decode(encoded_data)
-            content = pickle.loads(serialized_data)
-            self.queue.append(content)
-        logging.info("[Control Channel] Status: %s, %s", self.local_status, self.remote_status)
-        logging.info("[Control Channel] Received: %s", data)
-        
+        try:
+            decoded_data = base64.b64decode(encoded_json_data).decode()
+            data = json.loads(decoded_data)
+            if JSONMessage.STATUS.name in data:
+                self.remote_status = data[JSONMessage.STATUS.name]
+                if self.local_status == Status.CONNECTED.name and self.remote_status == Status.CONNECTED.name:
+                    self.local_status = Status.READY.name
+                    self.remote_status = Status.READY.name
+                if self.local_status == Status.DISCONNECTING.name and self.remote_status == Status.DISCONNECTING.name:
+                    self.is_active = False
+                    self.transport.loseConnection()
+            if JSONMessage.SYNC.name in data:
+                encoded_data = data[JSONMessage.SYNC.name]
+                serialized_data = base64.b64decode(encoded_data)
+                content = pickle.loads(serialized_data)
+                self.queue.append(content)
+            
+            logging.info("[Control Channel] Status: %s, %s", self.local_status, self.remote_status)
+            logging.info("[Control Channel] Received: %s", data)
+
+        except (json.JSONDecodeError, KeyError) as e:
+            logging.error("[Control Channel] Error processing received data: %s", e)
+        except (pickle.PickleError) as e:
+            logging.error("[Control Channel] Error decoding sync message: %s", e)
+        except Exception as e:
+            logging.error("[Control Channel] Unexpected error in dataReceived: %s", e)
 
     def disconnecting(self):
         """
@@ -62,9 +94,12 @@ class WorkerProtocol(Protocol):
         
         This method sets the local status to DISCONNECTING and sends the current state to the remote endpoint.
         """
-        self.local_status = Status.DISCONNECTING.name
-        self.transport.write(self.get_current_state_json())
-        logging.info("[Control Channel] Disconnecting...")
+        try:
+            self.local_status = Status.DISCONNECTING.name
+            self.send_encoded_data({JSONMessage.STATUS.name: self.local_status})
+            logging.info("[Control Channel] Disconnecting...")
+        except Exception as e:
+            logging.error("[Control Channel] Error during disconnection: %s", e)
 
     def connectionLost(self, reason):
         """
@@ -75,8 +110,12 @@ class WorkerProtocol(Protocol):
         Args:
             reason: The reason for the connection loss.
         """
-        self.is_active = False
-        logging.info("[Control Channel] Connection lost.")
+        try:
+            self.is_active = False
+            logging.info("[Control Channel] Connection lost.")
+            logging.info(reason)
+        except Exception as e:
+            logging.error("[Control Channel] Error handling connection lost: %s", e)
 
     def send_sync(self, content):
         """
@@ -87,10 +126,17 @@ class WorkerProtocol(Protocol):
         Args:
             content: The content of the sync message.
         """
-        serialized_data = pickle.dumps(content)
-        encoded_data = base64.b64encode(serialized_data).decode("utf-8")
-        self.transport.write(json.dumps({JSONMessage.SYNC.name: encoded_data}).encode())
-        logging.info("[Control Channel] Sync message sent: %s", content)
+        try:
+            serialized_data = pickle.dumps(content)
+            encoded_data = base64.b64encode(serialized_data).decode("utf-8")
+            self.send_encoded_data({JSONMessage.SYNC.name: encoded_data})
+            logging.info("[Control Channel] Sync message sent: %s", content)
+        except (pickle.PickleError) as e:
+            logging.error("[Control Channel] Error serializing or encoding sync message: %s", e)
+        except (TypeError, json.JSONDecodeError) as e:
+            logging.error("[Control Channel] Error encoding sync message to JSON: %s", e)
+        except Exception as e:
+            logging.error("[Control Channel] Unexpected error in send_sync: %s", e)
 
 
 class WorkerClientProtocol(WorkerProtocol):
@@ -107,11 +153,14 @@ class WorkerClientProtocol(WorkerProtocol):
         This method is called when the connection is successfully established with the server.
         It sets the local status to CONNECTED, sends the current state to the server, and logs the event.
         """
-        self.factory.stopTrying()
-        self.factory.state_machine.set_variable_value(self.factory.variable, self)
-        self.local_status = Status.CONNECTED.name
-        self.transport.write(self.get_current_state_json())
-        logging.info("[Control Channel] Connection made")
+        try:
+            self.factory.stopTrying()
+            self.factory.state_machine.set_variable_value(self.factory.variable, self)
+            self.local_status = Status.CONNECTED.name
+            self.send_encoded_data({JSONMessage.STATUS.name: self.local_status})
+            logging.info("[Control Channel] Connection made")
+        except Exception as e:
+            logging.error("[Control Channel] Error during client connection setup: %s", e)
 
 
 class WorkerServerProtocol(WorkerProtocol):
@@ -128,7 +177,10 @@ class WorkerServerProtocol(WorkerProtocol):
         This method is called when a client successfully establishes a connection with the server.
         It sets the local status to CONNECTED, sends the current state to the client, and logs the event.
         """
-        self.factory.state_machine.set_variable_value(self.factory.variable, self)
-        self.local_status = Status.CONNECTED.name
-        self.transport.write(self.get_current_state_json())
-        logging.info("[Control Channel] Connection made")
+        try:
+            self.factory.state_machine.set_variable_value(self.factory.variable, self)
+            self.local_status = Status.CONNECTED.name
+            self.send_encoded_data({JSONMessage.STATUS.name: self.local_status})
+            logging.info("[Control Channel] Connection made")
+        except Exception as e:
+            logging.error("[Control Channel] Error during server connection setup: %s", e)

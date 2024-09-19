@@ -45,7 +45,7 @@ class WorkerProtocol(Protocol):
         try:
             json_data = json.dumps(data).encode()
             base64_data = base64.b64encode(json_data).decode("utf-8")
-            self.transport.getHandle().sendall(base64_data.encode())
+            self.transport.write(base64_data.encode())
             logging.info("[Control Channel] Data sent: %s", data)
         except (TypeError, json.JSONDecodeError) as e:
             logging.error("[Control Channel] Error encoding data to JSON: %s", e)

@@ -1,135 +1,141 @@
 import socket
-import threading
+import http_2_overwrite
+import h2.config
 import h2.connection
 import h2.events
-import h2.config
+import ssl
+from checks import function_map
+from http2_utils import (
+    create_ssl_context,
+    create_socket,
+    SSL_CONFIG,
+    H2_CONFIG_SETTINGS,
+    send_frame
+)
 import time
-import select
 
-from nopasaran.definitions.events import EventNames
-from nopasaran.tools.http_2_overwrite import *
+FRAME_TIMEOUT_SECONDS = 1  # Timeout when waiting for frames
 
 class HTTP2SocketServer:
-    """
-    A basic HTTP/2 server implementation using the h2 library and sockets.
-    """
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.sock = None
+        self.conn = None
+        self.client_socket = None
 
-    def __init__(self):
-        self.routes = {}
-        self.request_received = None
-        self.received_request_data = None
-
-    def handle_connection(self, client_socket):
-        """
-        Handle an incoming HTTP/2 connection.
-
-        Args:
-            client_socket (socket.socket): The client socket.
-        """
-        conn = h2.connection.H2Connection(config=h2.config.H2Configuration(client_side=False))
-        conn.initiate_connection()
-        client_socket.sendall(conn.data_to_send())
-
-        while True:
-            try:
-                data = client_socket.recv(65535)
-                if not data:
-                    break
-
-                events = conn.receive_data(data)
-                for event in events:
-                    if isinstance(event, h2.events.RequestReceived):
-                        self.handle_request(event, conn)
-                    elif isinstance(event, h2.events.DataReceived):
-                        conn.acknowledge_received_data(event.flow_controlled_length, event.stream_id)
-                    elif isinstance(event, h2.events.StreamEnded):
-                        self.handle_stream_ended(event, conn, client_socket)
-
-                client_socket.sendall(conn.data_to_send())
-            except Exception as e:
-                print(f"Error handling connection: {e}")
-                break
-
-        client_socket.close()
-
-    def handle_request(self, event, conn):
-        """
-        Handle an HTTP/2 request.
-
-        Args:
-            event (h2.events.RequestReceived): The request received event.
-            conn (h2.connection.H2Connection): The HTTP/2 connection.
-        """
-        headers = {key.decode('utf-8'): value.decode('utf-8') for key, value in event.headers}
-        method = headers[':method']
-        path = headers[':path']
-
-        route_key = (path, method)
-        if route_key in self.routes:
-            route = self.routes[route_key]
-            # Ensure the body is encoded as bytes
-            body = route['body'].encode('utf-8') if isinstance(route['body'], str) else route['body']
+    def start(self, tls_enabled = False, protocol = 'h2', connection_settings_server = {}):
+        """Start the HTTP/2 server"""
+        self.sock = create_socket(self.host, self.port, is_server=True)
+        self.sock.listen(5)
+        
+        self.client_socket, address = self.sock.accept()    
+        
+        if tls_enabled:
+            ssl_context = create_ssl_context(
+                protocol=protocol,
+                is_client=False
+            )
             
-            response_headers = [
-                (b':status', str(route['status']).encode('utf-8'))
-                ] + [(key.encode('utf-8'), value.encode('utf-8')) for key, value in route['headers']]
+            self.client_socket = ssl_context.wrap_socket(
+                self.client_socket,
+                server_side=True
+            )
+        
+        config_settings = H2_CONFIG_SETTINGS.copy()
+        config_settings.update(connection_settings_server)
+        config = h2.config.H2Configuration(client_side=False, **config_settings)
+        self.conn = h2.connection.H2Connection(config=config)
+        
+        # Send connection preface
+        self.conn.initiate_connection()
+        self.client_socket.sendall(self.conn.data_to_send())
 
-            conn.send_headers(event.stream_id, response_headers)
-            conn.send_data(event.stream_id, body, end_stream=True)
-        else:
-            response_headers = [(b':status', b'404')]
-            conn.send_headers(event.stream_id, response_headers, end_stream=True)
+    def _receive_frame(self) -> bytes:
+        """Helper method to receive data"""
+        frame = self.client_socket.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
+        return frame
 
-        # Store the raw received request data
-        self.received_request_data = headers
+    def wait_for_client_preface(self):
+        """Wait for client's connection preface"""
+        data = self._receive_frame()
+        if data:
+            events = self.conn.receive_data(data)
+            for event in events:
+                if isinstance(event, h2.events.RemoteSettingsChanged):
+                    outbound_data = self.conn.data_to_send()  # This will generate SETTINGS ACK
+                    if outbound_data:
+                        self.client_socket.sendall(outbound_data)
 
-        # Notify that a request has been received
-        if self.request_received:
-            with self.request_received:
-                self.request_received.notify_all()
+    def wait_for_client_ack(self):
+        """Wait for server's SETTINGS_ACK frame"""
+        data = self._receive_frame()
+        if data:
+            events = self.conn.receive_data(data)
+            for event in events:
+                if isinstance(event, h2.events.SettingsAcknowledged):
+                    outbound_data = self.conn.data_to_send()
+                    if outbound_data:
+                        self.client_socket.sendall(outbound_data)
 
-    def handle_stream_ended(self, event, conn, client_socket):
+    def receive_client_frames(self, client_frames):
+        """Wait for client's frames"""
+        for frame in client_frames:
+            data = self._receive_frame()
+            if data is None:  # Timeout occurred
+                return
+            
+            else:
+                events = self.conn.receive_data(data)
+                self._handle_test(events[0], frame)
+
+    def send_frames(self, server_frames):
+        """Send frames based on test case"""
+        for frame in server_frames:
+            send_frame(self.conn, self.client_socket, frame)
+        
+        # Add a small delay to ensure frames are transmitted
+        time.sleep(0.1)
+
+    def _handle_test(self, event, frame):
         """
-        Handle a stream ended event (used to close the connection if necessary).
-
-        Args:
-            event (h2.events.StreamEnded): The stream ended event.
-            conn (h2.connection.H2Connection): The HTTP/2 connection.
-            client_socket (socket.socket): The client socket.
+        Handle test cases for received frames.
+        Each frame can have multiple tests, where each test contains multiple checks.
+        A test passes if all its checks pass.
+        We try each test until one passes completely, or all tests fail.
         """
-        client_socket.sendall(conn.data_to_send())
+        tests = frame.get('tests', [])
 
-    def wait_for_request(self, port, timeout):
-        """
-        Wait for an HTTP/2 request on a specified port with a timeout.
+        if not tests:
+            return
+        
+        for test_index, test in enumerate(tests, 1):
+            all_checks_passed = True
+            
+            # Try all checks in this test
+            for check in test:
+                function_name = check['function']
+                params = check['params']
+                
+                function = function_map.get(function_name)
+                if not function:
+                    all_checks_passed = False
+                    break
+                
+                if not function(event, *params):
+                    all_checks_passed = False
+                    break
+            
+            if all_checks_passed:
+                return  # Exit after first successful test
+        
+        # If we get here, all tests failed
 
-        Args:
-            port (int): The port to listen on.
-            timeout (int): The timeout duration in seconds.
-
-        Returns:
-            Tuple[dict, str]: The received request data or None if a timeout occurs, and the event name.
-        """
-        server_address = ('', port)
-        self.request_received = threading.Condition()
-        self.received_request_data = None
-
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            server_socket.bind(server_address)
-            server_socket.listen(1)
-            server_socket.setblocking(False)
-
-            start_time = time.time()
-
-            while True:
-                elapsed_time = time.time() - start_time
-                if elapsed_time > timeout:
-                    return None, EventNames.TIMEOUT.name
-
-                ready_to_read, _, _ = select.select([server_socket], [], [], timeout - elapsed_time)
-
-                if ready_to_read:
-                    client_socket, _ = server_socket.accept()
-                    self.handle_connection(client_socket)
-                    return self.received_request_data, EventNames.REQUEST_RECEIVED.name
+    def close_connection(self):
+        """Handle response waiting state."""        
+        for i in range(1):
+            data = self._receive_frame()
+            events = self.conn.receive_data(data)
+            for event in events:
+                if isinstance(event, h2.events.ConnectionTerminated):
+                    self.client_socket.close()

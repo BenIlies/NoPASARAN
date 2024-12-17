@@ -5,7 +5,7 @@ import h2.connection
 import h2.events
 import ssl
 from checks import function_map
-from http2_utils import (
+from nopasaran.http_2_utils import (
     create_ssl_context,
     create_socket,
     SSL_CONFIG,

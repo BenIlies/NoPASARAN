@@ -4,7 +4,7 @@ import h2.connection
 import h2.config
 import h2.events
 import ssl
-from http2_utils import (
+from nopasaran.http_2_utils import (
     setup_logging,
     create_ssl_context,
     create_socket,

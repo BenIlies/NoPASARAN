@@ -7,7 +7,7 @@ class HTTP2ServerPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=0, output_args=1)
+    @parsing_decorator(input_args=2, output_args=1)
     def create_http_2_server(inputs, outputs, state_machine):
         """
         Create an instance of HTTP2SocketServer.

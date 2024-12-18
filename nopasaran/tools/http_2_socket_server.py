@@ -1,10 +1,8 @@
-import socket
-import http_2_overwrite
 import h2.config
 import h2.connection
 import h2.events
-import ssl
-from checks import function_map
+import nopasaran.tools.http_2_overwrite
+from nopasaran.tools.checks import function_map
 from nopasaran.http_2_utils import (
     create_ssl_context,
     create_socket,
@@ -13,8 +11,6 @@ from nopasaran.http_2_utils import (
     send_frame
 )
 import time
-
-FRAME_TIMEOUT_SECONDS = 1  # Timeout when waiting for frames
 
 class HTTP2SocketServer:
     def __init__(self, host, port):

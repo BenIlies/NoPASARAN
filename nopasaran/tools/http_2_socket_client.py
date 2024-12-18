@@ -1,26 +1,21 @@
 import time
-import http_2_overwrite
 import h2.connection
 import h2.config
 import h2.events
-import ssl
 from nopasaran.http_2_utils import (
-    setup_logging,
     create_ssl_context,
     create_socket,
     SSL_CONFIG,
-    log_h2_frame,
     H2_CONFIG_SETTINGS,
     send_frame
 )
-import socket
-from checks import function_map
+import nopasaran.tools.http_2_overwrite
+from nopasaran.tools.checks import function_map
 
 # Add at the top with other constants
-FRAME_TIMEOUT_SECONDS = 2  # Increased from 1 to 2 seconds
 MAX_RETRY_ATTEMPTS = 3
 
-class HTTP2Client:
+class HTTP2SocketClient:
     def __init__(self, host: str, port: int):
         self.host = host
         self.port = port

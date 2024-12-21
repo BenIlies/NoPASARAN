@@ -50,6 +50,20 @@ class HTTP2ServerPrimitives:
             - The connection settings for the server
 
         Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketServer instance variable
+                - The name of the tls_enabled flag variable
+                - The name of the TLS protocol variable
+                - The name of the connection settings variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         tls_enabled = state_machine.get_variable_value(inputs[1])
@@ -73,6 +87,17 @@ class HTTP2ServerPrimitives:
             - The HTTP2SocketServer instance
 
         Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketServer instance variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         server.wait_for_client_preface()
@@ -87,6 +112,17 @@ class HTTP2ServerPrimitives:
             - The HTTP2SocketServer instance
 
         Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketServer instance variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         server.wait_for_client_ack()
@@ -97,10 +133,23 @@ class HTTP2ServerPrimitives:
         """
         Wait for the client's frames.
 
-        Number of input arguments: 1
+        Number of input arguments: 2
             - The HTTP2SocketServer instance
+            - The client frames to receive
 
         Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketServer instance variable
+                - The name of the client frames variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         client_frames = state_machine.get_variable_value(inputs[1])
@@ -117,6 +166,18 @@ class HTTP2ServerPrimitives:
             - The frames to send
 
         Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketServer instance variable
+                - The name of the server frames variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         server_frames = state_machine.get_variable_value(inputs[1])
@@ -132,6 +193,17 @@ class HTTP2ServerPrimitives:
             - The HTTP2SocketServer instance
 
         Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketServer instance variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         server.close_connection()

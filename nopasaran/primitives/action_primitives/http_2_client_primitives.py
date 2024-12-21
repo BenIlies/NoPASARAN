@@ -40,6 +40,28 @@ class HTTP2ClientPrimitives:
     def start_http_2_client(inputs, outputs, state_machine):
         """
         Start the HTTP/2 client.
+
+        Number of input arguments: 4
+            - The HTTP2SocketClient instance
+            - The tls_enabled flag
+            - The TLS protocol to use
+            - The connection settings for the client
+
+        Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketClient instance variable
+                - The name of the tls_enabled flag variable
+                - The name of the TLS protocol variable
+                - The name of the connection settings variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         client = state_machine.get_variable_value(inputs[0])
         tls_enabled = state_machine.get_variable_value(inputs[1])
@@ -55,9 +77,25 @@ class HTTP2ClientPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)
-    def wait_for_client_preface(inputs, outputs, state_machine):
+    def wait_for_server_preface(inputs, outputs, state_machine):
         """
-        Wait for the client's connection preface.
+        Wait for the server's SETTINGS frame.
+
+        Number of input arguments: 1
+            - The HTTP2SocketClient instance
+
+        Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketClient instance variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         client = state_machine.get_variable_value(inputs[0])
         client.wait_for_client_preface()
@@ -67,6 +105,22 @@ class HTTP2ClientPrimitives:
     def wait_for_server_ack(inputs, outputs, state_machine):
         """
         Wait for the server's SETTINGS_ACK frame.
+
+        Number of input arguments: 1
+            - The HTTP2SocketClient instance
+
+        Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketClient instance variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         client = state_machine.get_variable_value(inputs[0])
         client.wait_for_server_ack()
@@ -76,6 +130,24 @@ class HTTP2ClientPrimitives:
     def send_client_frames(inputs, outputs, state_machine):
         """
         Send frames to the server.
+
+        Number of input arguments: 2
+            - The HTTP2SocketClient instance
+            - The frames to send
+
+        Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketClient instance variable
+                - The name of the client frames variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         client = state_machine.get_variable_value(inputs[0])
         client_frames = state_machine.get_variable_value(inputs[1])
@@ -86,6 +158,24 @@ class HTTP2ClientPrimitives:
     def receive_server_frames(inputs, outputs, state_machine):
         """
         Wait for server's frames.
+
+        Number of input arguments: 2
+            - The HTTP2SocketClient instance
+            - The server frames to receive
+
+        Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketClient instance variable
+                - The name of the server frames variable
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         client = state_machine.get_variable_value(inputs[0])
         server_frames = state_machine.get_variable_value(inputs[1])

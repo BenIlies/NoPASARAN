@@ -98,7 +98,7 @@ class HTTP2ClientPrimitives:
             None
         """
         client = state_machine.get_variable_value(inputs[0])
-        client.wait_for_client_preface()
+        client.wait_for_server_preface()
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)

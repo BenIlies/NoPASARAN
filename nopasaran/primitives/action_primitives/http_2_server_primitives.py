@@ -92,7 +92,7 @@ class HTTP2ServerPrimitives:
         server.wait_for_client_ack()
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=0)
+    @parsing_decorator(input_args=2, output_args=0)
     def receive_client_frames(inputs, outputs, state_machine):
         """
         Wait for the client's frames.
@@ -103,7 +103,8 @@ class HTTP2ServerPrimitives:
         Number of output arguments: 0
         """
         server = state_machine.get_variable_value(inputs[0])
-        server.receive_client_frames()
+        client_frames = state_machine.get_variable_value(inputs[1])
+        server.receive_client_frames(client_frames)
     
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)

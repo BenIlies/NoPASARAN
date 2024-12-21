@@ -13,7 +13,7 @@ from nopasaran.http_2_utils import (
 import time
 
 class HTTP2SocketServer:
-    def __init__(self, host, port):
+    def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
         self.sock = None

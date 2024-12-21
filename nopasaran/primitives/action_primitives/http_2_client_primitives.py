@@ -31,6 +31,7 @@ class HTTP2ClientPrimitives:
         """
         host = state_machine.get_variable_value(inputs[0])
         port = state_machine.get_variable_value(inputs[1])
+        port = int(port)
         client = HTTP2SocketClient(host, port)
         state_machine.set_variable_value(outputs[0], client)
 
@@ -44,6 +45,12 @@ class HTTP2ClientPrimitives:
         tls_enabled = state_machine.get_variable_value(inputs[1])
         protocol = state_machine.get_variable_value(inputs[2])
         connection_settings_client = state_machine.get_variable_value(inputs[3])
+
+        if tls_enabled == 'true':
+            tls_enabled = True
+        else:
+            tls_enabled = False
+
         client.start(tls_enabled, protocol, connection_settings_client)
 
     @staticmethod

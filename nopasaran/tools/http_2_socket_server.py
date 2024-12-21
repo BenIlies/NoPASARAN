@@ -79,11 +79,11 @@ class HTTP2SocketServer:
         for frame in client_frames:
             data = self._receive_frame()
             if data is None:  # Timeout occurred
-                return
+                return False
             
-            else:
-                events = self.conn.receive_data(data)
-                self._handle_test(events[0], frame)
+            events = self.conn.receive_data(data)
+            result = self._handle_test(events[0], frame)
+            return result
 
     def send_frames(self, server_frames):
         """Send frames based on test case"""
@@ -93,17 +93,16 @@ class HTTP2SocketServer:
         # Add a small delay to ensure frames are transmitted
         time.sleep(0.1)
 
-    def _handle_test(self, event, frame):
+    def _handle_test(self, event, frame) -> bool:
         """
         Handle test cases for received frames.
-        Each frame can have multiple tests, where each test contains multiple checks.
-        A test passes if all its checks pass.
-        We try each test until one passes completely, or all tests fail.
+        Each scenario can have multiple tests, where each test contains multiple checks.
+        A test passes if all its checks pass. A scenario passes if one of its tests passes.
         """
         tests = frame.get('tests', [])
 
         if not tests:
-            return
+            return True
         
         for test_index, test in enumerate(tests, 1):
             all_checks_passed = True
@@ -114,18 +113,22 @@ class HTTP2SocketServer:
                 params = check['params']
                 
                 function = function_map.get(function_name)
+
+                # check if check exists
                 if not function:
                     all_checks_passed = False
                     break
                 
+                # run the check. if it fails, break the loop
                 if not function(event, *params):
                     all_checks_passed = False
                     break
             
             if all_checks_passed:
-                return  # Exit after first successful test
+                return True  # Exit after first successful test
         
         # If we get here, all tests failed
+        return False
 
     def close_connection(self):
         """Handle response waiting state."""        

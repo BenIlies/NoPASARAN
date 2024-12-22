@@ -100,7 +100,8 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        server.wait_for_client_preface()
+        event = server.wait_for_client_preface()
+        state_machine.trigger_event(event)
     
     @staticmethod
     @parsing_decorator(input_args=1, output_args=0)
@@ -125,7 +126,8 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        server.wait_for_client_ack()
+        event = server.wait_for_client_ack()
+        state_machine.trigger_event(event)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -155,8 +157,9 @@ class HTTP2ServerPrimitives:
         """
         server = state_machine.get_variable_value(inputs[0])
         client_frames = state_machine.get_variable_value(inputs[1])
-        result = server.receive_client_frames(client_frames)
+        result, event = server.receive_client_frames(client_frames)
         state_machine.set_variable_value(outputs[0], result)
+        state_machine.trigger_event(event)
     
     @staticmethod
     @parsing_decorator(input_args=2, output_args=0)

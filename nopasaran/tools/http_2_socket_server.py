@@ -11,6 +11,10 @@ from nopasaran.http_2_utils import (
     send_frame
 )
 import time
+import select
+from nopasaran.definitions.events import EventNames
+
+TIMEOUT = 10
 
 class HTTP2SocketServer:
     def __init__(self, host: str, port: int):
@@ -49,41 +53,69 @@ class HTTP2SocketServer:
 
     def _receive_frame(self) -> bytes:
         """Helper method to receive data"""
-        frame = self.client_socket.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
-        return frame
+        start_time = time.time()
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > TIMEOUT:
+                return None
+            
+            ready_to_read, _, _ = select.select([self.client_socket], [], [], TIMEOUT)
+            if ready_to_read:
+                frame = self.client_socket.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
+                return frame
 
-    def wait_for_client_preface(self):
+    def wait_for_client_preface(self) -> str:
         """Wait for client's connection preface"""
         data = self._receive_frame()
-        if data:
-            events = self.conn.receive_data(data)
-            for event in events:
-                if isinstance(event, h2.events.RemoteSettingsChanged):
-                    outbound_data = self.conn.data_to_send()  # This will generate SETTINGS ACK
-                    if outbound_data:
-                        self.client_socket.sendall(outbound_data)
+        if data is None:
+            return EventNames.TIMEOUT.name
+        
+        events = self.conn.receive_data(data)
+        for event in events:
+            if isinstance(event, h2.events.RemoteSettingsChanged):
+                outbound_data = self.conn.data_to_send()  # This will generate SETTINGS ACK
+                if outbound_data:
+                    self.client_socket.sendall(outbound_data)
 
-    def wait_for_client_ack(self):
+        return EventNames.PREFACE_RECEIVED.name
+    
+    def wait_for_client_ack(self) -> str:
         """Wait for server's SETTINGS_ACK frame"""
         data = self._receive_frame()
-        if data:
-            events = self.conn.receive_data(data)
-            for event in events:
-                if isinstance(event, h2.events.SettingsAcknowledged):
-                    outbound_data = self.conn.data_to_send()
-                    if outbound_data:
-                        self.client_socket.sendall(outbound_data)
+        if data is None:
+            return EventNames.TIMEOUT.name
+        
+        events = self.conn.receive_data(data)
+        for event in events:
+            if isinstance(event, h2.events.SettingsAcknowledged):
+                outbound_data = self.conn.data_to_send()
+                if outbound_data:
+                    self.client_socket.sendall(outbound_data)
 
-    def receive_client_frames(self, client_frames):
+        return EventNames.ACK_RECEIVED.name
+
+    def receive_client_frames(self, client_frames) -> bool | str:
         """Wait for client's frames"""
         for frame in client_frames:
             data = self._receive_frame()
-            if data is None:  # Timeout occurred
-                return False
+
+            # if data is None, it means the proxy dropped the frames (so conformant?)
+            if data is None:
+                return True, EventNames.TIMEOUT.name
             
             events = self.conn.receive_data(data)
+
+            # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
             result = self._handle_test(events[0], frame)
-            return result
+
+            # if a test passes, return True
+            if result:
+                return True, EventNames.TEST_PASSED.name
+            elif result is False:
+                return False, EventNames.TEST_FAILED.name
+        
+        # will reach here if there were no individual tests to run and the proxy did not drop the frames (no timeout)
+        return False, EventNames.TEST_FAILED.name
 
     def send_frames(self, server_frames):
         """Send frames based on test case"""
@@ -102,7 +134,7 @@ class HTTP2SocketServer:
         tests = frame.get('tests', [])
 
         if not tests:
-            return True
+            return None
         
         for test_index, test in enumerate(tests, 1):
             all_checks_passed = True

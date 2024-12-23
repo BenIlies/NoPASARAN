@@ -102,6 +102,8 @@ class HTTP2SocketClient:
         # Add a small delay to ensure frames are transmitted
         time.sleep(0.1)
 
+        return EventNames.FRAMES_SENT.name
+
     def receive_server_frames(self, server_frames) -> bool | str:
         """
             Wait for server's frames
@@ -180,28 +182,3 @@ class HTTP2SocketClient:
         
         # If we get here, all tests failed
         return False
-
-    # def close_connection(self):
-    #     """Handle CLOSING state: Send GOAWAY if needed and close the connection"""
-    #     try:
-    #         # Only send GOAWAY if it wasn't the last frame sent
-    #         last_frame = self.test_case.get('client_frames', [])[-1] if self.test_case else None
-    #         if not last_frame or last_frame.get('type') != 'GOAWAY':
-    #             self.conn.close_connection()
-    #             self.sock.sendall(self.conn.data_to_send())
-            
-    #         # Wait briefly for any final messages
-    #             self.sock.settimeout(0.1)
-    #             while not self.conn.state_machine.state == h2.connection.ConnectionState.CLOSED:
-    #                 data = self.sock.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
-    #                 if not data:
-    #                     break
-    #                 events = self.conn.receive_data(data)
-    #                 for event in events:
-    #                     self._handle_frame(event)
-            
-    #     finally:
-    #         if self.sock:
-    #             self.sock.close()
-    #             self.sock = None
-    #             self.conn = None

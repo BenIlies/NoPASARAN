@@ -31,3 +31,4 @@ class EventNames(Enum):
     ACK_RECEIVED = 20
     TEST_PASSED = 21
     TEST_FAILED = 22
+    FRAMES_SENT = 23

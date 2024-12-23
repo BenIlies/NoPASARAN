@@ -141,6 +141,8 @@ class HTTP2SocketServer:
         # Add a small delay to ensure frames are transmitted
         time.sleep(0.1)
 
+        return EventNames.FRAMES_SENT.name
+
     def _handle_test(self, event, frame) -> bool | None:
         """
         Handle test cases for received frames.
@@ -182,12 +184,3 @@ class HTTP2SocketServer:
         
         # If we get here, all tests failed
         return False
-
-    def close_connection(self):
-        """Handle response waiting state."""        
-        for i in range(1):
-            data = self._receive_frame()
-            events = self.conn.receive_data(data)
-            for event in events:
-                if isinstance(event, h2.events.ConnectionTerminated):
-                    self.client_socket.close()

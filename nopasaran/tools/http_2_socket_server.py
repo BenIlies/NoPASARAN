@@ -1,8 +1,11 @@
+import time
+import select
 import h2.config
 import h2.connection
 import h2.events
 import nopasaran.tools.http_2_overwrite
 from nopasaran.tools.checks import function_map
+from nopasaran.definitions.events import EventNames
 from nopasaran.http_2_utils import (
     create_ssl_context,
     create_socket,
@@ -10,11 +13,9 @@ from nopasaran.http_2_utils import (
     H2_CONFIG_SETTINGS,
     send_frame
 )
-import time
-import select
-from nopasaran.definitions.events import EventNames
 
 TIMEOUT = 10
+MAX_RETRY_ATTEMPTS = 3
 
 class HTTP2SocketServer:
     def __init__(self, host: str, port: int):
@@ -95,14 +96,29 @@ class HTTP2SocketServer:
         return EventNames.ACK_RECEIVED.name
 
     def receive_client_frames(self, client_frames) -> bool | str:
-        """Wait for client's frames"""
+        """
+            Wait for client's frames
+
+            Returns:
+                - True if 
+                    - the test passed or 
+                    - the proxy dropped the frames (timed out)
+                - False if 
+                    - the test failed or 
+                    - no tests were run and the proxy did not drop the frames
+        """
+        retry_count = 0
         for frame in client_frames:
             data = self._receive_frame()
 
             # if data is None, it means the proxy dropped the frames (so conformant?)
             if data is None:
-                return True, EventNames.TIMEOUT.name
+                retry_count += 1
+                if retry_count >= MAX_RETRY_ATTEMPTS:
+                    return True, EventNames.TIMEOUT.name
+                continue
             
+            retry_count = 0  # Reset retry counter on successful receive
             events = self.conn.receive_data(data)
 
             # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
@@ -125,11 +141,16 @@ class HTTP2SocketServer:
         # Add a small delay to ensure frames are transmitted
         time.sleep(0.1)
 
-    def _handle_test(self, event, frame) -> bool:
+    def _handle_test(self, event, frame) -> bool | None:
         """
         Handle test cases for received frames.
         Each scenario can have multiple tests, where each test contains multiple checks.
         A test passes if all its checks pass. A scenario passes if one of its tests passes.
+
+        Returns:
+            - True if the test passed
+            - False if the test failed
+            - None if no tests were found for that frame
         """
         tests = frame.get('tests', [])
 

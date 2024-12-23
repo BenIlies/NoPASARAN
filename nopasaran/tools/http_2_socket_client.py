@@ -1,7 +1,11 @@
 import time
+import select
 import h2.connection
 import h2.config
 import h2.events
+import nopasaran.tools.http_2_overwrite
+from nopasaran.tools.checks import function_map
+from nopasaran.definitions.events import EventNames
 from nopasaran.http_2_utils import (
     create_ssl_context,
     create_socket,
@@ -9,11 +13,10 @@ from nopasaran.http_2_utils import (
     H2_CONFIG_SETTINGS,
     send_frame
 )
-import nopasaran.tools.http_2_overwrite
-from nopasaran.tools.checks import function_map
 
 # Add at the top with other constants
 MAX_RETRY_ATTEMPTS = 3
+TIMEOUT = 10
 
 class HTTP2SocketClient:
     def __init__(self, host: str, port: int):
@@ -50,31 +53,46 @@ class HTTP2SocketClient:
 
     def _receive_frame(self) -> bytes:
         """Helper method to receive data"""
-        data = self.sock.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
-        return data
+        start_time = time.time()
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > TIMEOUT:
+                return None
+            
+            ready_to_read, _, _ = select.select([self.sock], [], [], TIMEOUT)
+            if ready_to_read:
+                frame = self.sock.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
+                return frame
 
-    def wait_for_server_preface(self):
+    def wait_for_server_preface(self) -> str:
         """Wait for server's SETTINGS frame"""
         data = self._receive_frame()
-        if data:
-            events = self.conn.receive_data(data)
-            for event in events:
-                if isinstance(event, h2.events.RemoteSettingsChanged):
-                    outbound_data = self.conn.data_to_send()  # This will generate SETTINGS ACK
-                    if outbound_data:
-                        self.sock.sendall(outbound_data)
+        if data is None:
+            return EventNames.TIMEOUT.name
+        
+        events = self.conn.receive_data(data)
+        for event in events:
+            if isinstance(event, h2.events.RemoteSettingsChanged):
+                outbound_data = self.conn.data_to_send()  # This will generate SETTINGS ACK
+                if outbound_data:
+                    self.sock.sendall(outbound_data)
 
-    def wait_for_server_ack(self):
+        return EventNames.PREFACE_RECEIVED.name
+
+    def wait_for_server_ack(self) -> str:
         """Wait for server's SETTINGS_ACK frame"""
         data = self._receive_frame()
-        if data:
-            events = self.conn.receive_data(data)
-            for event in events:
-                if isinstance(event, h2.events.SettingsAcknowledged):
-                    outbound_data = self.conn.data_to_send()
-                    if outbound_data:
-                        self.sock.sendall(outbound_data)
+        if data is None:
+            return EventNames.TIMEOUT.name
+        
+        events = self.conn.receive_data(data)
+        for event in events:
+            if isinstance(event, h2.events.SettingsAcknowledged):
+                outbound_data = self.conn.data_to_send()
+                if outbound_data:
+                    self.sock.sendall(outbound_data)
 
+        return EventNames.ACK_RECEIVED.name
 
     def send_frames(self, client_frames):
         """Send frames based on test case"""
@@ -84,34 +102,59 @@ class HTTP2SocketClient:
         # Add a small delay to ensure frames are transmitted
         time.sleep(0.1)
 
-    def receive_frames(self, server_frames):
-        """Wait for server's frames"""
+    def receive_server_frames(self, server_frames) -> bool | str:
+        """
+            Wait for server's frames
+        
+            Returns:
+                - True if 
+                    - the test passed or 
+                    - the proxy dropped the frames (timed out)
+                - False if 
+                    - the test failed or 
+                    - no tests were run and the proxy did not drop the frames
+        """
         retry_count = 0
                 
         for frame in server_frames:
             data = self._receive_frame()
+
+            # if data is None, it means the proxy dropped the frames (so conformant?)
             if data is None:  # Timeout occurred
                 retry_count += 1
                 if retry_count >= MAX_RETRY_ATTEMPTS:
-                    return
+                    return True, EventNames.TIMEOUT.name
                 continue
             
-            else:
-                retry_count = 0  # Reset retry counter on successful receive
-                events = self.conn.receive_data(data)
-                self._handle_test(events[0], frame)
+            retry_count = 0  # Reset retry counter on successful receive
+            events = self.conn.receive_data(data)
+
+            # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
+            result = self._handle_test(events[0], frame)
+
+            # if a test passes, return True
+            if result:
+                return True, EventNames.TEST_PASSED.name
+            elif result is False:
+                return False, EventNames.TEST_FAILED.name
+        
+        return False, EventNames.TEST_FAILED.name
 
     def _handle_test(self, event, frame):
         """
         Handle test cases for received frames.
-        Each frame can have multiple tests, where each test contains multiple checks.
-        A test passes if all its checks pass.
-        We try each test until one passes completely, or all tests fail.
+        Each scenario can have multiple tests, where each test contains multiple checks.
+        A test passes if all its checks pass. A scenario passes if one of its tests passes.
+
+        Returns:
+            - True if the test passed
+            - False if the test failed
+            - None if no tests were found for that frame
         """
         tests = frame.get('tests', [])
 
         if not tests:
-            return
+            return None
         
         for test_index, test in enumerate(tests, 1):
             all_checks_passed = True
@@ -122,6 +165,8 @@ class HTTP2SocketClient:
                 params = check['params']
                 
                 function = function_map.get(function_name)
+
+                # check if check exists
                 if not function:
                     all_checks_passed = False
                     break
@@ -131,9 +176,10 @@ class HTTP2SocketClient:
                     break
             
             if all_checks_passed:
-                return  # Exit after first successful test
+                return True  # Exit after first successful test
         
         # If we get here, all tests failed
+        return False
 
     # def close_connection(self):
     #     """Handle CLOSING state: Send GOAWAY if needed and close the connection"""
@@ -145,7 +191,6 @@ class HTTP2SocketClient:
     #             self.sock.sendall(self.conn.data_to_send())
             
     #         # Wait briefly for any final messages
-    #         try:
     #             self.sock.settimeout(0.1)
     #             while not self.conn.state_machine.state == h2.connection.ConnectionState.CLOSED:
     #                 data = self.sock.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
@@ -154,8 +199,8 @@ class HTTP2SocketClient:
     #                 events = self.conn.receive_data(data)
     #                 for event in events:
     #                     self._handle_frame(event)
+            
     #     finally:
-    #         self.state = ClientState.CLOSED
     #         if self.sock:
     #             self.sock.close()
     #             self.sock = None

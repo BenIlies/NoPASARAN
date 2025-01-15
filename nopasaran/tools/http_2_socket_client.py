@@ -136,9 +136,9 @@ class HTTP2SocketClient:
 
             # if a test passes, return True
             if result:
-                return True, EventNames.TEST_PASSED.name
+                return True, EventNames.TEST_FAILED.name
             elif result is False:
-                return False, EventNames.TEST_FAILED.name
+                return False, EventNames.TEST_PASSED.name
         
         return False, EventNames.TEST_FAILED.name
 

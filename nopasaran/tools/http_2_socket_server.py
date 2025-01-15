@@ -126,9 +126,9 @@ class HTTP2SocketServer:
 
             # if a test passes, return True
             if result:
-                return True, EventNames.TEST_PASSED.name
+                return True, EventNames.TEST_FAILED.name
             elif result is False:
-                return False, EventNames.TEST_FAILED.name
+                return False, EventNames.TEST_PASSED.name
         
         # will reach here if there were no individual tests to run and the proxy did not drop the frames (no timeout)
         return False, EventNames.TEST_FAILED.name

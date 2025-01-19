@@ -132,17 +132,17 @@ class HTTP2SocketClient:
             events = self.conn.receive_data(data)
 
             # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
-            result = self._handle_test(events[0], frame)
+            result, test_index = self._handle_test(events[0], frame)
 
             # if a test passes, return True
-            if result:
-                return True, EventNames.TEST_FAILED.name
+            if result is True:
+                return True, EventNames.TEST_PASSED.name, f'Test {test_index} passed'
             elif result is False:
-                return False, EventNames.TEST_PASSED.name
+                return False, EventNames.TEST_FAILED.name, "All tests failed for the frame"
         
-        return False, EventNames.TEST_FAILED.name
+        return False, EventNames.TEST_FAILED.name, "No tests were found for the frame and the proxy did not drop the frames"
 
-    def _handle_test(self, event, frame):
+    def _handle_test(self, event, frame) -> bool | int | None:
         """
         Handle test cases for received frames.
         Each scenario can have multiple tests, where each test contains multiple checks.
@@ -156,7 +156,7 @@ class HTTP2SocketClient:
         tests = frame.get('tests', [])
 
         if not tests:
-            return None
+            return None, None
         
         for test_index, test in enumerate(tests, 1):
             all_checks_passed = True
@@ -178,7 +178,7 @@ class HTTP2SocketClient:
                     break
             
             if all_checks_passed:
-                return True  # Exit after first successful test
+                return True, test_index  # Exit after first successful test
         
         # If we get here, all tests failed
-        return False
+        return False, None

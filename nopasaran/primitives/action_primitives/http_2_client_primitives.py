@@ -144,6 +144,7 @@ class HTTP2ClientPrimitives:
         Number of output arguments: 2
             - The result of the test
             - The event name
+            - The message to output
 
         Args:
             inputs (List[str]): The list of input variable names containing:
@@ -153,6 +154,7 @@ class HTTP2ClientPrimitives:
             outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the result of the test
                 - The name of the variable to store the event name
+                - The name of the variable to store the message
 
             state_machine: The state machine object.
 
@@ -161,9 +163,10 @@ class HTTP2ClientPrimitives:
         """
         client = state_machine.get_variable_value(inputs[0])
         server_frames = state_machine.get_variable_value(inputs[1])
-        result, event = client.receive_server_frames(server_frames)
+        result, event, msg = client.receive_server_frames(server_frames)
         state_machine.set_variable_value(outputs[0], result)
         state_machine.set_variable_value(outputs[1], event)
+        state_machine.set_variable_value(outputs[2], msg)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)

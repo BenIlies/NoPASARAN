@@ -132,7 +132,7 @@ class HTTP2ClientPrimitives:
         state_machine.set_variable_value(outputs[0], event)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=2)
+    @parsing_decorator(input_args=2, output_args=3)
     def receive_server_frames(inputs, outputs, state_machine):
         """
         Wait for server's frames.

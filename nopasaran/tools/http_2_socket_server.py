@@ -115,7 +115,7 @@ class HTTP2SocketServer:
             if data is None:
                 retry_count += 1
                 if retry_count >= MAX_RETRY_ATTEMPTS:
-                    return True, EventNames.TIMEOUT.name
+                    return True, EventNames.TIMEOUT.name, "Timeout occurred"
                 continue
             
             retry_count = 0  # Reset retry counter on successful receive

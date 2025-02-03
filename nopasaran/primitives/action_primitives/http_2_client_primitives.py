@@ -76,7 +76,7 @@ class HTTP2ClientPrimitives:
         client.start(tls_enabled, protocol, connection_settings_client)
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
+    @parsing_decorator(input_args=1, output_args=2)
     def wait_for_server_preface(inputs, outputs, state_machine):
         """
         Wait for the server's SETTINGS frame.
@@ -84,15 +84,17 @@ class HTTP2ClientPrimitives:
         Number of input arguments: 1
             - The HTTP2SocketClient instance
 
-        Number of output arguments: 1
+        Number of output arguments: 2
             - The event name
+            - The message
 
         Args:
             inputs (List[str]): The list of input variable names containing:
                 - The name of the HTTP2SocketClient instance variable
 
-            outputs (List[str]): The list of output variable names. It contains one output argument:
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
+                - The name of the variable to store the message
 
             state_machine: The state machine object.
 
@@ -100,11 +102,12 @@ class HTTP2ClientPrimitives:
             None
         """
         client = state_machine.get_variable_value(inputs[0])
-        event = client.wait_for_server_preface()
+        event, msg = client.wait_for_server_preface()
         state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], msg)
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
+    @parsing_decorator(input_args=1, output_args=2)
     def wait_for_server_ack(inputs, outputs, state_machine):
         """
         Wait for the server's SETTINGS_ACK frame.
@@ -112,15 +115,17 @@ class HTTP2ClientPrimitives:
         Number of input arguments: 1
             - The HTTP2SocketClient instance
 
-        Number of output arguments: 1
+        Number of output arguments: 2
             - The event name
+            - The message
 
         Args:
             inputs (List[str]): The list of input variable names containing:
                 - The name of the HTTP2SocketClient instance variable
 
-            outputs (List[str]): The list of output variable names. It contains one output argument:
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
+                - The name of the variable to store the message
 
             state_machine: The state machine object.
 
@@ -128,8 +133,9 @@ class HTTP2ClientPrimitives:
             None
         """
         client = state_machine.get_variable_value(inputs[0])
-        event = client.wait_for_server_ack()
+        event, msg = client.wait_for_server_ack()
         state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], msg)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=3)

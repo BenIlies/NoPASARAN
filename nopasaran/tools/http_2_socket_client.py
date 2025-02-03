@@ -68,7 +68,7 @@ class HTTP2SocketClient:
         """Wait for server's SETTINGS frame"""
         data = self._receive_frame()
         if data is None:
-            return EventNames.TIMEOUT.name
+            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for server's preface"
         
         events = self.conn.receive_data(data)
         for event in events:
@@ -77,13 +77,13 @@ class HTTP2SocketClient:
                 if outbound_data:
                     self.sock.sendall(outbound_data)
 
-        return EventNames.PREFACE_RECEIVED.name
+        return EventNames.PREFACE_RECEIVED.name, "Server's preface received"
 
     def wait_for_server_ack(self) -> str:
         """Wait for server's SETTINGS_ACK frame"""
         data = self._receive_frame()
         if data is None:
-            return EventNames.TIMEOUT.name
+            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for server's SETTINGS_ACK frame"
         
         events = self.conn.receive_data(data)
         for event in events:
@@ -92,7 +92,7 @@ class HTTP2SocketClient:
                 if outbound_data:
                     self.sock.sendall(outbound_data)
 
-        return EventNames.ACK_RECEIVED.name
+        return EventNames.ACK_RECEIVED.name, "Server's SETTINGS_ACK frame received"
 
     def send_frames(self, client_frames):
         """Send frames based on test case"""

@@ -95,7 +95,7 @@ class HTTP2SocketServer:
 
         return EventNames.ACK_RECEIVED.name, "Client's SETTINGS_ACK frame received"
 
-    def receive_client_frames(self, client_frames) -> bool | str:
+    def receive_client_frames(self, client_frames) -> str:
         """
             Wait for client's frames
 
@@ -115,7 +115,7 @@ class HTTP2SocketServer:
             if data is None:
                 retry_count += 1
                 if retry_count >= MAX_RETRY_ATTEMPTS:
-                    return True, EventNames.TIMEOUT.name, "Timeout occurred"
+                    return EventNames.TIMEOUT.name, "Timeout occurred"
                 continue
             
             retry_count = 0  # Reset retry counter on successful receive
@@ -126,12 +126,12 @@ class HTTP2SocketServer:
 
             # if a test passes, return True
             if result is True:
-                return True, EventNames.TEST_PASSED.name, f'Test {test_index} passed'
+                return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed'
             elif result is False:
-                return False, EventNames.TEST_FAILED.name, "All tests failed for the frame"
+                return EventNames.TEST_COMPLETED.name, "All tests failed for the frame"
         
         # will reach here if there were no individual tests to run and the proxy did not drop the frames (no timeout)
-        return False, EventNames.TEST_FAILED.name, "No tests were found for the frame and the proxy did not drop the frames"
+        return EventNames.TEST_COMPLETED.name, "No tests were found for the frame and the proxy did not drop the frames"
 
     def send_frames(self, server_frames):
         """Send frames based on test case"""
@@ -184,3 +184,27 @@ class HTTP2SocketServer:
         
         # If we get here, all tests failed
         return False, None
+
+    def close(self):
+        """Close the HTTP/2 server and clean up resources"""
+        try:
+            if self.conn:
+                # Send GOAWAY frame to indicate graceful shutdown
+                self.conn.close_connection()
+                if self.client_socket:
+                    self.client_socket.sendall(self.conn.data_to_send())
+            
+            # Close sockets
+            if self.client_socket:
+                self.client_socket.close()
+            if self.sock:
+                self.sock.close()
+            
+            # Clear references
+            self.conn = None
+            self.client_socket = None
+            self.sock = None
+            
+            return EventNames.CONNECTION_CLOSED.name
+        except Exception as e:
+            return EventNames.ERROR.name

@@ -104,17 +104,13 @@ class HTTP2SocketClient:
 
         return EventNames.FRAMES_SENT.name
 
-    def receive_server_frames(self, server_frames) -> bool | str:
+    def receive_server_frames(self, server_frames) -> str:
         """
             Wait for server's frames
         
             Returns:
-                - True if 
-                    - the test passed or 
-                    - the proxy dropped the frames (timed out)
-                - False if 
-                    - the test failed or 
-                    - no tests were run and the proxy did not drop the frames
+                - The event name
+                - The message
         """
         retry_count = 0
                 
@@ -125,7 +121,7 @@ class HTTP2SocketClient:
             if data is None:  # Timeout occurred
                 retry_count += 1
                 if retry_count >= MAX_RETRY_ATTEMPTS:
-                    return True, EventNames.TIMEOUT.name, "Timeout occurred"
+                    return EventNames.TIMEOUT.name, "Timeout occurred"
                 continue
             
             retry_count = 0  # Reset retry counter on successful receive
@@ -136,11 +132,11 @@ class HTTP2SocketClient:
 
             # if a test passes, return True
             if result is True:
-                return True, EventNames.TEST_PASSED.name, f'Test {test_index} passed'
+                return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed'
             elif result is False:
-                return False, EventNames.TEST_FAILED.name, "All tests failed for the frame"
+                return EventNames.TEST_COMPLETED.name, "All tests failed for the frame"
         
-        return False, EventNames.TEST_FAILED.name, "No tests were found for the frame and the proxy did not drop the frames"
+        return EventNames.TEST_COMPLETED.name, "No tests were found for the frame and the proxy did not drop the frames"
 
     def _handle_test(self, event, frame) -> bool | int | None:
         """
@@ -182,3 +178,24 @@ class HTTP2SocketClient:
         
         # If we get here, all tests failed
         return False, None
+    
+    def close(self):
+        """Close the HTTP/2 client and clean up resources"""
+        try:
+            if self.conn:
+                # Send GOAWAY frame to indicate graceful shutdown
+                self.conn.close_connection()
+                if self.sock:
+                    self.sock.sendall(self.conn.data_to_send())
+            
+            # Close socket
+            if self.sock:
+                self.sock.close()
+                
+            # Clear references
+            self.conn = None
+            self.sock = None
+            
+            return EventNames.CONNECTION_CLOSED.name
+        except Exception as e:
+            return EventNames.ERROR.name

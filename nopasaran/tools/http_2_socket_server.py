@@ -78,7 +78,7 @@ class HTTP2SocketServer:
                 if outbound_data:
                     self.client_socket.sendall(outbound_data)
 
-        return EventNames.PREFACE_RECEIVED.name, "Client's preface received"
+                return EventNames.PREFACE_RECEIVED.name, "Client's preface received"
     
     def wait_for_client_ack(self) -> str:
         """Wait for client's SETTINGS_ACK frame"""

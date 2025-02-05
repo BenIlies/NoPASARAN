@@ -38,7 +38,7 @@ class HTTP2SocketServer:
         except TimeoutError:
             return EventNames.TIMEOUT.name
         
-        if tls_enabled:
+        if tls_enabled == 'true':
             ssl_context = create_ssl_context(
                 protocol=protocol,
                 is_client=False

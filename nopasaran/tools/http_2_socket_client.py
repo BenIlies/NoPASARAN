@@ -31,10 +31,13 @@ class HTTP2SocketClient:
         self.sock.settimeout(TIMEOUT)  # Set socket timeout
         
         try:
-            if tls_enabled:
+            # First attempt the connection
+            self.sock.connect((self.host, self.port))
+            
+            if tls_enabled == 'true':
                 ssl_context = create_ssl_context(
                     protocol=protocol,
-                    is_client=False
+                    is_client=True
                 )
                 
                 self.sock = ssl_context.wrap_socket(
@@ -42,7 +45,6 @@ class HTTP2SocketClient:
                     server_hostname=self.host
                 )
             
-            self.sock.connect((self.host, self.port))
         except (TimeoutError, ConnectionRefusedError) as e:
             return EventNames.TIMEOUT.name
         

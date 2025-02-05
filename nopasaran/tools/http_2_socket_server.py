@@ -30,7 +30,13 @@ class HTTP2SocketServer:
         self.sock = create_socket(self.host, self.port, is_server=True)
         self.sock.listen(5)
         
-        self.client_socket, address = self.sock.accept()    
+        # Set socket timeout
+        self.sock.settimeout(TIMEOUT)
+        
+        try:
+            self.client_socket, address = self.sock.accept()
+        except TimeoutError:
+            return EventNames.TIMEOUT.name
         
         if tls_enabled:
             ssl_context = create_ssl_context(
@@ -51,6 +57,8 @@ class HTTP2SocketServer:
         # Send connection preface
         self.conn.initiate_connection()
         self.client_socket.sendall(self.conn.data_to_send())
+        
+        return EventNames.SERVER_STARTED.name
 
     def _receive_frame(self) -> bytes:
         """Helper method to receive data"""

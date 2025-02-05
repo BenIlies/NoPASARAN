@@ -16,7 +16,7 @@ from nopasaran.http_2_utils import (
 
 # Add at the top with other constants
 MAX_RETRY_ATTEMPTS = 3
-TIMEOUT = 10
+TIMEOUT = 5
 
 class HTTP2SocketClient:
     def __init__(self, host: str, port: int):
@@ -28,19 +28,23 @@ class HTTP2SocketClient:
     def start(self, tls_enabled = False, protocol = 'h2', connection_settings_client = {}):
         """Handle IDLE state: Create connection and move to WAITING_PREFACE"""
         self.sock = create_socket(self.host, self.port)
-
-        if tls_enabled:
-            ssl_context = create_ssl_context(
-                protocol=protocol,
-                is_client=False
-            )
-            
-            self.sock = ssl_context.wrap_socket(
-                self.sock,
-                server_hostname=self.host
-            )
+        self.sock.settimeout(TIMEOUT)  # Set socket timeout
         
-        self.sock.connect((self.host, self.port))
+        try:
+            if tls_enabled:
+                ssl_context = create_ssl_context(
+                    protocol=protocol,
+                    is_client=False
+                )
+                
+                self.sock = ssl_context.wrap_socket(
+                    self.sock,
+                    server_hostname=self.host
+                )
+            
+            self.sock.connect((self.host, self.port))
+        except (TimeoutError, ConnectionRefusedError) as e:
+            return EventNames.TIMEOUT.name
         
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_client)
@@ -50,6 +54,8 @@ class HTTP2SocketClient:
         # Send connection preface
         self.conn.initiate_connection()
         self.sock.sendall(self.conn.data_to_send())
+        
+        return EventNames.CLIENT_STARTED.name
 
     def _receive_frame(self) -> bytes:
         """Helper method to receive data"""

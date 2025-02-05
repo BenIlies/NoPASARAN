@@ -31,3 +31,5 @@ class EventNames(Enum):
     ACK_RECEIVED = 20
     TEST_COMPLETED = 21
     FRAMES_SENT = 22
+    CLIENT_STARTED = 23
+    SERVER_STARTED = 24

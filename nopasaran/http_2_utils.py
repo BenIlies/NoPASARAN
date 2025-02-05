@@ -18,8 +18,8 @@ from hyperframe.frame import (
 
 class SSL_CONFIG:
     """SSL configuration constants"""
-    CERT_PATH = "tools/certs/server.crt"
-    KEY_PATH = "tools/certs/server.key"
+    CERT_PATH = "nopasaran/tools/certs/server.crt"
+    KEY_PATH = "nopasaran/tools/certs/server.key"
     MAX_BUFFER_SIZE = 65535
 
 def create_ssl_context(protocol: str, is_client: bool = True):

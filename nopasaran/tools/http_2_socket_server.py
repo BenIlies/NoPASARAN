@@ -118,6 +118,7 @@ class HTTP2SocketServer:
                     - no tests were run and the proxy did not drop the frames
         """
         retry_count = 0
+        frames_received = []
         for frame in client_frames:
             data = self._receive_frame()
 
@@ -125,23 +126,24 @@ class HTTP2SocketServer:
             if data is None:
                 retry_count += 1
                 if retry_count >= MAX_RETRY_ATTEMPTS:
-                    return EventNames.TIMEOUT.name, "Timeout occurred"
+                    return EventNames.TIMEOUT.name, "Timeout occurred", frames_received
                 continue
             
             retry_count = 0  # Reset retry counter on successful receive
             events = self.conn.receive_data(data)
+            frames_received.append(events[0])
 
             # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
             result, test_index = self._handle_test(events[0], frame)
 
             # if a test passes, return True
             if result is True:
-                return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed'
+                return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed', frames_received
             elif result is False:
-                return EventNames.TEST_COMPLETED.name, "All tests failed for the frame"
+                return EventNames.TEST_COMPLETED.name, "All tests failed for the frame", frames_received
         
         # will reach here if there were no individual tests to run and the proxy did not drop the frames (no timeout)
-        return EventNames.TEST_COMPLETED.name, "No tests were found for the frame and the proxy did not drop the frames"
+        return EventNames.TEST_COMPLETED.name, "No tests were found for the frame and the proxy did not drop the frames", frames_received
 
     def send_frames(self, server_frames):
         """Send frames based on test case"""

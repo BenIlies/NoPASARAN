@@ -88,7 +88,7 @@ class HTTP2SocketServer:
 
                 return EventNames.PREFACE_RECEIVED.name, "Client's preface received"
         
-        return EventNames.TIMEOUT.name, "Proxy returned an error"
+            return EventNames.ERROR.name, "Proxy returned an error"
     
     def wait_for_client_ack(self) -> str:
         """Wait for client's SETTINGS_ACK frame"""

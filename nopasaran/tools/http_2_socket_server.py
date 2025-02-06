@@ -131,7 +131,7 @@ class HTTP2SocketServer:
             
             retry_count = 0  # Reset retry counter on successful receive
             events = self.conn.receive_data(data)
-            frames_received.append(events[0])
+            frames_received.append(events)
 
             # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
             result, test_index = self._handle_test(events[0], frame)

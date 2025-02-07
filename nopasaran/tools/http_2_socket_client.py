@@ -7,13 +7,13 @@ from nopasaran.http_2_utils import (
     create_socket,
     H2_CONFIG_SETTINGS,
 )
-from nopasaran.tools.http_2_socket_base import HTTP2SocketBase, TIMEOUT
+from nopasaran.tools.http_2_socket_base import HTTP2SocketBase
 
 class HTTP2SocketClient(HTTP2SocketBase):
     def start(self, tls_enabled = False, protocol = 'h2', connection_settings_client = {}):
         """Handle IDLE state: Create connection and move to WAITING_PREFACE"""
         self.sock = create_socket(self.host, self.port)
-        self.sock.settimeout(TIMEOUT)  # Set socket timeout
+        self.sock.settimeout(self.TIMEOUT)  # Set socket timeout
         
         try:
             # First attempt the connection

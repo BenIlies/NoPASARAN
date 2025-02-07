@@ -7,7 +7,7 @@ from nopasaran.http_2_utils import (
     create_socket,
     H2_CONFIG_SETTINGS,
 )
-from nopasaran.tools.http_2_socket_base import HTTP2SocketBase, TIMEOUT
+from nopasaran.tools.http_2_socket_base import HTTP2SocketBase
 
 class HTTP2SocketServer(HTTP2SocketBase):
     def __init__(self, host: str, port: int):
@@ -19,7 +19,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
         self.sock = create_socket(self.host, self.port, is_server=True)
         self.sock.listen(5)
         
-        self.sock.settimeout(TIMEOUT)
+        self.sock.settimeout(self.TIMEOUT)
         
         try:
             self.client_socket, address = self.sock.accept()

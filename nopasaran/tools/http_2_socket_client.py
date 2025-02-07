@@ -125,6 +125,8 @@ class HTTP2SocketClient:
         """
         retry_count = 0
         frames_received = []
+        result = None  # Initialize result variable
+        
         for frame in server_frames:
             data = self._receive_frame()
 
@@ -138,6 +140,7 @@ class HTTP2SocketClient:
             retry_count = 0  # Reset retry counter on successful receive
             events = self.conn.receive_data(data)
             frames_received.append(events)
+            
             for event in events:
                 # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
                 result, test_index = self._handle_test(event, frame)
@@ -146,13 +149,13 @@ class HTTP2SocketClient:
                 if result is True:
                     return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', frames_received
                 elif result is False:
-                    pass # TODO: add a test failed event
+                    continue  # Try next event if this test failed
         
+        # Handle the case where we've processed all frames
         if result is None:
-            # will reach here if there were no individual tests to run and the proxy did not drop the frames (no timeout)
-            return EventNames.TEST_COMPLETED.name, "The proxy did not drop the frames", frames_received
+            return EventNames.TEST_COMPLETED.name, "Frames were received but no tests were defined.", frames_received
         else:
-            return EventNames.TEST_COMPLETED.name, "All tests failed", frames_received
+            return EventNames.TEST_COMPLETED.name, "Frames were received but all tests failed", frames_received
 
     def _handle_test(self, event, frame) -> bool | int | None:
         """

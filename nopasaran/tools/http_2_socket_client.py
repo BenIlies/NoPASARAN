@@ -151,7 +151,9 @@ class HTTP2SocketClient:
                 elif result is False:
                     continue  # Try next event if this test failed
         
-        # Handle the case where we've processed all frames
+        if frames_received == [] and server_frames != []:
+            return EventNames.TEST_COMPLETED.name, "Expected frames were not received", frames_received
+        
         if result is None:
             return EventNames.TEST_COMPLETED.name, "Frames were received but no tests were defined.", frames_received
         else:

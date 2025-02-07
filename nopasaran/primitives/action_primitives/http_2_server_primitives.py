@@ -72,8 +72,9 @@ class HTTP2ServerPrimitives:
         protocol = state_machine.get_variable_value(inputs[2])
         connection_settings_server = state_machine.get_variable_value(inputs[3])
 
-        event = server.start(tls_enabled, protocol, connection_settings_server)
+        event, msg = server.start(tls_enabled, protocol, connection_settings_server)
         state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], msg)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=2)

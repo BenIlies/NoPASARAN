@@ -24,7 +24,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
         try:
             self.client_socket, address = self.sock.accept()
         except TimeoutError:
-            return EventNames.TIMEOUT.name
+            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for client connection"
         
         if tls_enabled == 'true':
             ssl_context = create_ssl_context(
@@ -46,4 +46,4 @@ class HTTP2SocketServer(HTTP2SocketBase):
         self.conn.initiate_connection()
         self.client_socket.sendall(self.conn.data_to_send())
         
-        return EventNames.SERVER_STARTED.name
+        return EventNames.SERVER_STARTED.name, "Server started"

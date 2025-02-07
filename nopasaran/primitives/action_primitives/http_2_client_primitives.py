@@ -136,7 +136,7 @@ class HTTP2ClientPrimitives:
         state_machine.set_variable_value(outputs[1], msg)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=2)
+    @parsing_decorator(input_args=2, output_args=3)
     def receive_server_frames(inputs, outputs, state_machine):
         """
         Wait for server's frames.
@@ -145,18 +145,20 @@ class HTTP2ClientPrimitives:
             - The HTTP2SocketClient instance
             - The server frames to receive
 
-        Number of output arguments: 2
+        Number of output arguments: 3
             - The event name
-            - The client verdict
+            - The message
+            - The frames received
 
         Args:
             inputs (List[str]): The list of input variable names containing:
                 - The name of the HTTP2SocketClient instance variable
                 - The name of the server frames variable
 
-            outputs (List[str]): The list of output variable names. It contains two output arguments:
+            outputs (List[str]): The list of output variable names. It contains three output arguments:
                 - The name of the variable to store the event name
-                - The name of the variable to store the client verdict
+                - The name of the variable to store the message
+                - The name of the variable to store the frames received
 
             state_machine: The state machine object.
 
@@ -165,9 +167,10 @@ class HTTP2ClientPrimitives:
         """
         client = state_machine.get_variable_value(inputs[0])
         server_frames = state_machine.get_variable_value(inputs[1])
-        event, client_verdict = client.receive_server_frames(server_frames)
+        event, msg, frames_received = client.receive_server_frames(server_frames)
         state_machine.set_variable_value(outputs[0], event)
-        state_machine.set_variable_value(outputs[1], client_verdict)
+        state_machine.set_variable_value(outputs[1], msg)
+        state_machine.set_variable_value(outputs[2], frames_received)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)

@@ -108,14 +108,11 @@ class HTTP2SocketServer:
     def receive_client_frames(self, client_frames) -> str:
         """
             Wait for client's frames
-
+            
             Returns:
-                - True if 
-                    - the test passed or 
-                    - the proxy dropped the frames (timed out)
-                - False if 
-                    - the test failed or 
-                    - no tests were run and the proxy did not drop the frames
+                - The event name
+                - The message
+                - The frames received
         """
         retry_count = 0
         frames_received = []

@@ -121,9 +121,10 @@ class HTTP2SocketClient:
             Returns:
                 - The event name
                 - The message
+                - The frames received
         """
         retry_count = 0
-                
+        frames_received = []
         for frame in server_frames:
             data = self._receive_frame()
 
@@ -131,22 +132,27 @@ class HTTP2SocketClient:
             if data is None:  # Timeout occurred
                 retry_count += 1
                 if retry_count >= MAX_RETRY_ATTEMPTS:
-                    return EventNames.TIMEOUT.name, "Timeout occurred"
+                    return EventNames.TIMEOUT.name, "Timeout occurred", frames_received
                 continue
             
             retry_count = 0  # Reset retry counter on successful receive
             events = self.conn.receive_data(data)
+            frames_received.append(events)
+            for event in events:
+                # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
+                result, test_index = self._handle_test(event, frame)
 
-            # if there is a test for the frame, it will run it and return True or False. If no test exists, it will return None
-            result, test_index = self._handle_test(events[0], frame)
-
-            # if a test passes, return True
-            if result is True:
-                return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed'
-            elif result is False:
-                return EventNames.TEST_COMPLETED.name, "All tests failed for the frame"
+                # if a test passes, return True
+                if result is True:
+                    return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', frames_received
+                elif result is False:
+                    pass # TODO: add a test failed event
         
-        return EventNames.TEST_COMPLETED.name, "No tests were found for the frame and the proxy did not drop the frames"
+        if result is None:
+            # will reach here if there were no individual tests to run and the proxy did not drop the frames (no timeout)
+            return EventNames.TEST_COMPLETED.name, "The proxy did not drop the frames", frames_received
+        else:
+            return EventNames.TEST_COMPLETED.name, "All tests failed", frames_received
 
     def _handle_test(self, event, frame) -> bool | int | None:
         """

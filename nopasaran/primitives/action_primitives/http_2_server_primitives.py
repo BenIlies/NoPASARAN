@@ -38,7 +38,7 @@ class HTTP2ServerPrimitives:
 
 
     @staticmethod
-    @parsing_decorator(input_args=4, output_args=0)
+    @parsing_decorator(input_args=4, output_args=2)
     def start_http_2_server(inputs, outputs, state_machine):
         """
         Start the HTTP/2 server.
@@ -49,7 +49,8 @@ class HTTP2ServerPrimitives:
             - The TLS protocol to use
             - The connection settings for the server
 
-        Number of output arguments: 0
+        Number of output arguments: 1
+            - The event name
 
         Args:
             inputs (List[str]): The list of input variable names containing:
@@ -58,7 +59,8 @@ class HTTP2ServerPrimitives:
                 - The name of the TLS protocol variable
                 - The name of the connection settings variable
 
-            outputs (List[str]): The list of output variable names. No output arguments for this method.
+            outputs (List[str]): The list of output variable names. It contains one output argument:
+                - The name of the variable to store the event name
 
             state_machine: The state machine object.
 
@@ -70,12 +72,9 @@ class HTTP2ServerPrimitives:
         protocol = state_machine.get_variable_value(inputs[2])
         connection_settings_server = state_machine.get_variable_value(inputs[3])
 
-        if tls_enabled == 'true':
-            tls_enabled = True
-        else:
-            tls_enabled = False
-
-        server.start(tls_enabled, protocol, connection_settings_server)
+        event, msg = server.start(tls_enabled, protocol, connection_settings_server)
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], msg)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=2)
@@ -104,7 +103,7 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        event, msg = server.wait_for_client_preface()
+        event, msg = server.wait_for_preface()
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
 
@@ -135,7 +134,7 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        event, msg = server.wait_for_client_ack()
+        event, msg = server.wait_for_preface_ack()
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
 
@@ -143,26 +142,26 @@ class HTTP2ServerPrimitives:
     @parsing_decorator(input_args=2, output_args=3)
     def receive_client_frames(inputs, outputs, state_machine):
         """
-        Wait for the client's frames.
+        Receive the client's frames and handle the tests.
 
         Number of input arguments: 2
             - The HTTP2SocketServer instance
             - The client frames to receive
 
         Number of output arguments: 3
-            - The result of the test
             - The event name
-            - The message to output
+            - The message
+            - The frames received
 
         Args:
             inputs (List[str]): The list of input variable names containing:
                 - The name of the HTTP2SocketServer instance variable
                 - The name of the client frames variable
 
-            outputs (List[str]): The list of output variable names. It contains three output arguments:
-                - The name of the variable to store the result of the tests
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
                 - The name of the variable to store the message
+                - The name of the variable to store the frames received
 
             state_machine: The state machine object.
 
@@ -170,11 +169,11 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        client_frames = state_machine.get_variable_value(inputs[1])
-        result, event, msg = server.receive_client_frames(client_frames)
-        state_machine.set_variable_value(outputs[0], result)
-        state_machine.set_variable_value(outputs[1], event)
-        state_machine.set_variable_value(outputs[2], msg)
+        test_frames = state_machine.get_variable_value(inputs[1])
+        event, msg, frames_received = server.receive_test_frames(test_frames)
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], msg)
+        state_machine.set_variable_value(outputs[2], frames_received)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -206,3 +205,20 @@ class HTTP2ServerPrimitives:
         server_frames = state_machine.get_variable_value(inputs[1])
         event = server.send_frames(server_frames)
         state_machine.set_variable_value(outputs[0], event)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def close_http_2_server(inputs, outputs, state_machine):
+        """
+        Close the HTTP/2 server connection gracefully.
+        
+        Number of input arguments: 1
+            - The HTTP2SocketServer instance
+            
+        Number of output arguments: 1
+            - The event name
+        """
+        server = state_machine.get_variable_value(inputs[0])
+        event = server.close()
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.trigger_event(event)

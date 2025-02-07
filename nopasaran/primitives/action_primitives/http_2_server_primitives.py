@@ -102,7 +102,7 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        event, msg = server.wait_for_client_preface()
+        event, msg = server.wait_for_preface()
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
 
@@ -133,7 +133,7 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        event, msg = server.wait_for_client_ack()
+        event, msg = server.wait_for_preface_ack()
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
 
@@ -168,8 +168,8 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        client_frames = state_machine.get_variable_value(inputs[1])
-        event, msg, frames_received = server.receive_client_frames(client_frames)
+        test_frames = state_machine.get_variable_value(inputs[1])
+        event, msg, frames_received = server.receive_test_frames(test_frames)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
         state_machine.set_variable_value(outputs[2], frames_received)

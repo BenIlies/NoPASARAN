@@ -38,7 +38,7 @@ class HTTP2ServerPrimitives:
 
 
     @staticmethod
-    @parsing_decorator(input_args=4, output_args=1)
+    @parsing_decorator(input_args=4, output_args=2)
     def start_http_2_server(inputs, outputs, state_machine):
         """
         Start the HTTP/2 server.

@@ -38,16 +38,17 @@ class HTTP2ServerPrimitives:
 
 
     @staticmethod
-    @parsing_decorator(input_args=4, output_args=2)
+    @parsing_decorator(input_args=5, output_args=2)
     def start_http_2_server(inputs, outputs, state_machine):
         """
         Start the HTTP/2 server.
 
-        Number of input arguments: 4
+        Number of input arguments: 5
             - The HTTP2SocketServer instance
             - The tls_enabled flag
             - The TLS protocol to use
             - The connection settings for the server
+            - The client frames to receive
 
         Number of output arguments: 1
             - The event name
@@ -58,6 +59,7 @@ class HTTP2ServerPrimitives:
                 - The name of the tls_enabled flag variable
                 - The name of the TLS protocol variable
                 - The name of the connection settings variable
+                - The name of the client frames variable
 
             outputs (List[str]): The list of output variable names. It contains one output argument:
                 - The name of the variable to store the event name
@@ -71,8 +73,9 @@ class HTTP2ServerPrimitives:
         tls_enabled = state_machine.get_variable_value(inputs[1])
         protocol = state_machine.get_variable_value(inputs[2])
         connection_settings_server = state_machine.get_variable_value(inputs[3])
+        client_frames = state_machine.get_variable_value(inputs[4])
 
-        event, msg = server.start(tls_enabled, protocol, connection_settings_server)
+        event, msg = server.start(tls_enabled, protocol, connection_settings_server, client_frames)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
 

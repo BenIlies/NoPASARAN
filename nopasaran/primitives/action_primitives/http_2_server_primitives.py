@@ -50,8 +50,9 @@ class HTTP2ServerPrimitives:
             - The connection settings for the server
             - The client frames to receive
 
-        Number of output arguments: 1
+        Number of output arguments: 2
             - The event name
+            - The message
 
         Args:
             inputs (List[str]): The list of input variable names containing:
@@ -61,8 +62,9 @@ class HTTP2ServerPrimitives:
                 - The name of the connection settings variable
                 - The name of the client frames variable
 
-            outputs (List[str]): The list of output variable names. It contains one output argument:
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
+                - The name of the variable to store the message
 
             state_machine: The state machine object.
 

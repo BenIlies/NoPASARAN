@@ -128,6 +128,7 @@ class HTTP2SocketBase:
         frames_received = []
         result = None
         
+        # for every expected frame:
         for frame in test_frames:
             data = self._receive_frame()
 
@@ -142,20 +143,31 @@ class HTTP2SocketBase:
             frames_received.append(events)
             
             for event in events:
+                # result starts as None, if there are no tests, it will remain None
                 result, test_index = self._handle_test(event, frame)
 
+                # If a test passed, return the test's index and the frame that passed the test
                 if result is True:
                     return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', frames_received
+                # else, retry with the next frame
                 elif result is False:
                     continue
         
-        if frames_received == [] and test_frames != []:
-            return EventNames.TEST_COMPLETED.name, "Expected frames were not received", frames_received
-        
-        if result is None:
-            return EventNames.TEST_COMPLETED.name, "Frames were received but no tests were defined.", frames_received
+        # If no frames were received during the scenario
+        if not frames_received:
+            # check if we expected frames in the first place
+            if test_frames:
+                return EventNames.TEST_COMPLETED.name, "Expected frames were not received", frames_received
+            else:
+                return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", frames_received
+        # If frames were received
         else:
-            return EventNames.TEST_COMPLETED.name, "Frames were received but all tests failed", frames_received
+            # but no tests were defined for them
+            if result is None:
+                return EventNames.TEST_COMPLETED.name, "Frames were received but no tests were defined.", frames_received
+            # there were tests, but they all failed
+            else:
+                return EventNames.TEST_COMPLETED.name, "Frames were received but all tests failed", frames_received
 
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

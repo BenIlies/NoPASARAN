@@ -14,7 +14,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
         super().__init__(host, port)
         self.client_socket = None
 
-    def start(self, tls_enabled = False, protocol = 'h2', connection_settings_server = {}):
+    def start(self, tls_enabled = False, protocol = 'h2', connection_settings_server = {}, client_frames = []):
         """Start the HTTP/2 server"""
         self.sock = create_socket(self.host, self.port, is_server=True)
         self.sock.listen(5)
@@ -24,7 +24,10 @@ class HTTP2SocketServer(HTTP2SocketBase):
         try:
             self.client_socket, address = self.sock.accept()
         except TimeoutError:
-            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for client connection"
+            if client_frames:
+                return EventNames.TIMEOUT.name, "Timeout occurred while waiting for client connection. Proxy dropped client's frames."
+            else:
+                return EventNames.TIMEOUT.name, "Timeout occurred while waiting for client connection"
         
         if tls_enabled == 'true':
             ssl_context = create_ssl_context(

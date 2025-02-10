@@ -37,14 +37,16 @@ class HTTP2SocketBase:
     def send_frames(self, frames):
         """Send frames based on test case"""
         socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
+        sent_frames = []
         
         for frame in frames:
             send_frame(self.conn, socket_to_use, frame)
+            sent_frames.append(frame)
         
         # Add a small delay to ensure frames are transmitted
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
-        return EventNames.FRAMES_SENT.name
+        return EventNames.FRAMES_SENT.name, str(sent_frames)
 
     def _handle_test(self, event, frame) -> bool | int | None:
         """

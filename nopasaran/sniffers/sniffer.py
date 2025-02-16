@@ -20,6 +20,7 @@ class Sniffer(AsyncSniffer):
         self.machine = machine
         self.__filter = filter
         self.queue = None
+        self.src = Ether().src
         logging.debug('[Sniffer] Machine ID: {}: Sniffer initialized'.format(machine.machine_id))
 
     def __handle_sniffer(self):
@@ -50,12 +51,20 @@ class Sniffer(AsyncSniffer):
         Returns:
             bool: True if the packet is accepted, False otherwise.
         """
-        if 'Ether' in packet:
-            if packet[Ether].src != Ether().src:
-                filtered_packets = sniff(offline=packet, filter=self.__filter)
-                if packet in filtered_packets:
-                    logging.debug("[Sniffer] Packet passed the filter: %s", packet)
-                    return True
+        # Check if the packet is an IP packet
+        if 'IP' not in packet:
+            return False  # Reject if it's not an IP packet
+
+        # Check if the source MAC address of the packet is different from the local machine's MAC
+        if packet[Ether].src == self.src:
+            return False  # Reject packets with the local machine's MAC address
+        
+        # Apply further filtering (e.g., using sniff)
+        filtered_packets = sniff(offline=packet, filter=self.__filter)
+        if packet in filtered_packets:
+            logging.info("[Sniffer] Packet passed the filter: %s", packet)
+            return True
+        
         return False
 
     def set_filter(self, filter):
@@ -67,25 +76,3 @@ class Sniffer(AsyncSniffer):
         """
         self.__filter = filter
         logging.debug("[Sniffer] Filter set to: %s", filter)
-
-    def get_packet_layers(self, packet):
-        """
-        Get all the layers in a packet.
-        
-        Args:
-            packet: The packet to analyze.
-        
-        Returns:
-            list: List of layers in the packet.
-        """
-        layers = []
-        counter = 0
-        while True:
-            layer = packet.getlayer(counter)
-            if layer is None:
-                break
-            else:
-                layers.append(layer)
-            counter += 1
-        logging.debug("[Sniffer] Packet layers: %s", layers)
-        return layers

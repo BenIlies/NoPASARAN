@@ -20,7 +20,6 @@ class HTTP1SocketServer:
         """
         request = client_socket.recv(4096)
         request_str = request.decode('utf-8')
-
         # Extract request line and headers
         headers_end_index = request_str.find("\r\n\r\n")
         headers_part = request_str[:headers_end_index] if headers_end_index != -1 else request_str
@@ -28,25 +27,41 @@ class HTTP1SocketServer:
         method, path, _ = request_line.split(" ", 2)
 
         route_key = (path, method)
-        route_info = self.routes.get(route_key)
+        route_info_list = self.routes.get(route_key)
         
-        if route_info:
-            response_body = route_info.get('body', '')
-            status_code = route_info.get('status', 200)
-            headers = route_info.get('headers', [])
+        if route_info_list:
+            response = ""
+            for route_info in route_info_list:
+                response_body = route_info.get('body', '')
+                status_code = route_info.get('status', 200)
+                headers = route_info.get('headers', [])
+
+                # Construct each part of the response
+                response_part = f"HTTP/1.1 {status_code} OK\r\n"
+                for header_name, header_value in headers:
+                    response_part += f"{header_name}: {header_value}\r\n"
+                response_part += f"\r\n{response_body}\r\n\r\n"  # Double CRLF to separate responses
+
+                # Append the response part to the full response
+                response += response_part
+
+            # Send the full combined response to the client
+            client_socket.sendall(response.encode())
+
         else:
             response_body = 'NoPASARAN HTTP/1.1 Server'
             status_code = 404
             headers = []
 
-        # Construct the HTTP response
-        response = f"HTTP/1.1 {status_code} OK\r\n"
-        for header_name, header_value in headers:
-            response += f"{header_name}: {header_value}\r\n"
-        response += f"\r\n{response_body}"
-        
-        # Send response to client
-        client_socket.sendall(response.encode())
+            # Construct the HTTP response
+            response = f"HTTP/1.1 {status_code} OK\r\n"
+            for header_name, header_value in headers:
+                response += f"{header_name}: {header_value}\r\n"
+            response += f"\r\n{response_body}"
+
+            # Send response to client
+            client_socket.sendall(response.encode())
+
         client_socket.close()
 
         # Store the raw received request data
@@ -56,6 +71,8 @@ class HTTP1SocketServer:
         if self.request_received:
             with self.request_received:
                 self.request_received.notify_all()
+
+
 
     def wait_for_request(self, port, timeout):
         """

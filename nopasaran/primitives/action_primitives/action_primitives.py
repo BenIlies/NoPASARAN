@@ -18,6 +18,7 @@ from nopasaran.primitives.action_primitives.http_1_request_primitives import HTT
 from nopasaran.primitives.action_primitives.http_1_response_primitives import HTTP1ResponsePrimitives
 from nopasaran.primitives.action_primitives.http_2_server_primitives import HTTP2ServerPrimitives
 from nopasaran.primitives.action_primitives.http_2_client_primitives import HTTP2ClientPrimitives
+from nopasaran.primitives.action_primitives.mtu_primitives import MTUPrimitives
 
 class ActionPrimitives(Primitives):
     """
@@ -42,5 +43,6 @@ class ActionPrimitives(Primitives):
         HTTP1RequestPrimitives,
         HTTP1ResponsePrimitives,
         HTTP2ServerPrimitives,
-        HTTP2ClientPrimitives
+        HTTP2ClientPrimitives,
+        MTUPrimitives
         ]

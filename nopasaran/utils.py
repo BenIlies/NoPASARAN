@@ -5,7 +5,7 @@ import socket
 import select
 import subprocess  # Needed for get_default_mtu()
 
-from scapy.all import IP, TCP, UDP, ICMP
+from scapy.all import IP, TCP, UDP, ICMP, Raw
 
 def get_default_mtu():
     """
@@ -175,6 +175,23 @@ def create_ICMP_packet():
 def get_ICMP_payload(packet):
     return packet[ICMP].payload
 
+
+def set_IP_df(packet):
+    packet['IP'].flags = 'DF'
+
+def set_ICMP_payload(packet, payload_bytes):
+    packet[ICMP].remove_payload()          
+    packet[ICMP].add_payload(payload_bytes)  
+
+def set_ICMP_packet_bytes(packet, size):
+    # Generate a large payload of repeated 'A' characters
+    payload_data = b"A" * size
+    
+    # Attach this payload to the existing ICMP packet
+    set_ICMP_payload(packet, payload_data)
+    
+    return packet
+
 def handle_client_connection(client_socket):
     try:
         client_socket.recv(1024)
@@ -202,3 +219,9 @@ def send_request(ip, port, request_packet):
         return None
     
     return response
+
+def get_ICMP_type(packet):
+    return packet[ICMP].type
+
+def get_ICMP_code(packet):
+    return packet[ICMP].code

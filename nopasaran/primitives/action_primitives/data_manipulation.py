@@ -231,6 +231,44 @@ class DataManipulationPrimitives:
         decremented_value = old_value - decrement_amount
         state_machine.set_variable_value(outputs[0], decremented_value)
 
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def divide(inputs, outputs, state_machine):
+        """
+        Divide the value of a variable stored in the machine's state by a specified divisor.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of a variable representing the numerator.
+                - The divisor by which the numerator should be divided.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
+                The name of the variable to store the result of the division operation.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the divisor is zero.
+        """
+        numerator = int(state_machine.get_variable_value(inputs[0]))
+        divisor = int(inputs[1])
+        if divisor == 0:
+            raise ValueError("Division by zero is not allowed.")
+        divided_value = numerator // divisor
+        state_machine.set_variable_value(outputs[0], divided_value)
+
+
 
     @staticmethod
     @parsing_decorator(input_args=0, output_args=1)

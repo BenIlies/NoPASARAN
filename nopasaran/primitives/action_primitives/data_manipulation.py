@@ -362,3 +362,38 @@ class DataManipulationPrimitives:
             del dictionary[key]
         
         state_machine.set_variable_value(outputs[0], dictionary)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def string_to_integer(inputs, outputs, state_machine):
+        """
+        Convert a string value to an integer and store it in the machine's state.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
+                which is the name of a variable containing the string to be converted.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the converted integer.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the input string cannot be converted to an integer.
+        """
+        try:
+            integer_value = int(state_machine.get_variable_value(inputs[0]))
+            state_machine.set_variable_value(outputs[0], integer_value)
+        except ValueError:
+            raise ValueError(f"Cannot convert value {state_machine.get_variable_value(inputs[0])} to an integer.")

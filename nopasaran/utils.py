@@ -177,7 +177,7 @@ def get_ICMP_payload(packet):
 
 
 def set_IP_df(packet):
-    packet['IP'].flags = 'DF'
+    packet.flags = 'DF'
 
 def set_ICMP_payload(packet, payload_bytes):
     packet[ICMP].remove_payload()          

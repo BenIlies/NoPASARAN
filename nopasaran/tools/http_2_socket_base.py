@@ -145,6 +145,8 @@ class HTTP2SocketBase:
             frames_received.append(events)
             
             for event in events:
+                if isinstance(event, h2.events.ConnectionTerminated):
+                    return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
                 # result starts as None, if there are no tests, it will remain None
                 result, test_index = self._handle_test(event, frame)
 

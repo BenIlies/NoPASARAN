@@ -7,7 +7,7 @@ import h2
 import json
 import h2.events
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import argparse
 import h2.connection
 from hyperframe.frame import (
@@ -15,6 +15,11 @@ from hyperframe.frame import (
     PingFrame, SettingsFrame, RstStreamFrame, PriorityFrame,
     ContinuationFrame
 )
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+import tempfile
 
 class SSL_CONFIG:
     """SSL configuration constants"""
@@ -22,25 +27,31 @@ class SSL_CONFIG:
     KEY_PATH = "server.key"
     MAX_BUFFER_SIZE = 65535
 
-def create_ssl_context(protocol: str, is_client: bool = True):
-    """Create SSL context for client or server"""
-    if is_client:
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-    else:
-        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        context.load_cert_chain(
-            certfile=SSL_CONFIG.CERT_PATH,
-            keyfile=SSL_CONFIG.KEY_PATH
-        )
-
-    if not protocol:
-        protocol = 'h2'
-
-    context.set_alpn_protocols([protocol])
+def create_ssl_context(protocol='h2', is_client=True, cert_file=None, key_file=None):
+    """Create SSL context with the specified protocol"""
+    ssl_context = ssl.create_default_context(
+        purpose=ssl.Purpose.CLIENT_AUTH if not is_client else ssl.Purpose.SERVER_AUTH
+    )
     
-    return context
+    # Configure for HTTP/2
+    ssl_context.set_alpn_protocols([protocol])
+    
+    if not is_client:
+        # Server needs certificate and private key
+        if cert_file and key_file:
+            ssl_context.load_cert_chain(cert_file, key_file)
+        else:
+            # Generate temporary certificates if none provided
+            temp_cert, temp_key = generate_temp_certificates()
+            ssl_context.load_cert_chain(temp_cert, temp_key)
+            # Clean up temporary files
+            os.unlink(temp_cert)
+            os.unlink(temp_key)
+    
+    # Additional security settings
+    ssl_context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # Only TLS 1.2+
+    
+    return ssl_context
 
 def create_socket(host: str, port: int, is_server: bool = False):
     """Create and configure a socket"""
@@ -611,3 +622,51 @@ def send_continuation_frame(conn: h2.connection.H2Connection, sock: socket.socke
     # Serialize and send
     serialized = frame.serialize()
     sock.sendall(serialized)
+
+def generate_temp_certificates():
+    """Generate temporary self-signed certificates for TLS testing"""
+    # Generate private key
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+
+    # Generate certificate
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, u"localhost"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Test Certificate"),
+    ])
+
+    cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        private_key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.utcnow()
+    ).not_valid_after(
+        datetime.utcnow() + timedelta(days=1)
+    ).add_extension(
+        x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
+        critical=False,
+    ).sign(private_key, hashes.SHA256())
+
+    # Create temporary files
+    cert_file = tempfile.NamedTemporaryFile(delete=False)
+    key_file = tempfile.NamedTemporaryFile(delete=False)
+
+    # Write certificate and private key to temporary files
+    cert_file.write(cert.public_bytes(serialization.Encoding.PEM))
+    key_file.write(private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ))
+
+    cert_file.close()
+    key_file.close()
+
+    return cert_file.name, key_file.name

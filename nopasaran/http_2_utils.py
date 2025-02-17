@@ -29,9 +29,18 @@ class SSL_CONFIG:
 
 def create_ssl_context(protocol='h2', is_client=True, cert_file=None, key_file=None):
     """Create SSL context with the specified protocol"""
-    ssl_context = ssl.create_default_context(
-        purpose=ssl.Purpose.CLIENT_AUTH if not is_client else ssl.Purpose.SERVER_AUTH
-    )
+    if is_client:
+        ssl_context = ssl.create_default_context(
+            purpose=ssl.Purpose.SERVER_AUTH
+        )
+        # For testing, disable certificate verification
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+    else:
+        ssl_context = ssl.create_default_context(
+            purpose=ssl.Purpose.CLIENT_AUTH
+        )
+        ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
     # Configure for HTTP/2
     ssl_context.set_alpn_protocols([protocol])

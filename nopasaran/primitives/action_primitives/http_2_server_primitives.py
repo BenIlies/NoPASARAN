@@ -108,9 +108,10 @@ class HTTP2ServerPrimitives:
             None
         """
         server = state_machine.get_variable_value(inputs[0])
-        event, msg = server.wait_for_preface()
+        event, msg, frames = server.wait_for_preface()
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
+        state_machine.set_variable_value(outputs[2], frames)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=2)

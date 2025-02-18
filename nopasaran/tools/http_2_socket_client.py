@@ -31,7 +31,7 @@ class HTTP2SocketClient(HTTP2SocketBase):
                 )
             
         except (TimeoutError, ConnectionRefusedError) as e:
-            return EventNames.TIMEOUT.name, f"Timeout occurred while waiting for client connection: {e}"
+            return EventNames.TIMEOUT.name, f"Timeout occurred while trying to connect to the server: {e}"
         
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_client)

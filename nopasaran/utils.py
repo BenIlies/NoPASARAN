@@ -177,7 +177,17 @@ def get_ICMP_payload(packet):
 
 
 def set_IP_df(packet):
-    packet.flags = 'DF'
+    """
+    Set the Don't Fragment (DF) flag on an IP packet.
+
+    Scapy represents flags for the IP packet as an integer. 
+    The value 2 (binary 010) corresponds to the DF flag.
+    """
+    # Ensure we are dealing with an IP packet at the top layer or
+    # adjust to packet[IP] if the IP is nested.
+    if hasattr(packet, 'flags'):
+        packet.flags |= 2  # Set the DF bit
+    return packet
 
 def set_ICMP_payload(packet, payload_bytes):
     packet[ICMP].remove_payload()          

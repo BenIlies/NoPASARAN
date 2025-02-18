@@ -195,7 +195,7 @@ class DataManipulationPrimitives:
             None
         """
         old_value = int(state_machine.get_variable_value(inputs[0]))
-        increment_amount = int(inputs[1])
+        increment_amount = int(state_machine.get_variable_value(inputs[1]))
         incremented_value = old_value + increment_amount
         state_machine.set_variable_value(outputs[0], incremented_value)
 
@@ -264,7 +264,7 @@ class DataManipulationPrimitives:
             ValueError: If the divisor is zero.
         """
         numerator = int(state_machine.get_variable_value(inputs[0]))
-        divisor = int(inputs[1])
+        divisor = int(state_machine.get_variable_value(inputs[1]))
         if divisor == 0:
             raise ValueError("Division by zero is not allowed.")
         divided_value = numerator // divisor
@@ -400,38 +400,5 @@ class DataManipulationPrimitives:
         except ValueError:
             raise ValueError(f"Cannot convert value {state_machine.get_variable_value(inputs[0])} to an integer.")
         
-    @parsing_decorator(input_args=2, output_args=1)
-    def increment_variables(inputs, outputs, state_machine):
-            """
-            Increments the value of a variable (inputs[0]) by the value of another variable (inputs[1])
-            in the state machine, and stores the result in outputs[0].
-
-            Number of input arguments: 2
-            Number of output arguments: 1
-
-            Optional input arguments: No
-            Optional output arguments: No
-
-            Args:
-                inputs (List[str]):
-                    - inputs[0]: The name of a variable representing the initial value.
-                    - inputs[1]: The name of a variable representing the increment amount.
-
-                outputs (List[str]):
-                    - outputs[0]: The name of the variable to store the resulting incremented value.
-
-                state_machine: The state machine object.
-
-            Returns:
-                None
-            """
-            # Get both values from the state machine (instead of treating the second as a literal).
-            old_value = int(state_machine.get_variable_value(inputs[0]))
-            increment_amount = int(state_machine.get_variable_value(inputs[1]))
-
-            # Perform the increment operation.
-            incremented_value = old_value + increment_amount
-
-            # Store the result in the specified output variable.
-            state_machine.set_variable_value(outputs[0], incremented_value)
+ 
 

@@ -38,14 +38,22 @@ class MTUPrimitives:
     @parsing_decorator(input_args=1, output_args=1)
     def set_IP_df(inputs, outputs, state_machine):
         """
-        Set the Don't Fragment (DF) flag on an IP packet.
+        Set the Don't Fragment (DF) flag on an IP packet, using the utility function.
+
+        Number of input arguments: 1
+            inputs[0]: The variable name for the IP packet.
+
+        Number of output arguments: 1
+            outputs[0]: The variable name to store the updated IP packet.
         """
-        packet = state_machine.get_variable_value(inputs[0])  # Retrieve the packet
+        # Retrieve the packet from the state machine
+        packet = state_machine.get_variable_value(inputs[0])
         
-        packet.flags |= 2  # Set the DF flag (2 = Don't Fragment)
-        
-        state_machine.set_variable_value(outputs[0], state_machine.get_variable_value(inputs[0]))
-        utils.set_TCP_payload(state_machine.get_variable_value(outputs[0]), state_machine.get_variable_value(inputs[1]))
+        # Call the utility function that sets the DF flag
+        updated_packet = utils.set_IP_df(packet)
+
+        # Store the updated packet back in the state machine
+        state_machine.set_variable_value(outputs[0], updated_packet)
 
 
     @staticmethod

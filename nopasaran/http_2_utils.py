@@ -485,7 +485,7 @@ def send_push_promise_frame(conn: h2.connection.H2Connection, sock: socket.socke
     if headers:
         headers = format_headers(headers)
     else:
-        headers = [(':status', '200')]
+        headers = [(':method', 'GET'), (':path', '/'), (':authority', 'localhost'), (':scheme', 'http')]
     
     # Get encoded headers from the connection's encoder
     encoded_headers = conn.encoder.encode(headers)

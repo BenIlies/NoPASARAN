@@ -87,7 +87,7 @@ class MTUPrimitives:
         """
         packet = state_machine.get_variable_value(inputs[0])
         size = state_machine.get_variable_value(inputs[1])
-        updated_packet = utils.set_ICMP_packet_bites(packet, size)
+        updated_packet = utils.set_ICMP_packet_bytes(packet, size)
         state_machine.set_variable_value(outputs[0], updated_packet)
 
    

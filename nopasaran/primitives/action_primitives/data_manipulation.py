@@ -229,7 +229,7 @@ class DataManipulationPrimitives:
             None
         """
         old_value = int(state_machine.get_variable_value(inputs[0]))
-        decrement_amount = int(inputs[1])
+        decrement_amount = int(state_machine.get_variable_value(inputs[1]))
         decremented_value = old_value - decrement_amount
         state_machine.set_variable_value(outputs[0], decremented_value)
 

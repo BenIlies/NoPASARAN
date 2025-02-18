@@ -151,47 +151,47 @@ def get_ICMP_code(inputs, outputs, state_machine):
     # Assuming the packet is stored as a list-like structure and we take the first element.
     packet = state_machine.get_variable_value(inputs[0])[0]
     state_machine.set_variable_value(outputs[0], packet['ICMP'].code)
-
+    @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
     def set_UDP_payload(inputs, outputs, state_machine):
-        """
-        Set/replace the payload of an existing UDP packet.
+            """
+            Set/replace the payload of an existing UDP packet.
 
-        Number of input arguments: 2
-            inputs[0]: The variable name for the UDP packet.
-            inputs[1]: The variable name for the payload bytes.
-        Number of output arguments: 1
-            outputs[0]: The variable name to store the updated packet.
-        """
-        packet = state_machine.get_variable_value(inputs[0])
-        payload_bytes = state_machine.get_variable_value(inputs[1])
-        updated_packet = utils.set_UDP_payload(packet, payload_bytes)
-        state_machine.set_variable_value(outputs[0], updated_packet)
+            Number of input arguments: 2
+                inputs[0]: The variable name for the UDP packet.
+                inputs[1]: The variable name for the payload bytes.
+            Number of output arguments: 1
+                outputs[0]: The variable name to store the updated packet.
+            """
+            packet = state_machine.get_variable_value(inputs[0])
+            payload_bytes = state_machine.get_variable_value(inputs[1])
+            updated_packet = utils.set_UDP_payload(packet, payload_bytes)
+            state_machine.set_variable_value(outputs[0], updated_packet)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
     def set_UDP_packet_bytes(inputs, outputs, state_machine):
-        """
-        Attach a payload of repeated 'A' characters to a UDP packet.
+            """
+            Attach a payload of repeated 'A' characters to a UDP packet.
 
-        Number of input arguments: 2
-            inputs[0]: The variable name for the UDP packet.
-            inputs[1]: The size (number of bytes) to fill with 'A'.
-        Number of output arguments: 1
-            outputs[0]: The variable name to store the updated packet.
-        """
-        packet = state_machine.get_variable_value(inputs[0])
-        size = state_machine.get_variable_value(inputs[1])
-        updated_packet = utils.set_UDP_packet_bytes(packet, size)
-        state_machine.set_variable_value(outputs[0], updated_packet)
+            Number of input arguments: 2
+                inputs[0]: The variable name for the UDP packet.
+                inputs[1]: The size (number of bytes) to fill with 'A'.
+            Number of output arguments: 1
+                outputs[0]: The variable name to store the updated packet.
+            """
+            packet = state_machine.get_variable_value(inputs[0])
+            size = state_machine.get_variable_value(inputs[1])
+            updated_packet = utils.set_UDP_packet_bytes(packet, size)
+            state_machine.set_variable_value(outputs[0], updated_packet)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def get_UDP_payload_size(inputs, outputs, state_machine):
-        """
-        Get the size (in bytes) of the UDP payload from a UDP packet.
-        """
-        packet = state_machine.get_variable_value(inputs[0])
-        payload_size = utils.get_UDP_payload_size(packet)
-        state_machine.set_variable_value(outputs[0], payload_size)
+            """
+            Get the size (in bytes) of the UDP payload from a UDP packet.
+            """
+            packet = state_machine.get_variable_value(inputs[0])
+            payload_size = utils.get_UDP_payload_size(packet)
+            state_machine.set_variable_value(outputs[0], payload_size)
 

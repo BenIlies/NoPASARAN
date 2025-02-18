@@ -80,6 +80,20 @@ def create_TCP_packet():
 def create_UDP_packet():
     return IP()/UDP()
 
+def set_UDP_payload(packet, payload):
+    # Remove any existing payload and add the new payload
+    packet.remove_payload()
+    packet /= Raw(load=payload)
+
+def set_UDP_packet_bytes(packet, size):
+    """
+    Sets the UDP packet's payload to a sequence of 'A' characters
+    so that the payload is exactly 'size' bytes long.
+    """
+    payload_data = b"A" * size
+    set_UDP_payload(packet, payload_data)
+    return packet
+
 def set_IP_dst(packet, dst):
     packet['IP'].dst = dst
 
@@ -235,3 +249,13 @@ def get_ICMP_type(packet):
 
 def get_ICMP_code(packet):
     return packet[ICMP].code
+
+def get_UDP_payload_size(packet):
+    """
+    Return the size (in bytes) of the UDP payload.
+    """
+    if packet.haslayer(Raw):
+        payload = packet[Raw].load
+    else:
+        payload = b""
+    return len(payload)

@@ -99,7 +99,8 @@ class UDPPrimitives:
         udp_packet = state_machine.get_variable_value(inputs[0])
         dport = state_machine.get_variable_value(inputs[1])
 
-        udp_packet['UDP'].dport = dport
+        udp_packet = utils.set_UDP_dport(udp_packet, dport)
+        
 
         state_machine.set_variable_value(outputs[0], udp_packet)
 

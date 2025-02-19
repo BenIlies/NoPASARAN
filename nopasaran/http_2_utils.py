@@ -642,8 +642,8 @@ def generate_temp_certificates():
 
     # Generate certificate
     subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, u"localhost"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Test Certificate"),
+        x509.NameAttribute(NameOID.COMMON_NAME, u""),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u""),
     ])
 
     cert = x509.CertificateBuilder().subject_name(
@@ -658,9 +658,6 @@ def generate_temp_certificates():
         datetime.utcnow()
     ).not_valid_after(
         datetime.utcnow() + timedelta(days=1)
-    ).add_extension(
-        x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
-        critical=False,
     ).sign(private_key, hashes.SHA256())
 
     # Create temporary files

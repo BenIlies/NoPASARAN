@@ -142,11 +142,15 @@ class HTTP2SocketBase:
             
             retry_count = 0
             events = self.conn.receive_data(data)
-            frames_received.append(events)
             
             for event in events:
+                frames_received.append(event)
                 if isinstance(event, h2.events.ConnectionTerminated):
                     return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
+                
+                if isinstance(event, (h2.events.RemoteSettingsChanged, h2.events.SettingsAcknowledged)):
+                    continue
+
                 # result starts as None, if there are no tests, it will remain None
                 result, test_index = self._handle_test(event, frame)
 
@@ -155,7 +159,7 @@ class HTTP2SocketBase:
                     return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', str(frames_received)
         
         # If no frames were received during the scenario
-        if not frames_received:
+        if len(frames_received) == 0:
             # check if we expected frames in the first place
             if test_frames:
                 return EventNames.TEST_COMPLETED.name, "Expected frames were not received", str(frames_received)

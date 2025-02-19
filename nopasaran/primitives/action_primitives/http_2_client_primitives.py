@@ -75,7 +75,7 @@ class HTTP2ClientPrimitives:
         state_machine.set_variable_value(outputs[1], msg)
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=2)
+    @parsing_decorator(input_args=1, output_args=3)
     def wait_for_server_preface(inputs, outputs, state_machine):
         """
         Wait for the server's SETTINGS frame.
@@ -83,17 +83,19 @@ class HTTP2ClientPrimitives:
         Number of input arguments: 1
             - The HTTP2SocketClient instance
 
-        Number of output arguments: 2
+        Number of output arguments: 3
             - The event name
             - The message
+            - The frames received
 
         Args:
             inputs (List[str]): The list of input variable names containing:
                 - The name of the HTTP2SocketClient instance variable
 
-            outputs (List[str]): The list of output variable names. It contains two output arguments:
+            outputs (List[str]): The list of output variable names. It contains three output arguments:
                 - The name of the variable to store the event name
                 - The name of the variable to store the message
+                - The name of the variable to store the frames received
 
             state_machine: The state machine object.
 

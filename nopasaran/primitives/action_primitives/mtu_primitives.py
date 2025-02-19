@@ -101,6 +101,7 @@ class MTUPrimitives:
         packet = state_machine.get_variable_value(inputs[0])[0]
         state_machine.set_variable_value(outputs[0], packet['ICMP'].code)
 
+    
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
     def set_UDP_payload(inputs, outputs, state_machine):
@@ -115,8 +116,10 @@ class MTUPrimitives:
         """
         packet = state_machine.get_variable_value(inputs[0])
         payload_bytes = state_machine.get_variable_value(inputs[1])
-        updated_packet = utils.set_UDP_payload(packet, payload_bytes)
-        state_machine.set_variable_value(outputs[0], updated_packet)
+        # Update the payload in place
+        utils.set_UDP_payload(packet, payload_bytes)
+        # Now store the (updated) packet in the output variable.
+        state_machine.set_variable_value(outputs[0], packet)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -132,8 +135,9 @@ class MTUPrimitives:
         """
         packet = state_machine.get_variable_value(inputs[0])
         size = state_machine.get_variable_value(inputs[1])
-        updated_packet = utils.set_UDP_packet_bytes(packet, size)
-        state_machine.set_variable_value(outputs[0], updated_packet)
+        # Update the packet's payload using the utility function.
+        utils.set_UDP_packet_bytes(packet, size)
+        state_machine.set_variable_value(outputs[0], packet)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

@@ -80,19 +80,27 @@ def create_TCP_packet():
 def create_UDP_packet():
     return IP()/UDP()
 
-def set_UDP_payload(packet, payload):
-    # Remove any existing payload and add the new payload
-    packet.remove_payload()
-    packet /= Raw(load=payload)
+def set_UDP_payload(packet, payload_bytes):
+    """
+    Replace the payload of a UDP packet with payload_bytes without recreating
+    the entire packet.
+
+    If a Raw layer already exists, update its load; otherwise, append a new Raw layer.
+    """
+    if packet.haslayer(Raw):
+        # Modify the existing Raw layer
+        packet[Raw].load = payload_bytes
+    else:
+        # Append a new Raw layer to the UDP layer
+        packet[UDP].add_payload(Raw(load=payload_bytes))
+    return packet
 
 def set_UDP_packet_bytes(packet, size):
     """
-    Sets the UDP packet's payload to a sequence of 'A' characters
-    so that the payload is exactly 'size' bytes long.
+    Set the UDP packet's payload to a sequence of 'A' characters of length `size`.
     """
-    payload_data = b"A" * size
-    set_UDP_payload(packet, payload_data)
-    return packet
+    payload_data = b"A" * int(size)
+    return set_UDP_payload(packet, payload_data)
 
 def set_IP_dst(packet, dst):
     packet['IP'].dst = dst

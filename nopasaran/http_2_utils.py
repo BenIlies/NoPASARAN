@@ -642,8 +642,8 @@ def generate_temp_certificates():
 
     # Generate certificate
     subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, u""),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u""),
+        x509.NameAttribute(NameOID.COMMON_NAME, u"test.nopasaran.com"),  # Simple test domain
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Test Certificate"),
     ])
 
     cert = x509.CertificateBuilder().subject_name(

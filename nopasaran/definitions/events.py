@@ -33,3 +33,4 @@ class EventNames(Enum):
     FRAMES_SENT = 22
     CLIENT_STARTED = 23
     SERVER_STARTED = 24
+    CONNECTION_TERMINATED = 25

@@ -535,66 +535,40 @@ def new_update_header_buffer(self, f):
 
 def new_send_data(self, stream_id, data, end_stream=False, pad_length=None):
     """
-    Send data on a given stream.
-
-    This method does no breaking up of data: if the data is larger than the
-    value returned by :meth:`local_flow_control_window
-    <h2.connection.H2Connection.local_flow_control_window>` for this stream
-    then a :class:`FlowControlError <h2.exceptions.FlowControlError>` will
-    be raised. If the data is larger than :data:`max_outbound_frame_size
-    <h2.connection.H2Connection.max_outbound_frame_size>` then a
-    :class:`FrameTooLargeError <h2.exceptions.FrameTooLargeError>` will be
-    raised.
-
-    h2 does this to avoid buffering the data internally. If the user
-    has more data to send than h2 will allow, consider breaking it up
-    and buffering it externally.
-
-    :param stream_id: The ID of the stream on which to send the data.
-    :type stream_id: ``int``
-    :param data: The data to send on the stream.
-    :type data: ``bytes``
-    :param end_stream: (optional) Whether this is the last data to be sent
-        on the stream. Defaults to ``False``.
-    :type end_stream: ``bool``
-    :param pad_length: (optional) Length of the padding to apply to the
-        data frame. Defaults to ``None`` for no use of padding. Note that
-        a value of ``0`` results in padding of length ``0``
-        (with the "padding" flag set on the frame).
-
-        .. versionadded:: 2.6.0
-
-    :type pad_length: ``int``
-    :returns: Nothing
+    Modified send_data to force sending DATA frames even in IDLE state
     """
     self.config.logger.debug(
         "Send data on stream ID %d with len %d", stream_id, len(data)
     )
+    
     frame_size = len(data)
     if pad_length is not None:
         if not isinstance(pad_length, int):
             raise TypeError("pad_length must be an int")
         if pad_length < 0 or pad_length > 255:
             raise ValueError("pad_length must be within range: [0, 255]")
-        # Account for padding bytes plus the 1-byte padding length field.
         frame_size += pad_length + 1
-    self.config.logger.debug(
-        "Frame size on stream ID %d is %d", stream_id, frame_size
-    )
 
-    self.state_machine.process_input(ConnectionInputs.SEND_DATA)
-    frames = self.streams[stream_id].send_data(
-        data, end_stream, pad_length=pad_length
-    )
+    # Create and send DATA frame directly
+    df = DataFrame(stream_id)
+    df.data = data
+    if end_stream:
+        df.flags.add('END_STREAM')
+    if pad_length is not None:
+        df.flags.add('PADDED')
+        df.pad_length = pad_length
 
-    self._prepare_for_sending(frames)
-
+    # Serialize the frame and add it to the output buffer
+    self._data_to_send += df.serialize()
+    
+    # Update flow control window
     self.outbound_flow_control_window -= frame_size
     self.config.logger.debug(
         "Outbound flow control window size is %d",
         self.outbound_flow_control_window
     )
-    assert self.outbound_flow_control_window >= 0
+    
+    return
 
 def new_receive_naked_continuation(self, frame):
     """
@@ -641,7 +615,7 @@ redefine_methods(H2Connection, {
     'initiate_connection': new_initiate_connection,
     '_receive_rst_stream_frame': new_receive_rst_stream_frame,
     '_receive_window_update_frame': new_receive_window_update_frame,
-    'send_data': new_send_data,
+    'send_data': new_send_data,  # Updated send_data method
     '_receive_naked_continuation': new_receive_naked_continuation
 })
 redefine_methods(FrameBuffer, {

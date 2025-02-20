@@ -59,8 +59,11 @@ def H2Configuration__init__(self,
     self.incorrect_client_connection_preface = incorrect_client_connection_preface
     self.skip_client_connection_preface = skip_client_connection_preface
 
-def H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
+class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
     """Override the state machine to allow DATA frames in IDLE state"""
+    
+    def __init__(self):
+        super().__init__()
     
     def process_input(self, input_: ConnectionInputs) -> List[str]:
         """

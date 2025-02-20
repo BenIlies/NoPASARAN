@@ -129,6 +129,8 @@ class HTTP2SocketBase:
         retry_count = 0
         frames_received = []
         result = None
+        initial_settings_received = False
+        initial_ack_received = False
         
         # for every expected frame:
         for frame in test_frames:
@@ -144,12 +146,20 @@ class HTTP2SocketBase:
             events = self.conn.receive_data(data)
             
             for event in events:
-                frames_received.append(event)
                 if isinstance(event, h2.events.ConnectionTerminated):
                     return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
                 
-                if isinstance(event, (h2.events.RemoteSettingsChanged, h2.events.SettingsAcknowledged)):
-                    continue
+                if isinstance(event, h2.events.RemoteSettingsChanged):
+                    if not initial_settings_received:
+                        initial_settings_received = True
+                        continue
+                
+                if isinstance(event, h2.events.SettingsAcknowledged):
+                    if not initial_ack_received:
+                        initial_ack_received = True
+                        continue
+
+                frames_received.append(event)
 
                 # result starts as None, if there are no tests, it will remain None
                 result, test_index = self._handle_test(event, frame)

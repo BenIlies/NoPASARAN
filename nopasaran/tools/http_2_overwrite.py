@@ -644,19 +644,28 @@ class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
         # Otherwise, use the original logic
         return super().process_input(input_)
 
+class H2ConnectionWithCustomStateMachine(H2Connection):
+    """H2Connection subclass with custom state machine"""
+    def __init__(self, config=None):
+        super().__init__(config)
+        self._state_machine = H2ConnectionStateMachineOverride()
+
+    @property
+    def state_machine(self):
+        return self._state_machine
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
     '__init__': H2Connection__init__,
-    '_begin_new_stream': new_begin_new_stream, 
-    '_receive_push_promise_frame': new_receive_push_promise_frame, 
+    '_begin_new_stream': new_begin_new_stream,
+    '_receive_push_promise_frame': new_receive_push_promise_frame,
     '_receive_priority_frame': new_receive_priority_frame,
     'initiate_connection': new_initiate_connection,
     '_receive_rst_stream_frame': new_receive_rst_stream_frame,
     '_receive_window_update_frame': new_receive_window_update_frame,
     'send_data': new_send_data,
-    '_receive_naked_continuation': new_receive_naked_continuation,
-    'state_machine': property(lambda self: H2ConnectionStateMachineOverride())
+    '_receive_naked_continuation': new_receive_naked_continuation
 })
 redefine_methods(FrameBuffer, {
     '__init__': FrameBuffer__init__, 
@@ -669,3 +678,7 @@ redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})
 redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
+
+# Add this at the end of the file
+import h2.connection
+h2.connection.H2Connection = H2ConnectionWithCustomStateMachine

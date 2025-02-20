@@ -8,7 +8,7 @@ from h2.frame_buffer import CONTINUATION_BACKLOG, FrameBuffer
 from h2.settings import Settings, SettingCodes
 from h2 import settings
 from h2.config import H2Configuration, DummyLogger
-from h2.connection import AllowedStreamIDs, ConnectionInputs, H2Connection, H2ConnectionStateMachine, _decode_headers
+from h2.connection import AllowedStreamIDs, ConnectionInputs, H2Connection, H2ConnectionStateMachine, _decode_headers, ConnectionState
 from h2.stream import H2Stream, StreamClosedBy
 from hyperframe.frame import (Frame, RstStreamFrame, HeadersFrame, PushPromiseFrame, SettingsFrame, 
                               DataFrame, WindowUpdateFrame, PingFrame, RstStreamFrame, 
@@ -19,6 +19,7 @@ from hyperframe.flags import Flags
 from h2.utilities import SizeLimitDict
 from h2.windows import WindowManager
 from h2 import utilities
+from typing import Optional, Tuple, List
 
 def redefine_methods(cls, methods_dict):
     for method_name, new_method in methods_dict.items():
@@ -628,6 +629,21 @@ def new_receive_naked_continuation(self, frame):
     
     return [], []
 
+class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
+    """Override the state machine to allow DATA frames in IDLE state"""
+    
+    def process_input(self, input_: ConnectionInputs) -> List[str]:
+        """
+        Override the process_input method to allow SEND_DATA in IDLE state
+        """
+        # If we're in IDLE state and trying to send data, just allow it
+        if (self.state == ConnectionState.IDLE and 
+            input_ == ConnectionInputs.SEND_DATA):
+            return []
+            
+        # Otherwise, use the original logic
+        return super().process_input(input_)
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -639,7 +655,8 @@ redefine_methods(H2Connection, {
     '_receive_rst_stream_frame': new_receive_rst_stream_frame,
     '_receive_window_update_frame': new_receive_window_update_frame,
     'send_data': new_send_data,
-    '_receive_naked_continuation': new_receive_naked_continuation
+    '_receive_naked_continuation': new_receive_naked_continuation,
+    'state_machine': property(lambda self: H2ConnectionStateMachineOverride())
 })
 redefine_methods(FrameBuffer, {
     '__init__': FrameBuffer__init__, 

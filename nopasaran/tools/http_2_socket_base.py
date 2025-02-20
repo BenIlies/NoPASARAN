@@ -156,6 +156,8 @@ class HTTP2SocketBase:
                     if not initial_ack_received:
                         initial_ack_received = True
                         continue
+                if isinstance(event, h2.events.StreamEnded):
+                    continue
 
                 frames_received.append(event)
             

@@ -26,7 +26,7 @@ def verifyregex(frame, attribute, regex):
     except AttributeError:
         return False
 
-def verifylength(event, length):
+def length_equal_to(event, length):
     """
     Verify the length of frame data or payload.
     Handles different frame types appropriately.
@@ -41,6 +41,24 @@ def verifylength(event, length):
             
         return False
         
+    except Exception as e:
+        return False
+    
+def length_greater_than(event, length):
+    """
+    Verify if the length of frame data or payload is greater than a given value.
+    Handles different frame types appropriately.
+    """
+    try:
+        expected_length = int(length)
+        
+        # For events with data attribute
+        if hasattr(event, 'data'):
+            actual_length = len(event.data)
+            return actual_length > expected_length
+
+        return False
+    
     except Exception as e:
         return False
 
@@ -131,7 +149,8 @@ def verifytype(event, type):
 
 function_map = {
     'verifyregex': verifyregex,
-    'verifylength': verifylength,
+    'length_equal_to': length_equal_to,
+    'length_greater_than': length_greater_than,
     'verifystreamid': verifystreamid,
     'verifyack': verifyack,
     'verifysettings': verifysettings,

@@ -168,19 +168,13 @@ class HTTP2SocketBase:
                         return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {received_frame}', str(frames_received)
                 
                 # If we get here, we received all frames but no test passed
-                return EventNames.TEST_COMPLETED.name, "All frames received but tests failed", str(frames_received)
-        
-        # Handle completion cases
-        if len(frames_received) == 0:
-            if test_frames:
-                return EventNames.TEST_COMPLETED.name, "Expected frames were not received", str(frames_received)
-            else:
-                return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", str(frames_received)
-        else:
-            if not test_frames:
-                return EventNames.TEST_COMPLETED.name, "Frames were received but no tests were defined.", str(frames_received)
-            else:
-                return EventNames.TEST_COMPLETED.name, f"Only received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
+                if len(test_frames) == 0 and len(expected_frame_count) == 0:
+                    return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", str(frames_received)
+                else:
+                    if result is False:
+                        return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but all tests failed", str(frames_received)
+                    else:
+                        return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but no tests were defined", str(frames_received)
 
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

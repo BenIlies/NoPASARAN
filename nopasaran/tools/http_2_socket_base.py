@@ -148,12 +148,12 @@ class HTTP2SocketBase:
                 if isinstance(event, h2.events.ConnectionTerminated):
                     return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
                 
-                if isinstance(event, h2.events.RemoteSettingsChanged):
-                    if not initial_settings_received:
-                        # make sure its actually the initial settings by checking if the length is equal to 42
-                        if len(event.settings) == 42:
+                # if its the server
+                if hasattr(self, 'client_socket'):
+                    if isinstance(event, h2.events.RemoteSettingsChanged):
+                        if not initial_settings_received:
                             initial_settings_received = True
-                            continue
+                        continue
                 
                 if isinstance(event, h2.events.SettingsAcknowledged):
                     if not initial_ack_received:

@@ -579,7 +579,7 @@ def new_send_data(self, stream_id, data, end_stream=False, pad_length=None):
         "Frame size on stream ID %d is %d", stream_id, frame_size
     )
 
-    # self.state_machine.process_input(ConnectionInputs.SEND_DATA)
+    self.state_machine.process_input(ConnectionInputs.SEND_DATA)
     frames = self.streams[stream_id].send_data(
         data, end_stream, pad_length=pad_length
     )

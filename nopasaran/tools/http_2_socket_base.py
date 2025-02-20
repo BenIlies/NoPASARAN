@@ -164,22 +164,22 @@ class HTTP2SocketBase:
             # Check if we've received all expected frames
             if len(frames_received) >= expected_frame_count:
                 # Now check the tests for each frame
-                for i, (expected_frame, received_frame) in enumerate(zip(test_frames, frames_received)):
-                    result, test_index = self._handle_test(received_frame, expected_frame)
-                    if result is True:
-                        return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {received_frame}', str(frames_received)
-                    elif result is False:
-                        return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but all tests failed", str(frames_received)
-                    else:
-                        return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but no tests were defined", str(frames_received)
+                for expected_frame in test_frames:
+                    for received_frame in frames_received:
+                        result, test_index = self._handle_test(received_frame, expected_frame)
+                        if result is True:
+                            return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {received_frame}', str(frames_received)
                 
-                # If we get here, we received all frames but no test passed
                 if expected_frame_count == 0:
                     if len(frames_received) == 0:
                         return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", str(frames_received)
                     else:
                         return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} frames but no frames were expected", str(frames_received)
-                    
+                
+                if result is False:
+                    return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but all tests failed", str(frames_received)
+                else:
+                    return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames, and no tests were defined", str(frames_received)        
 
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

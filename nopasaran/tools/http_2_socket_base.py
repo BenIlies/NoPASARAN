@@ -149,16 +149,19 @@ class HTTP2SocketBase:
                     return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
                 
                 # if its the server
-                if hasattr(self, 'client_socket'):
-                    if isinstance(event, h2.events.RemoteSettingsChanged):
-                        if not initial_settings_received:
-                            initial_settings_received = True
+                if isinstance(event, h2.events.RemoteSettingsChanged):
+                    settings = event.changed_settings
+                    # Check if this is the initial settings frame with default values
+                    if (settings.get(h2.settings.SettingCodes.ENABLE_PUSH, 1) == 1 and
+                        settings.get(h2.settings.SettingCodes.INITIAL_WINDOW_SIZE, 65535) == 65535 and
+                        settings.get(h2.settings.SettingCodes.MAX_CONCURRENT_STREAMS, 100) == 100):
                         continue
                 
                 if isinstance(event, h2.events.SettingsAcknowledged):
                     if not initial_ack_received:
                         initial_ack_received = True
                         continue
+
                 if isinstance(event, h2.events.StreamEnded):
                     continue
 

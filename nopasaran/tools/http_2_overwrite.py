@@ -2,7 +2,7 @@ import struct
 from typing import Iterable
 from hpack import Decoder, Encoder
 from h2.errors import ErrorCodes
-from h2.events import PriorityUpdated, StreamReset, WindowUpdated
+from h2.events import PriorityUpdated, StreamReset, WindowUpdated, DataReceived
 from h2.exceptions import FlowControlError, FrameDataMissingError, NoSuchStreamError, ProtocolError, StreamClosedError
 from h2.frame_buffer import CONTINUATION_BACKLOG, FrameBuffer
 from h2.settings import Settings, SettingCodes
@@ -71,7 +71,8 @@ class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
         """
         # If we're in IDLE state and trying to send or receive data, just allow it
         if (self.state == ConnectionState.IDLE and 
-            input_ in (ConnectionInputs.SEND_DATA, ConnectionInputs.RECV_DATA)):
+            input_ in (ConnectionInputs.SEND_DATA, ConnectionInputs.RECV_DATA, 
+                      ConnectionInputs.SEND_HEADERS, ConnectionInputs.RECV_HEADERS)):
             return []
             
         # Otherwise, use the original logic
@@ -605,6 +606,21 @@ def new_receive_naked_continuation(self, frame):
     
     return [], []
 
+def new_receive_data_frame(self, frame):
+    """
+    Modified _receive_data_frame to handle DATA frames in any state
+    """
+    # Don't enforce stream state checks
+    flow_controlled_length = len(frame.data) + frame.pad_length + 1 if frame.pad_length else len(frame.data)
+    
+    # Maintain the flow control window
+    self._inbound_flow_control_window_manager.window_consumed(
+        flow_controlled_length
+    )
+    
+    # Return the event
+    return [], [DataReceived()]
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -615,7 +631,8 @@ redefine_methods(H2Connection, {
     'initiate_connection': new_initiate_connection,
     '_receive_rst_stream_frame': new_receive_rst_stream_frame,
     '_receive_window_update_frame': new_receive_window_update_frame,
-    'send_data': new_send_data,  # Updated send_data method
+    'send_data': new_send_data,
+    '_receive_data_frame': new_receive_data_frame,
     '_receive_naked_continuation': new_receive_naked_continuation
 })
 redefine_methods(FrameBuffer, {

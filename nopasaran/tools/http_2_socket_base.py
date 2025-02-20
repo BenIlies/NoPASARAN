@@ -126,23 +126,21 @@ class HTTP2SocketBase:
     
     def receive_test_frames(self, test_frames) -> str:
         """Wait for test frames"""
-        retry_count = 0
         frames_received = []
-        result = None
+        retry_count = 0
         initial_settings_received = False
         initial_ack_received = False
+        expected_frame_count = len(test_frames)
         
-        # for every expected frame:
-        for frame in test_frames:
+        while retry_count < self.MAX_RETRY_ATTEMPTS:
             data = self._receive_frame()
-
+            
             if data is None:
                 retry_count += 1
                 if retry_count >= self.MAX_RETRY_ATTEMPTS:
-                    return EventNames.TIMEOUT.name, "Timeout occurred", str(frames_received)
+                    return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
                 continue
             
-            retry_count = 0
             events = self.conn.receive_data(data)
             
             for event in events:
@@ -160,29 +158,29 @@ class HTTP2SocketBase:
                         continue
 
                 frames_received.append(event)
-
-                # result starts as None, if there are no tests, it will remain None
-                result, test_index = self._handle_test(event, frame)
-
-                # If a test passed, return the test's index and the frame that passed the test
-                if result is True:
-                    return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', str(frames_received)
+            
+            # Check if we've received all expected frames
+            if len(frames_received) >= expected_frame_count:
+                # Now check the tests for each frame
+                for i, (expected_frame, received_frame) in enumerate(zip(test_frames, frames_received)):
+                    result, test_index = self._handle_test(received_frame, expected_frame)
+                    if result is True:
+                        return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {received_frame}', str(frames_received)
+                
+                # If we get here, we received all frames but no test passed
+                return EventNames.TEST_COMPLETED.name, "All frames received but tests failed", str(frames_received)
         
-        # If no frames were received during the scenario
+        # Handle completion cases
         if len(frames_received) == 0:
-            # check if we expected frames in the first place
             if test_frames:
                 return EventNames.TEST_COMPLETED.name, "Expected frames were not received", str(frames_received)
             else:
                 return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", str(frames_received)
-        # If frames were received
         else:
-            # but no tests were defined for them
-            if result is None:
+            if not test_frames:
                 return EventNames.TEST_COMPLETED.name, "Frames were received but no tests were defined.", str(frames_received)
-            # there were tests, but they all failed
             else:
-                return EventNames.TEST_COMPLETED.name, "Frames were received but all tests failed", str(frames_received)
+                return EventNames.TEST_COMPLETED.name, f"Only received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
 
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

@@ -29,15 +29,11 @@ class HTTP2SocketBase:
             if elapsed_time > self.TIMEOUT:
                 return None
             
-            # Calculate remaining timeout
-            remaining_timeout = max(0, self.TIMEOUT - elapsed_time)
-            ready_to_read, _, _ = select.select([socket_to_check], [], [], remaining_timeout)
+            ready_to_read, _, _ = select.select([socket_to_check], [], [], self.TIMEOUT)
             
             if ready_to_read:
                 frame = socket_to_check.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
                 return frame
-            elif remaining_timeout <= 0:
-                return None
 
     def send_frames(self, frames):
         """Send frames based on test case"""
@@ -154,8 +150,10 @@ class HTTP2SocketBase:
                 
                 if isinstance(event, h2.events.RemoteSettingsChanged):
                     if not initial_settings_received:
-                        initial_settings_received = True
-                        continue
+                        # make sure its actually the initial settings
+                        if event.settings.header_table_size == 4096 and event.settings.max_frame_size == 16384:
+                            initial_settings_received = True
+                            continue
                 
                 if isinstance(event, h2.events.SettingsAcknowledged):
                     if not initial_ack_received:

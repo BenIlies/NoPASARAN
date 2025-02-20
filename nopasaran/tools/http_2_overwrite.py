@@ -67,11 +67,11 @@ class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
     
     def process_input(self, input_: ConnectionInputs) -> List[str]:
         """
-        Override the process_input method to allow SEND_DATA in IDLE state
+        Override the process_input method to allow DATA frames in IDLE state
         """
-        # If we're in IDLE state and trying to send data, just allow it
+        # If we're in IDLE state and trying to send or receive data, just allow it
         if (self.state == ConnectionState.IDLE and 
-            input_ == ConnectionInputs.SEND_DATA):
+            input_ in (ConnectionInputs.SEND_DATA, ConnectionInputs.RECV_DATA)):
             return []
             
         # Otherwise, use the original logic

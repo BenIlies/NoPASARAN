@@ -151,7 +151,9 @@ class HTTP2SocketBase:
                 if isinstance(event, h2.events.RemoteSettingsChanged):
                     if not initial_settings_received:
                         # make sure its actually the initial settings
-                        if event.settings.header_table_size == 4096 and event.settings.max_frame_size == 16384:
+                        changed_settings = event.changed_settings
+                        if (changed_settings.get(h2.settings.SettingCodes.HEADER_TABLE_SIZE) == 4096 and 
+                            changed_settings.get(h2.settings.SettingCodes.MAX_FRAME_SIZE) == 16384):
                             initial_settings_received = True
                             continue
                 

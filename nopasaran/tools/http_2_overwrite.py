@@ -59,104 +59,103 @@ def H2Configuration__init__(self,
     self.incorrect_client_connection_preface = incorrect_client_connection_preface
     self.skip_client_connection_preface = skip_client_connection_preface
 
-def H2Connection__init__(self, config=None):
-        self.state_machine = H2ConnectionStateMachine()
-        self.streams = {}
-        self.highest_inbound_stream_id = 0
-        self.highest_outbound_stream_id = 0
-        self.encoder = Encoder()
-        self.decoder = Decoder()
+def H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
+    """Override the state machine to allow DATA frames in IDLE state"""
+    
+    def process_input(self, input_: ConnectionInputs) -> List[str]:
+        """
+        Override the process_input method to allow SEND_DATA in IDLE state
+        """
+        # If we're in IDLE state and trying to send data, just allow it
+        if (self.state == ConnectionState.IDLE and 
+            input_ == ConnectionInputs.SEND_DATA):
+            return []
+            
+        # Otherwise, use the original logic
+        return super().process_input(input_)
 
-        # This won't always actually do anything: for versions of HPACK older
-        # than 2.3.0 it does nothing. However, we have to try!
-        self.decoder.max_header_list_size = self.DEFAULT_MAX_HEADER_LIST_SIZE
+def H2Connection__init__modified(self, config=None):
+    """Modified init that uses our custom state machine"""
+    self.state_machine = H2ConnectionStateMachineOverride()
+    self.streams = {}
+    self.highest_inbound_stream_id = 0
+    self.highest_outbound_stream_id = 0
+    self.encoder = Encoder()
+    self.decoder = Decoder()
 
-        #: The configuration for this HTTP/2 connection object.
-        #:
-        #: .. versionadded:: 2.5.0
-        self.config = config
-        if self.config is None:
-            self.config = H2Configuration(
-                client_side=True,
-            )
+    # This won't always actually do anything: for versions of HPACK older
+    # than 2.3.0 it does nothing. However, we have to try!
+    self.decoder.max_header_list_size = self.DEFAULT_MAX_HEADER_LIST_SIZE
 
-        # Objects that store settings, including defaults.
-        #
-        # We set the MAX_CONCURRENT_STREAMS value to 100 because its default is
-        # unbounded, and that's a dangerous default because it allows
-        # essentially unbounded resources to be allocated regardless of how
-        # they will be used. 100 should be suitable for the average
-        # application. This default obviously does not apply to the remote
-        # peer's settings: the remote peer controls them!
-        #
-        # We also set MAX_HEADER_LIST_SIZE to a reasonable value. This is to
-        # advertise our defence against CVE-2016-6581. However, not all
-        # versions of HPACK will let us do it. That's ok: we should at least
-        # suggest that we're not vulnerable.
-        self.local_settings = Settings(
-            client=self.config.client_side,
-            initial_values={
-                SettingCodes.MAX_CONCURRENT_STREAMS: 100,
-                SettingCodes.MAX_HEADER_LIST_SIZE:
-                    self.DEFAULT_MAX_HEADER_LIST_SIZE,
-            }
-        )
-        self.remote_settings = Settings(client=not self.config.client_side)
-
-        # The current value of the connection flow control windows on the
-        # connection.
-        self.outbound_flow_control_window = (
-            self.remote_settings.initial_window_size
+    #: The configuration for this HTTP/2 connection object.
+    #:
+    #: .. versionadded:: 2.5.0
+    self.config = config
+    if self.config is None:
+        self.config = H2Configuration(
+            client_side=True,
         )
 
-        #: The maximum size of a frame that can be emitted by this peer, in
-        #: bytes.
-        self.max_outbound_frame_size = self.remote_settings.max_frame_size
-
-        #: The maximum size of a frame that can be received by this peer, in
-        #: bytes.
-        self.max_inbound_frame_size = self.local_settings.max_frame_size
-
-        # Buffer for incoming data.
-        self.incoming_buffer = FrameBuffer(server=not self.config.client_side, skip_client_connection_preface=self.config.skip_client_connection_preface)
-
-        # A private variable to store a sequence of received header frames
-        # until completion.
-        self._header_frames = []
-
-        # Data that needs to be sent.
-        self._data_to_send = bytearray()
-
-        # Keeps track of how streams are closed.
-        # Used to ensure that we don't blow up in the face of frames that were
-        # in flight when a RST_STREAM was sent.
-        # Also used to determine whether we should consider a frame received
-        # while a stream is closed as either a stream error or a connection
-        # error.
-        self._closed_streams = SizeLimitDict(
-            size_limit=self.MAX_CLOSED_STREAMS
-        )
-
-        # The flow control window manager for the connection.
-        self._inbound_flow_control_window_manager = WindowManager(
-            max_window_size=self.local_settings.initial_window_size
-        )
-
-        # When in doubt use dict-dispatch.
-        self._frame_dispatch_table = {
-            HeadersFrame: self._receive_headers_frame,
-            PushPromiseFrame: self._receive_push_promise_frame,
-            SettingsFrame: self._receive_settings_frame,
-            DataFrame: self._receive_data_frame,
-            WindowUpdateFrame: self._receive_window_update_frame,
-            PingFrame: self._receive_ping_frame,
-            RstStreamFrame: self._receive_rst_stream_frame,
-            PriorityFrame: self._receive_priority_frame,
-            GoAwayFrame: self._receive_goaway_frame,
-            ContinuationFrame: self._receive_naked_continuation,
-            AltSvcFrame: self._receive_alt_svc_frame,
-            ExtensionFrame: self._receive_unknown_frame
+    # Objects that store settings, including defaults.
+    self.local_settings = Settings(
+        client=self.config.client_side,
+        initial_values={
+            SettingCodes.MAX_CONCURRENT_STREAMS: 100,
+            SettingCodes.MAX_HEADER_LIST_SIZE:
+                self.DEFAULT_MAX_HEADER_LIST_SIZE,
         }
+    )
+    self.remote_settings = Settings(client=not self.config.client_side)
+
+    # The current value of the connection flow control windows on the
+    # connection.
+    self.outbound_flow_control_window = (
+        self.remote_settings.initial_window_size
+    )
+
+    #: The maximum size of a frame that can be emitted by this peer, in
+    #: bytes.
+    self.max_outbound_frame_size = self.remote_settings.max_frame_size
+
+    #: The maximum size of a frame that can be received by this peer, in
+    #: bytes.
+    self.max_inbound_frame_size = self.local_settings.max_frame_size
+
+    # Buffer for incoming data.
+    self.incoming_buffer = FrameBuffer(server=not self.config.client_side, skip_client_connection_preface=self.config.skip_client_connection_preface)
+
+    # A private variable to store a sequence of received header frames
+    # until completion.
+    self._header_frames = []
+
+    # Data that needs to be sent.
+    self._data_to_send = bytearray()
+
+    # Keeps track of how streams are closed.
+    self._closed_streams = SizeLimitDict(
+        size_limit=self.MAX_CLOSED_STREAMS
+    )
+
+    # The flow control window manager for the connection.
+    self._inbound_flow_control_window_manager = WindowManager(
+        max_window_size=self.local_settings.initial_window_size
+    )
+
+    # When in doubt use dict-dispatch.
+    self._frame_dispatch_table = {
+        HeadersFrame: self._receive_headers_frame,
+        PushPromiseFrame: self._receive_push_promise_frame,
+        SettingsFrame: self._receive_settings_frame,
+        DataFrame: self._receive_data_frame,
+        WindowUpdateFrame: self._receive_window_update_frame,
+        PingFrame: self._receive_ping_frame,
+        RstStreamFrame: self._receive_rst_stream_frame,
+        PriorityFrame: self._receive_priority_frame,
+        GoAwayFrame: self._receive_goaway_frame,
+        ContinuationFrame: self._receive_naked_continuation,
+        AltSvcFrame: self._receive_alt_svc_frame,
+        ExtensionFrame: self._receive_unknown_frame
+    }
 
 def new_initiate_connection(self):
     """
@@ -629,35 +628,10 @@ def new_receive_naked_continuation(self, frame):
     
     return [], []
 
-class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
-    """Override the state machine to allow DATA frames in IDLE state"""
-    
-    def process_input(self, input_: ConnectionInputs) -> List[str]:
-        """
-        Override the process_input method to allow SEND_DATA in IDLE state
-        """
-        # If we're in IDLE state and trying to send data, just allow it
-        if (self.state == ConnectionState.IDLE and 
-            input_ == ConnectionInputs.SEND_DATA):
-            return []
-            
-        # Otherwise, use the original logic
-        return super().process_input(input_)
-
-class H2ConnectionWithCustomStateMachine(H2Connection):
-    """H2Connection subclass with custom state machine"""
-    def __init__(self, config=None):
-        super().__init__(config)
-        self._state_machine = H2ConnectionStateMachineOverride()
-
-    @property
-    def state_machine(self):
-        return self._state_machine
-
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
-    '__init__': H2Connection__init__,
+    '__init__': H2Connection__init__modified,
     '_begin_new_stream': new_begin_new_stream,
     '_receive_push_promise_frame': new_receive_push_promise_frame,
     '_receive_priority_frame': new_receive_priority_frame,
@@ -678,7 +652,3 @@ redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})
 redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
-
-# Add this at the end of the file
-import h2.connection
-h2.connection.H2Connection = H2ConnectionWithCustomStateMachine

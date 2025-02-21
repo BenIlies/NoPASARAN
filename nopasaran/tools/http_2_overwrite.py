@@ -638,8 +638,8 @@ redefine_methods(H2Connection, {
 redefine_methods(FrameBuffer, {
     '__init__': FrameBuffer__init__, 
     'add_data': new_add_data, 
-    '__next__': new__next__, 
-    '_update_header_buffer': new_update_header_buffer
+    '__next__': new__next__
+    # '_update_header_buffer': new_update_header_buffer
 })
 redefine_methods(Frame, {'__init__': Frame__init__})
 redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})

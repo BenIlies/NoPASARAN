@@ -588,7 +588,7 @@ def new_receive_data_frame(self, frame):
     return [], [DataReceived()]
 
 def new_receive_headers(self, headers, encoding, end_stream):
-    """Skip trailer validation by ignoring end_stream requirement"""
+    """Skip trailer validation completely"""
     self.state_machine.process_input(StreamInputs.RECV_HEADERS)
     events = self._receive_headers_events(headers, encoding)
     return [], events
@@ -619,5 +619,5 @@ redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
 redefine_methods(H2Stream, {
-    '_receive_headers': new_receive_headers
+    'receive_headers': new_receive_headers
 })

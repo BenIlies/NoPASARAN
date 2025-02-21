@@ -163,11 +163,11 @@ class HTTP2SocketBase:
                 if isinstance(event, h2.events.StreamEnded):
                     continue
 
-                if frame['type'] == 'CONTINUATION':
-                    for event in frames_received:
-                        if isinstance(event, h2.events.RequestReceived) or isinstance(event, h2.events.PushedStreamReceived):
-                            if 'accept-encoding' in dict(event.headers).keys():
-                                frames_received.append('CONTINUATION_FRAME_RECEIVED')
+                # if frame['type'] == 'CONTINUATION':
+                #     for event in frames_received:
+                #         if isinstance(event, h2.events.RequestReceived) or isinstance(event, h2.events.PushedStreamReceived):
+                #             if 'accept-encoding' in dict(event.headers).keys():
+                #                 frames_received.append('CONTINUATION_FRAME_RECEIVED')
 
 
                 frames_received.append(event)

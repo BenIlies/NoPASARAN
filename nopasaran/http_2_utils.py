@@ -421,20 +421,28 @@ def send_settings_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
     # Convert settings keys to appropriate type (int or SettingCodes)
     processed_settings = {}
     for name, value in settings.items():
+        # If it's already a number, use it directly
+        if isinstance(name, int):
+            processed_settings[name] = value
+            continue
+            
         # Try to convert string to int for numeric settings
         try:
             setting_id = int(name)
             processed_settings[setting_id] = value
         except ValueError:
             # If not numeric, treat as a valid setting name
-            setting_id = getattr(h2.settings.SettingCodes, name)
-            processed_settings[setting_id] = value
+            try:
+                setting_id = getattr(h2.settings.SettingCodes, name)
+                processed_settings[setting_id] = value
+            except AttributeError:
+                # If setting name doesn't exist, skip it
+                continue
     
-    # If we want to bypass h2 validation and send raw frame
+    # Always use raw frame sending if we have unknown settings or non-zero stream ID
     if (stream_id != 0 or 
         'extra_bytes' in frame_data or 
-        'raw_payload' in frame_data or 
-        any(isinstance(k, int) and k not in h2.settings.SettingCodes for k in processed_settings)):
+        'raw_payload' in frame_data):
         
         settings_payload = b''
         for setting_id, value in processed_settings.items():
@@ -531,50 +539,27 @@ def send_ping_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame
         conn: H2Connection instance
         sock: Socket to send data on
         frame_data: Frame configuration dictionary containing:
-            - data (optional): Data to include in the PING
+            - data (optional): 8 bytes of data to include in the PING
             - flags (optional): Dictionary of flags to set
-            - length (optional): Custom length for the PING frame payload
     """
     flags = frame_data.get('flags', {})
     data = frame_data.get('data', b'\x00' * 8)  # Default to 8 zero bytes
     stream_id = frame_data.get('stream_id', 0)
-    custom_length = frame_data.get('length')
     
     # Convert string data to bytes if necessary
     if isinstance(data, str):
         data = data.encode('utf-8')
     
-    # If custom length is specified, send raw frame
-    if custom_length is not None:
-        # Pad or truncate data to match custom length
-        if len(data) < custom_length:
-            data = data + b'\x00' * (custom_length - len(data))
-        else:
-            data = data[:custom_length]
-            
-        # Create frame header
-        flags_byte = 0x1 if 'ACK' in flags else 0x0
-        header = (
-            custom_length.to_bytes(3, byteorder='big') +  # Length
-            b'\x06' +  # Type (0x6 for PING)
-            flags_byte.to_bytes(1, byteorder='big') +  # Flags
-            stream_id.to_bytes(4, byteorder='big')  # Stream ID
-        )
-        
-        # Send raw frame
-        sock.sendall(header + data)
-    else:
-        # Use normal h2 frame for standard 8-byte PING
-        frame = PingFrame(stream_id)
-        frame.data = data[:8]  # Ensure 8 bytes for standard PING
-        
-        # Add ACK flag if specified
-        if 'ACK' in flags:
-            frame.flags.add('ACK')
-        
-        # Serialize and send
-        serialized = frame.serialize()
-        sock.sendall(serialized)
+    frame = PingFrame(stream_id)
+    frame.data = data
+    
+    # Add ACK flag if specified
+    if 'ACK' in flags:
+        frame.flags.add('ACK')
+    
+    # Serialize and send
+    serialized = frame.serialize()
+    sock.sendall(serialized)
 
 def send_goaway_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a GOAWAY frame

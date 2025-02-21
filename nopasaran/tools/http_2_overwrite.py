@@ -492,20 +492,17 @@ def new_receive_window_update_frame(self, frame):
 def new_update_header_buffer(self, f):
     """
     Updates the internal header buffer. Returns a frame that should replace
-    the current one. Modified to accept CONTINUATION frames regardless of flags.
+    the current one. Modified to process headers immediately.
     """
-    # If we receive a CONTINUATION frame, always process it
+    # If we receive a CONTINUATION frame
     if isinstance(f, ContinuationFrame):
-        # If we don't have a header buffer started, just return the frame as-is
         if not self._headers_buffer:
             return f
             
-        # Otherwise, append to buffer
         self._headers_buffer.append(f)
         if len(self._headers_buffer) > CONTINUATION_BACKLOG:
             raise ProtocolError("Too many continuation frames received.")
             
-        # If this is the end of the header block, build a mutant HEADERS frame
         if 'END_HEADERS' in f.flags:
             f = self._headers_buffer[0]
             f.flags.add('END_HEADERS')
@@ -516,13 +513,10 @@ def new_update_header_buffer(self, f):
         else:
             f = None
             
-    # If we get a HEADERS or PUSH_PROMISE frame, always start a new buffer
+    # If we get a HEADERS or PUSH_PROMISE frame, process it immediately
     elif isinstance(f, (HeadersFrame, PushPromiseFrame)):
-        self._headers_buffer = [f]
-        if 'END_HEADERS' in f.flags:
-            # Remove END_HEADERS flag to allow CONTINUATION frames
-            f.flags.remove('END_HEADERS')
-        f = None
+        # Don't buffer, return the frame as-is
+        return f
 
     return f
 
@@ -615,19 +609,11 @@ def new_receive_data_frame(self, frame):
 
 def new_receive_headers(self, frame):
     """
-    Handle a HEADERS frame when it is received. Process it immediately
-    regardless of END_HEADERS flag.
+    Handle a HEADERS frame when it is received.
     """
-    self._header_frames.append(frame)
-    
-    # Process headers immediately
-    headers = _decode_headers(
-        self.decoder,
-        b''.join(f.data for f in self._header_frames)
-    )
-    
     try:
         stream = self._get_stream_by_id(frame.stream_id)
+        headers = _decode_headers(self.decoder, frame.data)
         frames, events = stream.receive_headers(
             headers,
             self.config.header_encoding,
@@ -636,9 +622,9 @@ def new_receive_headers(self, frame):
     except NoSuchStreamError:
         frames, events = [], []
     
-    # Only clear the buffer if END_HEADERS is set
-    if 'END_HEADERS' in frame.flags:
-        self._header_frames = []
+    # Store frame for potential CONTINUATION frames
+    if not 'END_HEADERS' in frame.flags:
+        self._header_frames = [frame]
         
     return frames, events
 

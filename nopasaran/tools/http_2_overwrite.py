@@ -654,6 +654,40 @@ def send_headers(self, headers, encoder, end_stream=False):
 
     return frames
 
+def receive_headers(self, headers, end_stream, header_encoding):
+    """
+    Receive a set of headers (or trailers).
+    """
+    if is_informational_response(headers):
+        if end_stream:
+            raise ProtocolError(
+                "Cannot set END_STREAM on informational responses"
+            )
+        input_ = StreamInputs.RECV_INFORMATIONAL_HEADERS
+    else:
+        input_ = StreamInputs.RECV_HEADERS
+
+    events = self.state_machine.process_input(input_)
+
+    if end_stream:
+        es_events = self.state_machine.process_input(
+            StreamInputs.RECV_END_STREAM
+        )
+        events[0].stream_ended = es_events[0]
+        events += es_events
+
+    self._initialize_content_length(headers)
+
+    # if isinstance(events[0], TrailersReceived):
+    #     if not end_stream:
+    #         raise ProtocolError("Trailers must have END_STREAM set")
+
+    hdr_validation_flags = self._build_hdr_validation_flags(events)
+    events[0].headers = self._process_received_headers(
+        headers, hdr_validation_flags, header_encoding
+    )
+    return [], events
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -679,3 +713,4 @@ redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})
 redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
+redefine_methods(H2Stream, {'receive_headers': receive_headers, 'send_headers': send_headers})

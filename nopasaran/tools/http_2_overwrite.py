@@ -500,12 +500,34 @@ def new_update_header_buffer(self, f):
         
     # Handle CONTINUATION frames as independent frames
     if isinstance(f, ContinuationFrame):
-        # Convert CONTINUATION to HEADERS frame to process it independently
-        headers_frame = HeadersFrame(f.stream_id)
-        headers_frame.data = f.data
-        headers_frame.flags = f.flags
-        return headers_frame
-        
+        # If we don't have a header buffer started, just return the frame as-is
+        if not self._headers_buffer:
+            return f
+            
+        # Otherwise, append to buffer
+        self._headers_buffer.append(f)
+        if len(self._headers_buffer) > CONTINUATION_BACKLOG:
+            raise ProtocolError("Too many continuation frames received.")
+            
+        # If this is the end of the header block, build a mutant HEADERS frame
+        if 'END_HEADERS' in f.flags:
+            f = self._headers_buffer[0]
+            f.flags.add('END_HEADERS')
+            if any(frame.stream_id == 0 for frame in self._headers_buffer):
+                f.stream_id = 0
+            f.data = b''.join(x.data for x in self._headers_buffer)
+            self._headers_buffer = []
+        else:
+            f = None
+            
+    # If we get a HEADERS or PUSH_PROMISE frame, always start a new buffer
+    elif isinstance(f, (HeadersFrame, PushPromiseFrame)):
+        self._headers_buffer = [f]
+        if 'END_HEADERS' in f.flags:
+            # Remove END_HEADERS flag to allow CONTINUATION frames
+            f.flags.remove('END_HEADERS')
+        f = None
+
     return f
 
 def new_send_data(self, stream_id, data, end_stream=False, pad_length=None):

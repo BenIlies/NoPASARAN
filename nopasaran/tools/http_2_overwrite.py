@@ -21,24 +21,6 @@ from h2.windows import WindowManager
 from h2 import utilities
 from typing import Optional, Tuple, List
 
-def is_informational_response(headers):
-    """
-    Determines if the given headers are for an informational response (1xx).
-    """
-    status = headers.get(b':status') or headers.get(':status')
-    if not status:
-        return False
-    
-    # Convert to string if bytes
-    if isinstance(status, bytes):
-        status = status.decode('utf-8')
-    
-    # Convert to int if string
-    if isinstance(status, str):
-        status = int(status)
-        
-    return 100 <= status <= 199
-
 def redefine_methods(cls, methods_dict):
     for method_name, new_method in methods_dict.items():
         setattr(cls, method_name, new_method)
@@ -621,7 +603,7 @@ def send_headers(self, headers, encoder, end_stream=False):
     # response.
     input_ = StreamInputs.SEND_HEADERS
     if ((not self.state_machine.client) and
-            is_informational_response(headers)):
+            False):
         if end_stream:
             raise ProtocolError(
                 "Cannot set END_STREAM on informational responses."
@@ -658,7 +640,7 @@ def receive_headers(self, headers, end_stream, header_encoding):
     """
     Receive a set of headers (or trailers).
     """
-    if is_informational_response(headers):
+    if False:
         if end_stream:
             raise ProtocolError(
                 "Cannot set END_STREAM on informational responses"

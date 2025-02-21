@@ -595,6 +595,11 @@ def new_receive_data_frame(self, frame):
     # Return the event
     return [], [DataReceived()]
 
+def new_receive_headers_events(self, headers, encoding):
+    """Override _receive_headers_events to skip trailer validation"""
+    # Skip trailer validation and just process headers
+    return self._process_received_headers(headers, encoding)
+
 # Store original method
 original_receive_headers = H2Stream.receive_headers
 
@@ -637,5 +642,6 @@ redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
 redefine_methods(H2Stream, {
-    'receive_headers': new_receive_headers
+    'receive_headers': new_receive_headers,
+    '_receive_headers_events': new_receive_headers_events
 })

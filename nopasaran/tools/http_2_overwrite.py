@@ -590,7 +590,7 @@ def new_receive_data_frame(self, frame):
 def new_receive_headers(self, headers, encoding, end_stream):
     """Skip trailer validation completely"""
     self.state_machine.process_input(StreamInputs.RECV_HEADERS)
-    events = self._receive_headers_events(headers, encoding)
+    events = self._inbound_header_events(headers, encoding)
     return [], events
 
 redefine_methods(settings, {'_validate_setting': new_validate_setting})

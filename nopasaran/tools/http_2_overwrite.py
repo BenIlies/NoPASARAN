@@ -491,39 +491,16 @@ def new_receive_window_update_frame(self, frame):
 
 def new_update_header_buffer(self, f):
     """
-    Updates the internal header buffer. Returns a frame that should replace
-    the current one. Modified to accept CONTINUATION frames regardless of flags.
+    Updates the internal header buffer. Converts CONTINUATION frames to HEADERS frames.
     """
-    # If we receive a CONTINUATION frame, always process it
+    # Convert CONTINUATION frames to HEADERS frames
     if isinstance(f, ContinuationFrame):
-        # If we don't have a header buffer started, just return the frame as-is
-        if not self._headers_buffer:
-            return f
-            
-        # Otherwise, append to buffer
-        self._headers_buffer.append(f)
-        if len(self._headers_buffer) > CONTINUATION_BACKLOG:
-            raise ProtocolError("Too many continuation frames received.")
-            
-        # If this is the end of the header block, build a mutant HEADERS frame
-        if 'END_HEADERS' in f.flags:
-            f = self._headers_buffer[0]
-            f.flags.add('END_HEADERS')
-            if any(frame.stream_id == 0 for frame in self._headers_buffer):
-                f.stream_id = 0
-            f.data = b''.join(x.data for x in self._headers_buffer)
-            self._headers_buffer = []
-        else:
-            f = None
-            
-    # If we get a HEADERS or PUSH_PROMISE frame, always start a new buffer
-    elif isinstance(f, (HeadersFrame, PushPromiseFrame)):
-        self._headers_buffer = [f]
-        if 'END_HEADERS' in f.flags:
-            # Remove END_HEADERS flag to allow CONTINUATION frames
-            f.flags.remove('END_HEADERS')
-        f = None
-
+        headers_frame = HeadersFrame(f.stream_id)
+        headers_frame.data = f.data
+        headers_frame.flags = f.flags
+        return headers_frame
+        
+    # Process all other frames normally
     return f
 
 def new_send_data(self, stream_id, data, end_stream=False, pad_length=None):
@@ -613,6 +590,19 @@ def new_receive_data_frame(self, frame):
     # Return the event
     return [], [DataReceived()]
 
+def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional[str], end_stream: bool) -> Tuple[List[Frame], List[Event]]:
+    """
+    Modified receive_headers to bypass trailer validation.
+    """
+    if self.state_machine.state == StreamState.HALF_CLOSED_LOCAL:
+        # Skip the trailer validation that requires END_STREAM
+        self.state_machine.process_input(StreamInputs.RECV_HEADERS)
+        events = self._receive_headers_events(headers, encoding)
+        return [], events
+
+    # Normal header processing
+    return self._receive_headers(headers, encoding, end_stream)
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -638,3 +628,6 @@ redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})
 redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
+redefine_methods(H2Stream, {
+    'receive_headers': new_receive_headers
+})

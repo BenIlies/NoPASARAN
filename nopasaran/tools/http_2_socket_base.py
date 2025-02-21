@@ -187,8 +187,10 @@ class HTTP2SocketBase:
                     else:
                         return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} frames but no frames were expected", str(frames_received)
                 
-                return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but all tests failed", str(frames_received)
-
+                if result is False:
+                    return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but all tests failed", str(frames_received)
+                else:
+                    return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
         return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
     
     def close(self):

@@ -491,6 +491,13 @@ def new_receive_window_update_frame(self, frame):
 
 def new_update_header_buffer(self, f):
     """Simplified header buffer that just passes frames through"""
+    if isinstance(f, ContinuationFrame):
+        # Convert CONTINUATION to HEADERS frame to process it independently
+        headers_frame = HeadersFrame(f.stream_id)
+        headers_frame.data = f.data
+        headers_frame.flags = f.flags
+        return headers_frame
+    
     return f
 
 def new_send_data(self, stream_id, data, end_stream=False, pad_length=None):

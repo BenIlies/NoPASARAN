@@ -128,13 +128,17 @@ class HTTP2SocketBase:
     def receive_test_frames(self, test_frames) -> str:
         """Wait for test frames"""
         frames_received = []
-        retry_count = 0
         initial_settings_received = False
         initial_ack_received = False
         expected_frame_count = len(test_frames)
         
         for frame in test_frames:
-            data = self._receive_frame()
+
+            retry_count = 0
+            data = None
+            while data is None and retry_count < self.MAX_RETRY_ATTEMPTS:
+                data = self._receive_frame()
+                retry_count += 1
             
             if data is None:
                 continue

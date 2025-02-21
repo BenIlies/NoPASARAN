@@ -133,7 +133,7 @@ class HTTP2SocketBase:
         initial_ack_received = False
         expected_frame_count = len(test_frames)
         
-        while retry_count < self.MAX_RETRY_ATTEMPTS:
+        for frame in test_frames:
             data = self._receive_frame()
             
             if data is None:
@@ -141,12 +141,6 @@ class HTTP2SocketBase:
                 if retry_count >= self.MAX_RETRY_ATTEMPTS:
                     return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
                 continue
-            
-            # Check if it's a HEADERS frame (type = 0x1)
-            if len(data) >= 4:  # Make sure we have enough data to check frame type
-                frame_type = data[3]
-                is_headers = frame_type == 0x1
-                print(f"Received frame type: {hex(frame_type)}")  # Debug info
             
             events = self.conn.receive_data(data)
             
@@ -168,6 +162,13 @@ class HTTP2SocketBase:
 
                 if isinstance(event, h2.events.StreamEnded):
                     continue
+
+                if frame['type'] == 'CONTINUATION':
+                    for event in frames_received:
+                        if isinstance(event, h2.events.RequestReceived) or isinstance(event, h2.events.PushedStreamReceived):
+                            if 'accept-encoding' in dict(event.headers).keys():
+                                frames_received.append('CONTINUATION_FRAME_RECEIVED')
+
 
                 frames_received.append(event)
                 

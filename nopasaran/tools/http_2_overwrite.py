@@ -616,6 +616,23 @@ def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional
     # Call original method
     return original_receive_headers(self, headers, encoding, end_stream)
 
+class H2StreamStateOverride(H2Stream):
+    def _receive_headers_events(self, headers, encoding):
+        """Completely bypass trailer validation"""
+        return self._process_received_headers(headers, encoding)
+
+    def receive_headers(self, headers, encoding, end_stream):
+        """Override to ignore END_STREAM requirement for trailers"""
+        self.state_machine.process_input(StreamInputs.RECV_HEADERS)
+        events = self._receive_headers_events(headers, encoding)
+        return [], events
+
+# Replace the H2Stream class entirely
+H2Stream = H2StreamStateOverride
+
+# Remove the individual method overrides since we're replacing the whole class
+redefine_methods(H2Stream, {})
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -641,7 +658,3 @@ redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})
 redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
-redefine_methods(H2Stream, {
-    'receive_headers': new_receive_headers,
-    '_receive_headers_events': new_receive_headers_events
-})

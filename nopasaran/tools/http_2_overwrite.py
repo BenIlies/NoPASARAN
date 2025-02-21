@@ -2,14 +2,14 @@ import struct
 from typing import Iterable
 from hpack import Decoder, Encoder
 from h2.errors import ErrorCodes
-from h2.events import PriorityUpdated, StreamReset, WindowUpdated, DataReceived, Event
+from h2.events import PriorityUpdated, StreamReset, WindowUpdated, DataReceived
 from h2.exceptions import FlowControlError, FrameDataMissingError, NoSuchStreamError, ProtocolError, StreamClosedError
 from h2.frame_buffer import CONTINUATION_BACKLOG, FrameBuffer
 from h2.settings import Settings, SettingCodes
 from h2 import settings
 from h2.config import H2Configuration, DummyLogger
 from h2.connection import AllowedStreamIDs, ConnectionInputs, H2Connection, H2ConnectionStateMachine, _decode_headers, ConnectionState
-from h2.stream import H2Stream, StreamClosedBy, StreamState, StreamInputs
+from h2.stream import H2Stream, StreamClosedBy
 from hyperframe.frame import (Frame, RstStreamFrame, HeadersFrame, PushPromiseFrame, SettingsFrame, 
                               DataFrame, WindowUpdateFrame, PingFrame, RstStreamFrame, 
                               PriorityFrame, GoAwayFrame, ContinuationFrame, AltSvcFrame, 
@@ -621,19 +621,6 @@ def new_receive_data_frame(self, frame):
     # Return the event
     return [], [DataReceived()]
 
-def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional[str], end_stream: bool) -> Tuple[List[Frame], List[Event]]:
-    """
-    Modified receive_headers to bypass trailer validation.
-    """
-    if self.state_machine.state == StreamState.HALF_CLOSED_LOCAL:
-        # Skip the trailer validation that requires END_STREAM
-        self.state_machine.process_input(StreamInputs.RECV_HEADERS)
-        events = self._receive_headers_events(headers, encoding)
-        return [], events
-
-    # Normal header processing
-    return self._receive_headers(headers, encoding, end_stream)
-
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -659,6 +646,3 @@ redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})
 redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
-redefine_methods(H2Stream, {
-    'receive_headers': new_receive_headers
-})

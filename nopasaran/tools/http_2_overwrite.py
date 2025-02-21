@@ -21,6 +21,24 @@ from h2.windows import WindowManager
 from h2 import utilities
 from typing import Optional, Tuple, List
 
+def is_informational_response(headers):
+    """
+    Determines if the given headers are for an informational response (1xx).
+    """
+    status = headers.get(b':status') or headers.get(':status')
+    if not status:
+        return False
+    
+    # Convert to string if bytes
+    if isinstance(status, bytes):
+        status = status.decode('utf-8')
+    
+    # Convert to int if string
+    if isinstance(status, str):
+        status = int(status)
+        
+    return 100 <= status <= 199
+
 def redefine_methods(cls, methods_dict):
     for method_name, new_method in methods_dict.items():
         setattr(cls, method_name, new_method)
@@ -592,6 +610,55 @@ def new_receive_headers(self, headers, encoding, end_stream):
     self.state_machine.process_input(StreamInputs.RECV_HEADERS)
     events = self._inbound_header_events(headers, encoding)
     return [], events
+
+def send_headers(self, headers, encoder, end_stream=False):
+    """
+    Returns a list of HEADERS/CONTINUATION frames to emit as either headers
+    or trailers.
+    """
+    self.config.logger.debug("Send headers %s on %r", headers, self)
+
+    # Because encoding headers makes an irreversible change to the header
+    # compression context, we make the state transition before we encode
+    # them.
+
+    # First, check if we're a client. If we are, no problem: if we aren't,
+    # we need to scan the header block to see if this is an informational
+    # response.
+    input_ = StreamInputs.SEND_HEADERS
+    if ((not self.state_machine.client) and
+            is_informational_response(headers)):
+        if end_stream:
+            raise ProtocolError(
+                "Cannot set END_STREAM on informational responses."
+            )
+
+        input_ = StreamInputs.SEND_INFORMATIONAL_HEADERS
+
+    events = self.state_machine.process_input(input_)
+
+    hf = HeadersFrame(self.stream_id)
+    hdr_validation_flags = self._build_hdr_validation_flags(events)
+    frames = self._build_headers_frames(
+        headers, encoder, hf, hdr_validation_flags
+    )
+
+    if end_stream:
+        # Not a bug: the END_STREAM flag is valid on the initial HEADERS
+        # frame, not the CONTINUATION frames that follow.
+        self.state_machine.process_input(StreamInputs.SEND_END_STREAM)
+        frames[0].flags.add('END_STREAM')
+
+    # if self.state_machine.trailers_sent and not end_stream:
+    #     raise ProtocolError("Trailers must have END_STREAM set.")
+
+    # if self.state_machine.client and self._authority is None:
+    #     self._authority = authority_from_headers(headers)
+
+    # store request method for _initialize_content_length
+    # self.request_method = extract_method_header(headers)
+
+    return frames
 
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})

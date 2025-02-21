@@ -619,7 +619,7 @@ def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional
 class H2StreamStateOverride(H2Stream):
     def _receive_headers_events(self, headers, encoding):
         """Completely bypass trailer validation"""
-        return self._process_received_headers(headers, encoding)
+        return self._process_received_headers(headers, header_encoding=encoding)
 
     def receive_headers(self, headers, encoding, end_stream):
         """Override to ignore END_STREAM requirement for trailers"""

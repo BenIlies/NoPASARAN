@@ -519,9 +519,9 @@ def new_update_header_buffer(self, f):
     # If we get a HEADERS or PUSH_PROMISE frame, always start a new buffer
     elif isinstance(f, (HeadersFrame, PushPromiseFrame)):
         self._headers_buffer = [f]
-        if 'END_HEADERS' in f.flags:
-            # Remove END_HEADERS flag to allow CONTINUATION frames
-            f.flags.remove('END_HEADERS')
+        # if 'END_HEADERS' in f.flags:
+        #     # Remove END_HEADERS flag to allow CONTINUATION frames
+        #     f.flags.remove('END_HEADERS')
         f = None
 
     return f

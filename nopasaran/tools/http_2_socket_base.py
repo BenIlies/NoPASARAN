@@ -165,6 +165,7 @@ class HTTP2SocketBase:
 
                 frames_received.append(event)
 
+                # account for continuation frames if it gets absorbed by request or push_promise frame
                 if frame['type'] == 'CONTINUATION':
                     for event in frames_received:
                         if isinstance(event, h2.events.RequestReceived) or isinstance(event, h2.events.PushedStreamReceived):

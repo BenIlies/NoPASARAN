@@ -492,36 +492,44 @@ def new_receive_window_update_frame(self, frame):
 def new_update_header_buffer(self, f):
     """
     Updates the internal header buffer. Returns a frame that should replace
-    the current one. Modified to accept CONTINUATION frames regardless of flags.
+    the current one. May throw exceptions if this frame is invalid.
     """
-    # If we receive a CONTINUATION frame, always process it
-    if isinstance(f, ContinuationFrame):
-        # If we don't have a header buffer started, just return the frame as-is
-        if not self._headers_buffer:
-            return f
-            
-        # Otherwise, append to buffer
+    # Check if we're in the middle of a headers block. If we are, this
+    # frame *must* be a CONTINUATION frame with the same stream ID as the
+    # leading HEADERS or PUSH_PROMISE frame. Anything else is a
+    # ProtocolError. If the frame *is* valid, append it to the header
+    # buffer.
+    if self._headers_buffer:
+        stream_id = self._headers_buffer[0].stream_id
+        valid_frame = (
+            f is not None and
+            isinstance(f, ContinuationFrame) and
+            (f.stream_id == stream_id or f.stream_id == 0)
+        )
+        if not valid_frame:
+            raise ProtocolError("Invalid frame during header block.")
+
+        # Append the frame to the buffer.
         self._headers_buffer.append(f)
         if len(self._headers_buffer) > CONTINUATION_BACKLOG:
             raise ProtocolError("Too many continuation frames received.")
-            
-        # If this is the end of the header block, build a mutant HEADERS frame
+
+        # If this is the end of the header block, then build a mutant HEADERS frame
         if 'END_HEADERS' in f.flags:
             f = self._headers_buffer[0]
             f.flags.add('END_HEADERS')
+            # If any frame in the sequence had stream_id=0, use that for testing
             if any(frame.stream_id == 0 for frame in self._headers_buffer):
                 f.stream_id = 0
             f.data = b''.join(x.data for x in self._headers_buffer)
             self._headers_buffer = []
         else:
             f = None
-            
-    # If we get a HEADERS or PUSH_PROMISE frame, always start a new buffer
-    elif isinstance(f, (HeadersFrame, PushPromiseFrame)):
-        self._headers_buffer = [f]
-        if 'END_HEADERS' in f.flags:
-            # Remove END_HEADERS flag to allow CONTINUATION frames
-            f.flags.remove('END_HEADERS')
+    elif (isinstance(f, (HeadersFrame, PushPromiseFrame)) and
+            'END_HEADERS' not in f.flags):
+        # This is the start of a headers block! Save the frame off and then
+        # act like we didn't receive one.
+        self._headers_buffer.append(f)
         f = None
 
     return f
@@ -572,6 +580,8 @@ def new_receive_naked_continuation(self, frame):
     if not self._header_frames:
         # Skip triggering the error by ignoring the frame
         return [], []
+        # Original error code:
+        # return self._receive_naked_continuation(frame)
 
     # Otherwise, keep receiving headers.
     self._header_frames.append(frame)
@@ -582,66 +592,17 @@ def new_receive_naked_continuation(self, frame):
             self.decoder,
             b''.join(f.data for f in self._header_frames)
         )
+        self._header_frames = []
         
         # Process according to the type of the first frame.
         first = self._header_frames[0]
-        frames = []
-        events = []
-        
         if isinstance(first, HeadersFrame):
-            try:
-                stream = self._get_stream_by_id(first.stream_id)
-                frames, events = stream.receive_headers(
-                    headers,
-                    self.config.header_encoding,
-                    'END_STREAM' in first.flags
-                )
-            except NoSuchStreamError:
-                # Stream not found, ignore the frame
-                pass
+            return self._receive_headers(first, headers)
         elif isinstance(first, PushPromiseFrame):
-            try:
-                stream = self._get_stream_by_id(first.stream_id)
-                frames, events = stream.receive_push_promise_in_band(
-                    first.promised_stream_id,
-                    headers,
-                    self.config.header_encoding
-                )
-            except NoSuchStreamError:
-                # Stream not found, ignore the frame
-                pass
-                
-        self._header_frames = []  # Clear the buffer after processing
-        return frames, events
-    
-    return [], []
-
-def new_receive_headers(self, frame):
-    """
-    Handle a HEADERS frame when it is received.
-    """
-    self._header_frames.append(frame)
-    
-    if 'END_HEADERS' in frame.flags:
-        # End of headers, process them.
-        headers = _decode_headers(
-            self.decoder,
-            b''.join(f.data for f in self._header_frames)
-        )
-        
-        try:
-            stream = self._get_stream_by_id(frame.stream_id)
-            frames, events = stream.receive_headers(
-                headers,
-                self.config.header_encoding,
-                'END_STREAM' in frame.flags
-            )
-        except NoSuchStreamError:
-            # Stream not found, ignore the frame
-            frames, events = [], []
-            
-        self._header_frames = []  # Clear the buffer
-        return frames, events
+            return self._receive_push_promise(first, headers)
+        else:
+            # This shouldn't happen, but handle it gracefully
+            return [], []
     
     return [], []
 
@@ -672,8 +633,7 @@ redefine_methods(H2Connection, {
     '_receive_window_update_frame': new_receive_window_update_frame,
     'send_data': new_send_data,
     '_receive_data_frame': new_receive_data_frame,
-    '_receive_naked_continuation': new_receive_naked_continuation,
-    '_receive_headers': new_receive_headers
+    '_receive_naked_continuation': new_receive_naked_continuation
 })
 redefine_methods(FrameBuffer, {
     '__init__': FrameBuffer__init__, 

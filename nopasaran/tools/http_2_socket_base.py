@@ -129,7 +129,7 @@ class HTTP2SocketBase:
         initial_ack_received = False
         expected_frame_count = len(test_frames)
         
-        while retry_count < self.MAX_RETRY_ATTEMPTS:
+        for frame in test_frames:
             data = self._receive_frame()
             
             if data is None:

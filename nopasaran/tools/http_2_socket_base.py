@@ -17,23 +17,19 @@ class HTTP2SocketBase:
         self.sock = None
         self.conn = None
         self.MAX_RETRY_ATTEMPTS = 3
-        self.TIMEOUT = 10
+        self.TIMEOUT = 5
 
     def _receive_frame(self) -> bytes:
         """Helper method to receive data"""
-        start_time = time.time()
         socket_to_check = self.sock if not hasattr(self, 'client_socket') else self.client_socket
         
-        while True:
-            elapsed_time = time.time() - start_time
-            if elapsed_time > self.TIMEOUT:
-                return None
-            
-            ready_to_read, _, _ = select.select([socket_to_check], [], [], self.TIMEOUT)
-            
-            if ready_to_read:
-                frame = socket_to_check.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
-                return frame
+        ready_to_read, _, _ = select.select([socket_to_check], [], [], self.TIMEOUT)
+        
+        if ready_to_read:
+            frame = socket_to_check.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
+            return frame
+        
+        return None
 
     def send_frames(self, frames):
         """Send frames based on test case"""

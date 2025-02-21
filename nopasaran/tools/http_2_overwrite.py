@@ -572,8 +572,6 @@ def new_receive_naked_continuation(self, frame):
     if not self._header_frames:
         # Skip triggering the error by ignoring the frame
         return [], []
-        # Original error code:
-        # return self._receive_naked_continuation(frame)
 
     # Otherwise, keep receiving headers.
     self._header_frames.append(frame)
@@ -584,17 +582,66 @@ def new_receive_naked_continuation(self, frame):
             self.decoder,
             b''.join(f.data for f in self._header_frames)
         )
-        self._header_frames = []
         
         # Process according to the type of the first frame.
         first = self._header_frames[0]
+        frames = []
+        events = []
+        
         if isinstance(first, HeadersFrame):
-            return self._receive_headers(first, headers)
+            try:
+                stream = self._get_stream_by_id(first.stream_id)
+                frames, events = stream.receive_headers(
+                    headers,
+                    self.config.header_encoding,
+                    'END_STREAM' in first.flags
+                )
+            except NoSuchStreamError:
+                # Stream not found, ignore the frame
+                pass
         elif isinstance(first, PushPromiseFrame):
-            return self._receive_push_promise(first, headers)
-        else:
-            # This shouldn't happen, but handle it gracefully
-            return [], []
+            try:
+                stream = self._get_stream_by_id(first.stream_id)
+                frames, events = stream.receive_push_promise_in_band(
+                    first.promised_stream_id,
+                    headers,
+                    self.config.header_encoding
+                )
+            except NoSuchStreamError:
+                # Stream not found, ignore the frame
+                pass
+                
+        self._header_frames = []  # Clear the buffer after processing
+        return frames, events
+    
+    return [], []
+
+def new_receive_headers(self, frame):
+    """
+    Handle a HEADERS frame when it is received.
+    """
+    self._header_frames.append(frame)
+    
+    if 'END_HEADERS' in frame.flags:
+        # End of headers, process them.
+        headers = _decode_headers(
+            self.decoder,
+            b''.join(f.data for f in self._header_frames)
+        )
+        
+        try:
+            stream = self._get_stream_by_id(frame.stream_id)
+            frames, events = stream.receive_headers(
+                headers,
+                self.config.header_encoding,
+                'END_STREAM' in frame.flags
+            )
+        except NoSuchStreamError:
+            # Stream not found, ignore the frame
+            frames, events = [], []
+            
+        self._header_frames = []  # Clear the buffer
+        return frames, events
     
     return [], []
 
@@ -625,7 +672,8 @@ redefine_methods(H2Connection, {
     '_receive_window_update_frame': new_receive_window_update_frame,
     'send_data': new_send_data,
     '_receive_data_frame': new_receive_data_frame,
-    '_receive_naked_continuation': new_receive_naked_continuation
+    '_receive_naked_continuation': new_receive_naked_continuation,
+    '_receive_headers': new_receive_headers
 })
 redefine_methods(FrameBuffer, {
     '__init__': FrameBuffer__init__, 

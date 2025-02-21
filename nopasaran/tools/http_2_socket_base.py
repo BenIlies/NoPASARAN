@@ -21,15 +21,19 @@ class HTTP2SocketBase:
 
     def _receive_frame(self) -> bytes:
         """Helper method to receive data"""
+        start_time = time.time()
         socket_to_check = self.sock if not hasattr(self, 'client_socket') else self.client_socket
         
-        ready_to_read, _, _ = select.select([socket_to_check], [], [], self.TIMEOUT)
-        
-        if ready_to_read:
-            frame = socket_to_check.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
-            return frame
-        
-        return None
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time > self.TIMEOUT:
+                return None
+            
+            ready_to_read, _, _ = select.select([socket_to_check], [], [], self.TIMEOUT)
+            
+            if ready_to_read:
+                frame = socket_to_check.recv(SSL_CONFIG.MAX_BUFFER_SIZE)
+                return frame
 
     def send_frames(self, frames):
         """Send frames based on test case"""

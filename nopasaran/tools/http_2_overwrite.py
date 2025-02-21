@@ -2,14 +2,14 @@ import struct
 from typing import Iterable
 from hpack import Decoder, Encoder
 from h2.errors import ErrorCodes
-from h2.events import PriorityUpdated, StreamReset, WindowUpdated, DataReceived, Event
+from h2.events import PriorityUpdated, StreamReset, WindowUpdated, DataReceived
 from h2.exceptions import FlowControlError, FrameDataMissingError, NoSuchStreamError, ProtocolError, StreamClosedError
 from h2.frame_buffer import CONTINUATION_BACKLOG, FrameBuffer
 from h2.settings import Settings, SettingCodes
 from h2 import settings
 from h2.config import H2Configuration, DummyLogger
 from h2.connection import AllowedStreamIDs, ConnectionInputs, H2Connection, H2ConnectionStateMachine, _decode_headers, ConnectionState
-from h2.stream import H2Stream, StreamClosedBy, StreamState, StreamInputs
+from h2.stream import H2Stream, StreamClosedBy
 from hyperframe.frame import (Frame, RstStreamFrame, HeadersFrame, PushPromiseFrame, SettingsFrame, 
                               DataFrame, WindowUpdateFrame, PingFrame, RstStreamFrame, 
                               PriorityFrame, GoAwayFrame, ContinuationFrame, AltSvcFrame, 
@@ -491,14 +491,10 @@ def new_receive_window_update_frame(self, frame):
 
 def new_update_header_buffer(self, f):
     """
-    Updates the internal header buffer. Modified to handle both standalone HEADERS
-    and invalid CONTINUATION sequences.
+    Updates the internal header buffer. Returns a frame that should replace
+    the current one. Modified to accept CONTINUATION frames regardless of flags.
     """
-    # Always process HEADERS frames immediately
-    if isinstance(f, (HeadersFrame, PushPromiseFrame)):
-        return f
-        
-    # Handle CONTINUATION frames as independent frames
+    # If we receive a CONTINUATION frame, always process it
     if isinstance(f, ContinuationFrame):
         # If we don't have a header buffer started, just return the frame as-is
         if not self._headers_buffer:
@@ -616,44 +612,6 @@ def new_receive_data_frame(self, frame):
     
     # Return the event
     return [], [DataReceived()]
-
-def new_receive_headers_events(self, headers, encoding):
-    """Override _receive_headers_events to skip trailer validation"""
-    # Skip trailer validation and just process headers
-    return self._process_received_headers(headers, encoding)
-
-# Store original method
-original_receive_headers = H2Stream.receive_headers
-
-def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional[str], end_stream: bool) -> Tuple[List[Frame], List[Event]]:
-    """
-    Modified receive_headers to bypass trailer validation.
-    """
-    if self.state_machine.state == StreamState.HALF_CLOSED_LOCAL:
-        # Skip the trailer validation that requires END_STREAM
-        self.state_machine.process_input(StreamInputs.RECV_HEADERS)
-        events = self._receive_headers_events(headers, encoding)
-        return [], events
-
-    # Call original method
-    return original_receive_headers(self, headers, encoding, end_stream)
-
-class H2StreamStateOverride(H2Stream):
-    def _receive_headers_events(self, headers, encoding):
-        """Completely bypass trailer validation"""
-        return self._process_received_headers(headers, header_encoding=encoding)
-
-    def receive_headers(self, headers, encoding, end_stream):
-        """Override to ignore END_STREAM requirement for trailers"""
-        self.state_machine.process_input(StreamInputs.RECV_HEADERS)
-        events = self._receive_headers_events(headers, encoding)
-        return [], events
-
-# Replace the H2Stream class entirely
-H2Stream = H2StreamStateOverride
-
-# Remove the individual method overrides since we're replacing the whole class
-redefine_methods(H2Stream, {})
 
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})

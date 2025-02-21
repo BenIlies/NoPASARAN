@@ -150,11 +150,8 @@ class HTTP2SocketBase:
                 
                 # if its the server
                 if isinstance(event, h2.events.RemoteSettingsChanged):
-                    settings = event.changed_settings
-                    # Check if this is the initial settings frame with default values
-                    if (settings.get(h2.settings.SettingCodes.ENABLE_PUSH, 1) == 1 and
-                        settings.get(h2.settings.SettingCodes.INITIAL_WINDOW_SIZE, 65535) == 65535 and
-                        settings.get(h2.settings.SettingCodes.MAX_CONCURRENT_STREAMS, 100) == 100):
+                    settings = event.changed_settings.items()
+                    if len(settings) == 7:
                         continue
                 
                 if isinstance(event, h2.events.SettingsAcknowledged):

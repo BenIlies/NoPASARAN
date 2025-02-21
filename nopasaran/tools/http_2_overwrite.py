@@ -492,17 +492,20 @@ def new_receive_window_update_frame(self, frame):
 def new_update_header_buffer(self, f):
     """
     Updates the internal header buffer. Returns a frame that should replace
-    the current one. Modified to process headers immediately.
+    the current one. Modified to accept CONTINUATION frames regardless of flags.
     """
-    # If we receive a CONTINUATION frame
+    # If we receive a CONTINUATION frame, always process it
     if isinstance(f, ContinuationFrame):
+        # If we don't have a header buffer started, just return the frame as-is
         if not self._headers_buffer:
             return f
             
+        # Otherwise, append to buffer
         self._headers_buffer.append(f)
         if len(self._headers_buffer) > CONTINUATION_BACKLOG:
             raise ProtocolError("Too many continuation frames received.")
             
+        # If this is the end of the header block, build a mutant HEADERS frame
         if 'END_HEADERS' in f.flags:
             f = self._headers_buffer[0]
             f.flags.add('END_HEADERS')
@@ -513,10 +516,13 @@ def new_update_header_buffer(self, f):
         else:
             f = None
             
-    # If we get a HEADERS or PUSH_PROMISE frame, process it immediately
+    # If we get a HEADERS or PUSH_PROMISE frame, always start a new buffer
     elif isinstance(f, (HeadersFrame, PushPromiseFrame)):
-        # Don't buffer, return the frame as-is
-        return f
+        self._headers_buffer = [f]
+        if 'END_HEADERS' in f.flags:
+            # Remove END_HEADERS flag to allow CONTINUATION frames
+            f.flags.remove('END_HEADERS')
+        f = None
 
     return f
 
@@ -607,27 +613,6 @@ def new_receive_data_frame(self, frame):
     # Return the event
     return [], [DataReceived()]
 
-def new_receive_headers(self, frame):
-    """
-    Handle a HEADERS frame when it is received.
-    """
-    try:
-        stream = self._get_stream_by_id(frame.stream_id)
-        headers = _decode_headers(self.decoder, frame.data)
-        frames, events = stream.receive_headers(
-            headers,
-            self.config.header_encoding,
-            'END_STREAM' in frame.flags
-        )
-    except NoSuchStreamError:
-        frames, events = [], []
-    
-    # Store frame for potential CONTINUATION frames
-    if not 'END_HEADERS' in frame.flags:
-        self._header_frames = [frame]
-        
-    return frames, events
-
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -640,8 +625,7 @@ redefine_methods(H2Connection, {
     '_receive_window_update_frame': new_receive_window_update_frame,
     'send_data': new_send_data,
     '_receive_data_frame': new_receive_data_frame,
-    '_receive_naked_continuation': new_receive_naked_continuation,
-    '_receive_headers': new_receive_headers
+    '_receive_naked_continuation': new_receive_naked_continuation
 })
 redefine_methods(FrameBuffer, {
     '__init__': FrameBuffer__init__, 

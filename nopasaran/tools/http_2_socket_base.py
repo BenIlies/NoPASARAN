@@ -166,9 +166,10 @@ class HTTP2SocketBase:
                 frames_received.append(event)
 
                 if frame['type'] == 'CONTINUATION':
-                    if isinstance(frames_received[-1], h2.events.RequestReceived):
-                        if 'accept-encoding' in dict(frames_received[-1].headers).keys():
-                            frames_received.append('CONTINUATION_FRAME_RECEIVED')
+                    for event in frames_received:
+                        if isinstance(event, h2.events.RequestReceived):
+                            if 'accept-encoding' in dict(event.headers).keys():
+                                frames_received.append('CONTINUATION_FRAME_RECEIVED')
 
             # Check if we've received all expected frames
             if len(frames_received) >= expected_frame_count:

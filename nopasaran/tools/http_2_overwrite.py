@@ -613,6 +613,35 @@ def new_receive_data_frame(self, frame):
     # Return the event
     return [], [DataReceived()]
 
+def new_receive_headers(self, frame):
+    """
+    Handle a HEADERS frame when it is received. Process it immediately
+    regardless of END_HEADERS flag.
+    """
+    self._header_frames.append(frame)
+    
+    # Process headers immediately
+    headers = _decode_headers(
+        self.decoder,
+        b''.join(f.data for f in self._header_frames)
+    )
+    
+    try:
+        stream = self._get_stream_by_id(frame.stream_id)
+        frames, events = stream.receive_headers(
+            headers,
+            self.config.header_encoding,
+            'END_STREAM' in frame.flags
+        )
+    except NoSuchStreamError:
+        frames, events = [], []
+    
+    # Only clear the buffer if END_HEADERS is set
+    if 'END_HEADERS' in frame.flags:
+        self._header_frames = []
+        
+    return frames, events
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
@@ -625,7 +654,8 @@ redefine_methods(H2Connection, {
     '_receive_window_update_frame': new_receive_window_update_frame,
     'send_data': new_send_data,
     '_receive_data_frame': new_receive_data_frame,
-    '_receive_naked_continuation': new_receive_naked_continuation
+    '_receive_naked_continuation': new_receive_naked_continuation,
+    '_receive_headers': new_receive_headers
 })
 redefine_methods(FrameBuffer, {
     '__init__': FrameBuffer__init__, 

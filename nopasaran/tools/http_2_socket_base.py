@@ -133,9 +133,6 @@ class HTTP2SocketBase:
             data = self._receive_frame()
             
             if data is None:
-                retry_count += 1
-                if retry_count >= self.MAX_RETRY_ATTEMPTS:
-                    return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
                 continue
             
             events = self.conn.receive_data(data)
@@ -180,6 +177,8 @@ class HTTP2SocketBase:
                 else:
                     return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames, and no tests were defined", str(frames_received)        
 
+        return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
+    
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""
         try:

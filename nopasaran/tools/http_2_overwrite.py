@@ -355,24 +355,38 @@ def new_add_data(self, data):
     self.data += data
 
 def new__next__(self):
-    # First, check that we have enough data to successfully parse the
-    # next frame header. If not, bail. Otherwise, parse it.
+    """Modified __next__ to convert CONTINUATION frames to independent HEADERS frames"""
     if len(self.data) < 9:
         raise StopIteration()
 
     try:
+        frame_type = self.data[3]
+        stream_id = int.from_bytes(self.data[5:9], byteorder='big') & 0x7FFFFFFF
+        
+        # If it's a CONTINUATION frame, convert to HEADERS frame
+        if frame_type == 0x9:  # CONTINUATION frame type
+            new_data = bytearray(self.data)
+            new_data[3] = 0x1  # Change to HEADERS frame type
+            
+            # Ensure each CONTINUATION is treated as an independent HEADERS frame
+            # by setting appropriate flags
+            flags = new_data[4]
+            if flags & 0x4:  # END_HEADERS flag
+                new_data[4] = flags | 0x4  # Keep END_HEADERS
+            else:
+                new_data[4] = flags & ~0x4  # Remove END_HEADERS
+                
+            self.data = bytes(new_data)
+        
         f, length = Frame.parse_frame_header(self.data[:9])
-    except (InvalidDataError, InvalidFrameError) as e:  # pragma: no cover
+    except (InvalidDataError, InvalidFrameError) as e:
         raise ProtocolError(
             "Received frame with invalid header: %s" % str(e)
         )
 
-    # Next, check that we have enough length to parse the frame body. If
-    # not, bail, leaving the frame header data in the buffer for next time.
     if len(self.data) < length + 9:
         raise StopIteration()
 
-    # Try to parse the frame body
     try:
         f.parse_body(memoryview(self.data[9:9+length]))
     except InvalidDataError:
@@ -380,19 +394,8 @@ def new__next__(self):
     except InvalidFrameError:
         raise FrameDataMissingError("Frame data missing or invalid")
 
-    # At this point, as we know we'll use or discard the entire frame, we
-    # can update the data.
     self.data = self.data[9+length:]
-
-    # Pass the frame through the header buffer.
-    f = self._update_header_buffer(f)
-
-    # If we got a frame we didn't understand or shouldn't yield, rather
-    # than return None it'd be better if we just tried to get the next
-    # frame in the sequence instead. Recurse back into ourselves to do
-    # that. This is safe because the amount of work we have to do here is
-    # strictly bounded by the length of the buffer.
-    return f if f is not None else self.__next__()
+    return f
 
 def Frame__init__(self, stream_id: int, flags: Iterable[str] = ()):
     #: The stream identifier for the stream this frame was received on.

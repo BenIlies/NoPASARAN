@@ -606,7 +606,7 @@ def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional
         return [], events
 
     # Normal header processing
-    return self._receive_headers(headers, encoding, end_stream)
+    return self.receive_headers(headers, encoding, end_stream)
 
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})

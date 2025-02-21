@@ -156,7 +156,12 @@ class HTTP2SocketBase:
                     continue
 
                 frames_received.append(event)
-            
+
+                if frame['type'] == 'CONTINUATION':
+                    if isinstance(frames_received[-1], h2.events.RequestReceived):
+                        if 'accept-encoding' in dict(frames_received[-1].headers).keys():
+                            frames_received.append('CONTINUATION_FRAME_RECEIVED')
+
             # Check if we've received all expected frames
             if len(frames_received) >= expected_frame_count:
                 # Now check the tests for each frame
@@ -177,7 +182,7 @@ class HTTP2SocketBase:
                 else:
                     return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames, and no tests were defined", str(frames_received)        
 
-        return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
+        return EventNames.TIMEOUT.name, f"Timeout occurred after {len(test_frames)} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
     
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

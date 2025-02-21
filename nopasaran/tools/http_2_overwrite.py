@@ -595,6 +595,9 @@ def new_receive_data_frame(self, frame):
     # Return the event
     return [], [DataReceived()]
 
+# Store original method
+original_receive_headers = H2Stream.receive_headers
+
 def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional[str], end_stream: bool) -> Tuple[List[Frame], List[Event]]:
     """
     Modified receive_headers to bypass trailer validation.
@@ -605,8 +608,8 @@ def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional
         events = self._receive_headers_events(headers, encoding)
         return [], events
 
-    # Normal header processing - call parent class method directly
-    return super(H2Stream, self).receive_headers(headers, encoding, end_stream)
+    # Call original method
+    return original_receive_headers(self, headers, encoding, end_stream)
 
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})

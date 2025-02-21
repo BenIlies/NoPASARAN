@@ -605,8 +605,8 @@ def new_receive_headers(self, headers: List[Tuple[str, str]], encoding: Optional
         events = self._receive_headers_events(headers, encoding)
         return [], events
 
-    # Normal header processing
-    return self.receive_headers(headers, encoding, end_stream)
+    # Normal header processing - call parent class method directly
+    return super(H2Stream, self).receive_headers(headers, encoding, end_stream)
 
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})

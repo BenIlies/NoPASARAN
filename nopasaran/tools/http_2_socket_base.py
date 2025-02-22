@@ -175,8 +175,11 @@ class HTTP2SocketBase:
             else:
                 return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} frames but no frames were expected", str(frames_received)
         
-        return EventNames.TEST_COMPLETED.name, f"Received all {expected_frame_count} frames but tests failed", str(frames_received)
-    
+        if result is False:
+            return EventNames.TEST_COMPLETED.name, f"Received all {expected_frame_count} frames but tests failed", str(frames_received)
+        else:
+            return EventNames.TEST_COMPLETED.name, f"Received all {expected_frame_count} frames.", str(frames_received)
+
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""
         try:

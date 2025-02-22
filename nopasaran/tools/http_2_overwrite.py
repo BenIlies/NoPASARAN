@@ -319,7 +319,7 @@ def new_receive_rst_stream_frame(self, frame):
         stream_frames = []
     else:
         # Don't remove the stream from self.streams after reset
-        stream = self._get_stream_by_id(frame.stream_id)
+        # stream = self._get_stream_by_id(frame.stream_id)
         
         # Create reset event but don't close stream
         event = StreamReset()

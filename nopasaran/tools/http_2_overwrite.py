@@ -231,8 +231,8 @@ def new_receive_push_promise_frame(self, frame):
         """
         Receive a push-promise frame on the connection.
         """
-        if not self.local_settings.enable_push:
-            raise ProtocolError("Received pushed stream")
+        # if not self.local_settings.enable_push:
+        #     raise ProtocolError("Received pushed stream")
 
         pushed_headers = _decode_headers(self.decoder, frame.data)
 

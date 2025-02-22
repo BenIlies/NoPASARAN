@@ -303,19 +303,28 @@ def new_receive_priority_frame(self, frame):
 def new_receive_rst_stream_frame(self, frame):
     """
     Receive a RST_STREAM frame on the connection.
+    Allow continued frame processing after reset.
     """
+    # Skip state machine validation for RST_STREAM
     # events = self.state_machine.process_input(
     #     ConnectionInputs.RECV_RST_STREAM
     # )
     stream_events = []
+    
     if frame.stream_id == 0:
         event = StreamReset()
         event.stream_id = 0
         stream_events.append(event)
         stream_frames = []
     else:
+        # Don't remove the stream from self.streams after reset
         stream = self._get_stream_by_id(frame.stream_id)
-        stream_frames, stream_events = stream.stream_reset(frame)
+        
+        # Create reset event but don't close stream
+        event = StreamReset()
+        event.stream_id = frame.stream_id
+        stream_events.append(event)
+        stream_frames = []
 
     return stream_frames, stream_events
 

@@ -72,7 +72,8 @@ class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
         # If we're in IDLE state and trying to send or receive data, just allow it
         if (self.state == ConnectionState.IDLE and 
             input_ in (ConnectionInputs.SEND_DATA, ConnectionInputs.RECV_DATA, 
-                      ConnectionInputs.SEND_HEADERS, ConnectionInputs.RECV_HEADERS)):
+                      ConnectionInputs.SEND_HEADERS, ConnectionInputs.RECV_HEADERS,
+                      ConnectionInputs.RECV_RESET)):
             return []
 
         # Otherwise, use the original logic

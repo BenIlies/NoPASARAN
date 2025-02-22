@@ -146,7 +146,7 @@ class HTTP2SocketBase:
                     # Skip initial settings frame
                     if isinstance(event, h2.events.RemoteSettingsChanged):
                         settings = event.changed_settings.items()
-                        if len(settings) == 7:
+                        if len(settings) >= 2:
                             continue
                     
                     # Skip initial settings ACK

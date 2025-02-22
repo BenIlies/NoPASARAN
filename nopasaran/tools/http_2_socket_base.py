@@ -126,73 +126,56 @@ class HTTP2SocketBase:
         return EventNames.ACK_RECEIVED.name, "PREFACE_ACK frame received"
     
     def receive_test_frames(self, test_frames) -> str:
-        """Wait for test frames"""
+        """Wait for test frames with adaptive timeout"""
         frames_received = []
-        retry_count = 0
-        initial_settings_received = False
-        initial_ack_received = False
         expected_frame_count = len(test_frames)
+        last_frame_time = time.time()
         
-        while retry_count < self.MAX_RETRY_ATTEMPTS:
+        while len(frames_received) < expected_frame_count:
             data = self._receive_frame()
             
-            if data is None:
-                retry_count += 1
-                if retry_count >= self.MAX_RETRY_ATTEMPTS:
-                    return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
-                continue
-            
-            events = self.conn.receive_data(data)
-            
-            for event in events:
-                if isinstance(event, h2.events.ConnectionTerminated):
-                    return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
+            if data is not None:
+                last_frame_time = time.time()
                 
-                # Skip initial settings frame
-                if isinstance(event, h2.events.RemoteSettingsChanged):
-                    settings = event.changed_settings.items()
-                    if len(settings) == 7:
-                        continue
+                events = self.conn.receive_data(data)
                 
-                # Skip initial settings ACK
-                if isinstance(event, h2.events.SettingsAcknowledged):
-                    # if not initial_ack_received:
-                    #     initial_ack_received = True
-                    #     continue
-                    continue
-
-                if isinstance(event, h2.events.StreamEnded):
+                for event in events:
+                    if isinstance(event, h2.events.ConnectionTerminated):
+                        return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
+                    
+                    # Skip initial settings frame
+                    if isinstance(event, h2.events.RemoteSettingsChanged):
+                        settings = event.changed_settings.items()
+                        if len(settings) == 7:
+                            continue
+                    
+                    # Skip initial settings ACK
+                    if isinstance(event, h2.events.SettingsAcknowledged):
                         continue
 
-                # if frame['type'] == 'CONTINUATION':
-                #     for event in frames_received:
-                #         if isinstance(event, h2.events.RequestReceived) or isinstance(event, h2.events.PushedStreamReceived):
-                #             if 'accept-encoding' in dict(event.headers).keys():
-                #                 frames_received.append('CONTINUATION_FRAME_RECEIVED')
+                    if isinstance(event, h2.events.StreamEnded):
+                        continue
 
-
-                frames_received.append(event)
-                
-                # Check tests after each frame is received
-                for expected_frame in test_frames:
-                    result, test_index = self._handle_test(event, expected_frame)
-                    if result is True:
-                        return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', str(frames_received)
+                    frames_received.append(event)
+                    
+                    # Check tests after each frame is received
+                    for expected_frame in test_frames:
+                        result, test_index = self._handle_test(event, expected_frame)
+                        if result is True:
+                            return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', str(frames_received)
             
-            # If we've received all expected frames and no test has passed,
-            # we should return with a failure
-            if len(frames_received) >= expected_frame_count:
-                if expected_frame_count == 0:
-                    if len(frames_received) == 0:
-                        return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", str(frames_received)
-                    else:
-                        return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} frames but no frames were expected", str(frames_received)
-                
-                if result is False:
-                    return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames but all tests failed", str(frames_received)
-                else:
-                    return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
-        return EventNames.TIMEOUT.name, f"Timeout occurred after {retry_count} attempts. Received {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
+            # Check for timeout since last frame
+            elif time.time() - last_frame_time > self.TIMEOUT:
+                return EventNames.TIMEOUT.name, f"No frame received for {self.TIMEOUT}s. Got {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
+        
+        # If we get here with all frames but no test passed
+        if expected_frame_count == 0:
+            if len(frames_received) == 0:
+                return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", str(frames_received)
+            else:
+                return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} frames but no frames were expected", str(frames_received)
+        
+        return EventNames.TEST_COMPLETED.name, f"Received all {expected_frame_count} frames but tests failed", str(frames_received)
     
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

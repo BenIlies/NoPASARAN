@@ -161,7 +161,12 @@ class HTTP2SocketBase:
                         continue
 
                 if isinstance(event, h2.events.StreamEnded):
-                    continue
+                    stream_ended = False
+                    for frame in frames_received:
+                        if frame['type'] == 'RST_STREAM':
+                            stream_ended = True
+                    if stream_ended:
+                        continue
 
                 # if frame['type'] == 'CONTINUATION':
                 #     for event in frames_received:

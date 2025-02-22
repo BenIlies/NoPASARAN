@@ -73,7 +73,7 @@ class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
         if (self.state == ConnectionState.IDLE and 
             input_ in (ConnectionInputs.SEND_DATA, ConnectionInputs.RECV_DATA, 
                       ConnectionInputs.SEND_HEADERS, ConnectionInputs.RECV_HEADERS,
-                      ConnectionInputs.RECV_RESET)):
+                      ConnectionInputs.RECV_RST_STREAM)):
             return []
 
         # Otherwise, use the original logic

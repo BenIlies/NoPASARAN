@@ -421,20 +421,28 @@ def send_settings_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
     # Convert settings keys to appropriate type (int or SettingCodes)
     processed_settings = {}
     for name, value in settings.items():
+        # If it's already a number, use it directly
+        if isinstance(name, int):
+            processed_settings[name] = value
+            continue
+            
         # Try to convert string to int for numeric settings
         try:
             setting_id = int(name)
             processed_settings[setting_id] = value
         except ValueError:
             # If not numeric, treat as a valid setting name
-            setting_id = getattr(h2.settings.SettingCodes, name)
-            processed_settings[setting_id] = value
+            try:
+                setting_id = getattr(h2.settings.SettingCodes, name)
+                processed_settings[setting_id] = value
+            except AttributeError:
+                # If setting name doesn't exist, skip it
+                continue
     
-    # If we want to bypass h2 validation and send raw frame
+    # Always use raw frame sending if we have unknown settings or non-zero stream ID
     if (stream_id != 0 or 
         'extra_bytes' in frame_data or 
-        'raw_payload' in frame_data or 
-        any(isinstance(k, int) and k not in h2.settings.SettingCodes for k in processed_settings)):
+        'raw_payload' in frame_data):
         
         settings_payload = b''
         for setting_id, value in processed_settings.items():

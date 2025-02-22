@@ -2,14 +2,14 @@ import struct
 from typing import Iterable
 from hpack import Decoder, Encoder
 from h2.errors import ErrorCodes
-from h2.events import PriorityUpdated, StreamReset, WindowUpdated
+from h2.events import PriorityUpdated, StreamReset, WindowUpdated, DataReceived
 from h2.exceptions import FlowControlError, FrameDataMissingError, NoSuchStreamError, ProtocolError, StreamClosedError
 from h2.frame_buffer import CONTINUATION_BACKLOG, FrameBuffer
 from h2.settings import Settings, SettingCodes
 from h2 import settings
 from h2.config import H2Configuration, DummyLogger
-from h2.connection import AllowedStreamIDs, ConnectionInputs, H2Connection, H2ConnectionStateMachine, _decode_headers
-from h2.stream import H2Stream, StreamClosedBy
+from h2.connection import AllowedStreamIDs, ConnectionInputs, H2Connection, H2ConnectionStateMachine, _decode_headers, ConnectionState
+from h2.stream import H2Stream, StreamClosedBy, StreamInputs
 from hyperframe.frame import (Frame, RstStreamFrame, HeadersFrame, PushPromiseFrame, SettingsFrame, 
                               DataFrame, WindowUpdateFrame, PingFrame, RstStreamFrame, 
                               PriorityFrame, GoAwayFrame, ContinuationFrame, AltSvcFrame, 
@@ -19,6 +19,7 @@ from hyperframe.flags import Flags
 from h2.utilities import SizeLimitDict
 from h2.windows import WindowManager
 from h2 import utilities
+from typing import Optional, Tuple, List
 
 def redefine_methods(cls, methods_dict):
     for method_name, new_method in methods_dict.items():
@@ -58,104 +59,108 @@ def H2Configuration__init__(self,
     self.incorrect_client_connection_preface = incorrect_client_connection_preface
     self.skip_client_connection_preface = skip_client_connection_preface
 
-def H2Connection__init__(self, config=None):
-        self.state_machine = H2ConnectionStateMachine()
-        self.streams = {}
-        self.highest_inbound_stream_id = 0
-        self.highest_outbound_stream_id = 0
-        self.encoder = Encoder()
-        self.decoder = Decoder()
+class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
+    """Override the state machine to allow DATA frames in IDLE state"""
+    
+    def __init__(self):
+        super().__init__()
+    
+    def process_input(self, input_: ConnectionInputs) -> List[str]:
+        """
+        Override the process_input method to allow DATA frames in IDLE state
+        """
+        # If we're in IDLE state and trying to send or receive data, just allow it
+        if (self.state == ConnectionState.IDLE and 
+            input_ in (ConnectionInputs.SEND_DATA, ConnectionInputs.RECV_DATA, 
+                      ConnectionInputs.SEND_HEADERS, ConnectionInputs.RECV_HEADERS,
+                      ConnectionInputs.RECV_RST_STREAM, ConnectionInputs.RECV_PUSH_PROMISE)):
+            return []
 
-        # This won't always actually do anything: for versions of HPACK older
-        # than 2.3.0 it does nothing. However, we have to try!
-        self.decoder.max_header_list_size = self.DEFAULT_MAX_HEADER_LIST_SIZE
+        # Otherwise, use the original logic
+        return super().process_input(input_)
 
-        #: The configuration for this HTTP/2 connection object.
-        #:
-        #: .. versionadded:: 2.5.0
-        self.config = config
-        if self.config is None:
-            self.config = H2Configuration(
-                client_side=True,
-            )
+def H2Connection__init__modified(self, config=None):
+    """Modified init that uses our custom state machine"""
+    self.state_machine = H2ConnectionStateMachineOverride()
+    self.streams = {}
+    self.highest_inbound_stream_id = 0
+    self.highest_outbound_stream_id = 0
+    self.encoder = Encoder()
+    self.decoder = Decoder()
 
-        # Objects that store settings, including defaults.
-        #
-        # We set the MAX_CONCURRENT_STREAMS value to 100 because its default is
-        # unbounded, and that's a dangerous default because it allows
-        # essentially unbounded resources to be allocated regardless of how
-        # they will be used. 100 should be suitable for the average
-        # application. This default obviously does not apply to the remote
-        # peer's settings: the remote peer controls them!
-        #
-        # We also set MAX_HEADER_LIST_SIZE to a reasonable value. This is to
-        # advertise our defence against CVE-2016-6581. However, not all
-        # versions of HPACK will let us do it. That's ok: we should at least
-        # suggest that we're not vulnerable.
-        self.local_settings = Settings(
-            client=self.config.client_side,
-            initial_values={
-                SettingCodes.MAX_CONCURRENT_STREAMS: 100,
-                SettingCodes.MAX_HEADER_LIST_SIZE:
-                    self.DEFAULT_MAX_HEADER_LIST_SIZE,
-            }
-        )
-        self.remote_settings = Settings(client=not self.config.client_side)
+    # This won't always actually do anything: for versions of HPACK older
+    # than 2.3.0 it does nothing. However, we have to try!
+    self.decoder.max_header_list_size = self.DEFAULT_MAX_HEADER_LIST_SIZE
 
-        # The current value of the connection flow control windows on the
-        # connection.
-        self.outbound_flow_control_window = (
-            self.remote_settings.initial_window_size
+    #: The configuration for this HTTP/2 connection object.
+    #:
+    #: .. versionadded:: 2.5.0
+    self.config = config
+    if self.config is None:
+        self.config = H2Configuration(
+            client_side=True,
         )
 
-        #: The maximum size of a frame that can be emitted by this peer, in
-        #: bytes.
-        self.max_outbound_frame_size = self.remote_settings.max_frame_size
-
-        #: The maximum size of a frame that can be received by this peer, in
-        #: bytes.
-        self.max_inbound_frame_size = self.local_settings.max_frame_size
-
-        # Buffer for incoming data.
-        self.incoming_buffer = FrameBuffer(server=not self.config.client_side, skip_client_connection_preface=self.config.skip_client_connection_preface)
-
-        # A private variable to store a sequence of received header frames
-        # until completion.
-        self._header_frames = []
-
-        # Data that needs to be sent.
-        self._data_to_send = bytearray()
-
-        # Keeps track of how streams are closed.
-        # Used to ensure that we don't blow up in the face of frames that were
-        # in flight when a RST_STREAM was sent.
-        # Also used to determine whether we should consider a frame received
-        # while a stream is closed as either a stream error or a connection
-        # error.
-        self._closed_streams = SizeLimitDict(
-            size_limit=self.MAX_CLOSED_STREAMS
-        )
-
-        # The flow control window manager for the connection.
-        self._inbound_flow_control_window_manager = WindowManager(
-            max_window_size=self.local_settings.initial_window_size
-        )
-
-        # When in doubt use dict-dispatch.
-        self._frame_dispatch_table = {
-            HeadersFrame: self._receive_headers_frame,
-            PushPromiseFrame: self._receive_push_promise_frame,
-            SettingsFrame: self._receive_settings_frame,
-            DataFrame: self._receive_data_frame,
-            WindowUpdateFrame: self._receive_window_update_frame,
-            PingFrame: self._receive_ping_frame,
-            RstStreamFrame: self._receive_rst_stream_frame,
-            PriorityFrame: self._receive_priority_frame,
-            GoAwayFrame: self._receive_goaway_frame,
-            ContinuationFrame: self._receive_naked_continuation,
-            AltSvcFrame: self._receive_alt_svc_frame,
-            ExtensionFrame: self._receive_unknown_frame
+    # Objects that store settings, including defaults.
+    self.local_settings = Settings(
+        client=self.config.client_side,
+        initial_values={
+            SettingCodes.MAX_CONCURRENT_STREAMS: 100,
+            SettingCodes.MAX_HEADER_LIST_SIZE:
+                self.DEFAULT_MAX_HEADER_LIST_SIZE,
         }
+    )
+    self.remote_settings = Settings(client=not self.config.client_side)
+
+    # The current value of the connection flow control windows on the
+    # connection.
+    self.outbound_flow_control_window = (
+        self.remote_settings.initial_window_size
+    )
+
+    #: The maximum size of a frame that can be emitted by this peer, in
+    #: bytes.
+    self.max_outbound_frame_size = self.remote_settings.max_frame_size
+
+    #: The maximum size of a frame that can be received by this peer, in
+    #: bytes.
+    self.max_inbound_frame_size = self.local_settings.max_frame_size
+
+    # Buffer for incoming data.
+    self.incoming_buffer = FrameBuffer(server=not self.config.client_side, skip_client_connection_preface=self.config.skip_client_connection_preface)
+
+    # A private variable to store a sequence of received header frames
+    # until completion.
+    self._header_frames = []
+
+    # Data that needs to be sent.
+    self._data_to_send = bytearray()
+
+    # Keeps track of how streams are closed.
+    self._closed_streams = SizeLimitDict(
+        size_limit=self.MAX_CLOSED_STREAMS
+    )
+
+    # The flow control window manager for the connection.
+    self._inbound_flow_control_window_manager = WindowManager(
+        max_window_size=self.local_settings.initial_window_size
+    )
+
+    # When in doubt use dict-dispatch.
+    self._frame_dispatch_table = {
+        HeadersFrame: self._receive_headers_frame,
+        PushPromiseFrame: self._receive_push_promise_frame,
+        SettingsFrame: self._receive_settings_frame,
+        DataFrame: self._receive_data_frame,
+        WindowUpdateFrame: self._receive_window_update_frame,
+        PingFrame: self._receive_ping_frame,
+        RstStreamFrame: self._receive_rst_stream_frame,
+        PriorityFrame: self._receive_priority_frame,
+        GoAwayFrame: self._receive_goaway_frame,
+        ContinuationFrame: self._receive_naked_continuation,
+        AltSvcFrame: self._receive_alt_svc_frame,
+        ExtensionFrame: self._receive_unknown_frame
+    }
 
 def new_initiate_connection(self):
     """
@@ -224,68 +229,56 @@ def new_begin_new_stream(self, stream_id, allowed_ids):
     return s
 
 def new_receive_push_promise_frame(self, frame):
-        """
-        Receive a push-promise frame on the connection.
-        """
-        if not self.local_settings.enable_push:
-            raise ProtocolError("Received pushed stream")
+    """
+    Receive a push-promise frame on the connection.
+    If we're a server, convert it to a HEADERS frame.
+    """
+    # If we're a server, convert PUSH_PROMISE to HEADERS
+    if not self.config.client_side:
+        # Create headers frame with same data
+        headers_frame = HeadersFrame(frame.stream_id)
+        headers_frame.data = frame.data
+        headers_frame.flags = frame.flags
+        headers_frame.pad_length = frame.pad_length
+        
+        # Process as headers frame
+        return self._receive_headers_frame(headers_frame)
 
-        pushed_headers = _decode_headers(self.decoder, frame.data)
+    # Original PUSH_PROMISE handling for clients
+    pushed_headers = _decode_headers(self.decoder, frame.data)
+    events = []
 
-        events = []
-
-        try:
-            if frame.stream_id == 0:
-                stream = self._get_stream_by_id(1)
-            else:
-                stream = self._get_stream_by_id(frame.stream_id)
-        except NoSuchStreamError:
-            # We need to check if the parent stream was reset by us. If it was
-            # then we presume that the PUSH_PROMISE was in flight when we reset
-            # the parent stream. Rather than accept the new stream, just reset
-            # it.
-            #
-            # If this was closed naturally, however, we should call this a
-            # PROTOCOL_ERROR: pushing a stream on a naturally closed stream is
-            # a real problem because it creates a brand new stream that the
-            # remote peer now believes exists.
-            if (self._stream_closed_by(frame.stream_id) ==
-                    StreamClosedBy.SEND_RST_STREAM):
-                f = RstStreamFrame(frame.promised_stream_id)
-                f.error_code = ErrorCodes.REFUSED_STREAM
-                return [f], events
-
-            raise ProtocolError("Attempted to push on closed stream.")
-
-        # We need to prevent peers pushing streams in response to streams that
-        # they themselves have already pushed: see #163 and RFC 7540 § 6.6. The
-        # easiest way to do that is to assert that the stream_id is not even:
-        # this shortcut works because only servers can push and the state
-        # machine will enforce this.
-        # if (frame.stream_id % 2) == 0:
-        #     raise ProtocolError("Cannot recursively push streams.")
-
-        try:
-            frames, stream_events = stream.receive_push_promise_in_band(
-                frame.promised_stream_id,
-                pushed_headers,
-                self.config.header_encoding,
-            )
-        except StreamClosedError:
-            # The parent stream was reset by us, so we presume that
-            # PUSH_PROMISE was in flight when we reset the parent stream.
-            # So we just reset the new stream.
+    try:
+        if frame.stream_id == 0:
+            stream = self._get_stream_by_id(1)
+        else:
+            stream = self._get_stream_by_id(frame.stream_id)
+    except NoSuchStreamError:
+        if (self._stream_closed_by(frame.stream_id) ==
+                StreamClosedBy.SEND_RST_STREAM):
             f = RstStreamFrame(frame.promised_stream_id)
             f.error_code = ErrorCodes.REFUSED_STREAM
             return [f], events
+        raise ProtocolError("Attempted to push on closed stream.")
 
-        new_stream = self._begin_new_stream(
-            frame.promised_stream_id, AllowedStreamIDs.EVEN
+    try:
+        frames, stream_events = stream.receive_push_promise_in_band(
+            frame.promised_stream_id,
+            pushed_headers,
+            self.config.header_encoding,
         )
-        self.streams[frame.promised_stream_id] = new_stream
-        new_stream.remotely_pushed(pushed_headers)
+    except StreamClosedError:
+        f = RstStreamFrame(frame.promised_stream_id)
+        f.error_code = ErrorCodes.REFUSED_STREAM
+        return [f], events
 
-        return frames, events + stream_events
+    new_stream = self._begin_new_stream(
+        frame.promised_stream_id, AllowedStreamIDs.EVEN
+    )
+    self.streams[frame.promised_stream_id] = new_stream
+    new_stream.remotely_pushed(pushed_headers)
+
+    return frames, events + stream_events
     
 def new_receive_priority_frame(self, frame):
     """
@@ -311,19 +304,28 @@ def new_receive_priority_frame(self, frame):
 def new_receive_rst_stream_frame(self, frame):
     """
     Receive a RST_STREAM frame on the connection.
+    Allow continued frame processing after reset.
     """
+    # Skip state machine validation for RST_STREAM
     # events = self.state_machine.process_input(
     #     ConnectionInputs.RECV_RST_STREAM
     # )
     stream_events = []
+    
     if frame.stream_id == 0:
         event = StreamReset()
         event.stream_id = 0
         stream_events.append(event)
         stream_frames = []
     else:
-        stream = self._get_stream_by_id(frame.stream_id)
-        stream_frames, stream_events = stream.stream_reset(frame)
+        # Don't remove the stream from self.streams after reset
+        # stream = self._get_stream_by_id(frame.stream_id)
+        
+        # Create reset event but don't close stream
+        event = StreamReset()
+        event.stream_id = frame.stream_id
+        stream_events.append(event)
+        stream_frames = []
 
     return stream_frames, stream_events
 
@@ -351,24 +353,38 @@ def new_add_data(self, data):
     self.data += data
 
 def new__next__(self):
-    # First, check that we have enough data to successfully parse the
-    # next frame header. If not, bail. Otherwise, parse it.
+    """Modified __next__ to convert CONTINUATION frames to independent HEADERS frames"""
     if len(self.data) < 9:
         raise StopIteration()
 
     try:
+        frame_type = self.data[3]
+        stream_id = int.from_bytes(self.data[5:9], byteorder='big') & 0x7FFFFFFF
+        
+        # If it's a CONTINUATION frame, convert to HEADERS frame
+        if frame_type == 0x9:  # CONTINUATION frame type
+            new_data = bytearray(self.data)
+            new_data[3] = 0x1  # Change to HEADERS frame type
+            
+            # Ensure each CONTINUATION is treated as an independent HEADERS frame
+            # by setting appropriate flags
+            flags = new_data[4]
+            if flags & 0x4:  # END_HEADERS flag
+                new_data[4] = flags | 0x4  # Keep END_HEADERS
+            else:
+                new_data[4] = flags & ~0x4  # Remove END_HEADERS
+                
+            self.data = bytes(new_data)
+        
         f, length = Frame.parse_frame_header(self.data[:9])
-    except (InvalidDataError, InvalidFrameError) as e:  # pragma: no cover
+    except (InvalidDataError, InvalidFrameError) as e:
         raise ProtocolError(
             "Received frame with invalid header: %s" % str(e)
         )
 
-    # Next, check that we have enough length to parse the frame body. If
-    # not, bail, leaving the frame header data in the buffer for next time.
     if len(self.data) < length + 9:
         raise StopIteration()
 
-    # Try to parse the frame body
     try:
         f.parse_body(memoryview(self.data[9:9+length]))
     except InvalidDataError:
@@ -376,19 +392,8 @@ def new__next__(self):
     except InvalidFrameError:
         raise FrameDataMissingError("Frame data missing or invalid")
 
-    # At this point, as we know we'll use or discard the entire frame, we
-    # can update the data.
     self.data = self.data[9+length:]
-
-    # Pass the frame through the header buffer.
-    f = self._update_header_buffer(f)
-
-    # If we got a frame we didn't understand or shouldn't yield, rather
-    # than return None it'd be better if we just tried to get the next
-    # frame in the sequence instead. Recurse back into ourselves to do
-    # that. This is safe because the amount of work we have to do here is
-    # strictly bounded by the length of the buffer.
-    return f if f is not None else self.__next__()
+    return f
 
 def Frame__init__(self, stream_id: int, flags: Iterable[str] = ()):
     #: The stream identifier for the stream this frame was received on.
@@ -486,112 +491,52 @@ def new_receive_window_update_frame(self, frame):
 
 
 def new_update_header_buffer(self, f):
-    """
-    Updates the internal header buffer. Returns a frame that should replace
-    the current one. May throw exceptions if this frame is invalid.
-    """
-    # Check if we're in the middle of a headers block. If we are, this
-    # frame *must* be a CONTINUATION frame with the same stream ID as the
-    # leading HEADERS or PUSH_PROMISE frame. Anything else is a
-    # ProtocolError. If the frame *is* valid, append it to the header
-    # buffer.
-    if self._headers_buffer:
-        stream_id = self._headers_buffer[0].stream_id
-        valid_frame = (
-            f is not None and
-            isinstance(f, ContinuationFrame) and
-            (f.stream_id == stream_id or f.stream_id == 0)
-        )
-        if not valid_frame:
-            raise ProtocolError("Invalid frame during header block.")
-
-        # Append the frame to the buffer.
-        self._headers_buffer.append(f)
-        if len(self._headers_buffer) > CONTINUATION_BACKLOG:
-            raise ProtocolError("Too many continuation frames received.")
-
-        # If this is the end of the header block, then build a mutant HEADERS frame
-        if 'END_HEADERS' in f.flags:
-            f = self._headers_buffer[0]
-            f.flags.add('END_HEADERS')
-            # If any frame in the sequence had stream_id=0, use that for testing
-            if any(frame.stream_id == 0 for frame in self._headers_buffer):
-                f.stream_id = 0
-            f.data = b''.join(x.data for x in self._headers_buffer)
-            self._headers_buffer = []
-        else:
-            f = None
-    elif (isinstance(f, (HeadersFrame, PushPromiseFrame)) and
-            'END_HEADERS' not in f.flags):
-        # This is the start of a headers block! Save the frame off and then
-        # act like we didn't receive one.
-        self._headers_buffer.append(f)
-        f = None
-
+    """Simplified header buffer that just passes frames through"""
+    if isinstance(f, ContinuationFrame):
+        # Convert CONTINUATION to HEADERS frame to process it independently
+        headers_frame = HeadersFrame(f.stream_id)
+        headers_frame.data = f.data
+        headers_frame.flags = f.flags
+        return headers_frame
+    
     return f
 
 def new_send_data(self, stream_id, data, end_stream=False, pad_length=None):
     """
-    Send data on a given stream.
-
-    This method does no breaking up of data: if the data is larger than the
-    value returned by :meth:`local_flow_control_window
-    <h2.connection.H2Connection.local_flow_control_window>` for this stream
-    then a :class:`FlowControlError <h2.exceptions.FlowControlError>` will
-    be raised. If the data is larger than :data:`max_outbound_frame_size
-    <h2.connection.H2Connection.max_outbound_frame_size>` then a
-    :class:`FrameTooLargeError <h2.exceptions.FrameTooLargeError>` will be
-    raised.
-
-    h2 does this to avoid buffering the data internally. If the user
-    has more data to send than h2 will allow, consider breaking it up
-    and buffering it externally.
-
-    :param stream_id: The ID of the stream on which to send the data.
-    :type stream_id: ``int``
-    :param data: The data to send on the stream.
-    :type data: ``bytes``
-    :param end_stream: (optional) Whether this is the last data to be sent
-        on the stream. Defaults to ``False``.
-    :type end_stream: ``bool``
-    :param pad_length: (optional) Length of the padding to apply to the
-        data frame. Defaults to ``None`` for no use of padding. Note that
-        a value of ``0`` results in padding of length ``0``
-        (with the "padding" flag set on the frame).
-
-        .. versionadded:: 2.6.0
-
-    :type pad_length: ``int``
-    :returns: Nothing
+    Modified send_data to force sending DATA frames even in IDLE state
     """
     self.config.logger.debug(
         "Send data on stream ID %d with len %d", stream_id, len(data)
     )
+    
     frame_size = len(data)
     if pad_length is not None:
         if not isinstance(pad_length, int):
             raise TypeError("pad_length must be an int")
         if pad_length < 0 or pad_length > 255:
             raise ValueError("pad_length must be within range: [0, 255]")
-        # Account for padding bytes plus the 1-byte padding length field.
         frame_size += pad_length + 1
-    self.config.logger.debug(
-        "Frame size on stream ID %d is %d", stream_id, frame_size
-    )
 
-    # self.state_machine.process_input(ConnectionInputs.SEND_DATA)
-    frames = self.streams[stream_id].send_data(
-        data, end_stream, pad_length=pad_length
-    )
+    # Create and send DATA frame directly
+    df = DataFrame(stream_id)
+    df.data = data
+    if end_stream:
+        df.flags.add('END_STREAM')
+    if pad_length is not None:
+        df.flags.add('PADDED')
+        df.pad_length = pad_length
 
-    self._prepare_for_sending(frames)
-
+    # Serialize the frame and add it to the output buffer
+    self._data_to_send += df.serialize()
+    
+    # Update flow control window
     self.outbound_flow_control_window -= frame_size
     self.config.logger.debug(
         "Outbound flow control window size is %d",
         self.outbound_flow_control_window
     )
-    assert self.outbound_flow_control_window >= 0
+    
+    return
 
 def new_receive_naked_continuation(self, frame):
     """
@@ -628,17 +573,116 @@ def new_receive_naked_continuation(self, frame):
     
     return [], []
 
+def new_receive_data_frame(self, frame):
+    """
+    Modified _receive_data_frame to handle DATA frames in any state
+    """
+    # Don't enforce stream state checks
+    flow_controlled_length = len(frame.data) + frame.pad_length + 1 if frame.pad_length else len(frame.data)
+    
+    # Maintain the flow control window
+    self._inbound_flow_control_window_manager.window_consumed(
+        flow_controlled_length
+    )
+    
+    # Return the event
+    return [], [DataReceived()]
+
+def send_headers(self, headers, encoder, end_stream=False):
+    """
+    Returns a list of HEADERS/CONTINUATION frames to emit as either headers
+    or trailers.
+    """
+    self.config.logger.debug("Send headers %s on %r", headers, self)
+
+    # Because encoding headers makes an irreversible change to the header
+    # compression context, we make the state transition before we encode
+    # them.
+
+    # First, check if we're a client. If we are, no problem: if we aren't,
+    # we need to scan the header block to see if this is an informational
+    # response.
+    input_ = StreamInputs.SEND_HEADERS
+    if ((not self.state_machine.client) and
+            False):
+        if end_stream:
+            raise ProtocolError(
+                "Cannot set END_STREAM on informational responses."
+            )
+
+        input_ = StreamInputs.SEND_INFORMATIONAL_HEADERS
+
+    events = self.state_machine.process_input(input_)
+
+    hf = HeadersFrame(self.stream_id)
+    hdr_validation_flags = self._build_hdr_validation_flags(events)
+    frames = self._build_headers_frames(
+        headers, encoder, hf, hdr_validation_flags
+    )
+
+    if end_stream:
+        # Not a bug: the END_STREAM flag is valid on the initial HEADERS
+        # frame, not the CONTINUATION frames that follow.
+        self.state_machine.process_input(StreamInputs.SEND_END_STREAM)
+        frames[0].flags.add('END_STREAM')
+
+    # if self.state_machine.trailers_sent and not end_stream:
+    #     raise ProtocolError("Trailers must have END_STREAM set.")
+
+    # if self.state_machine.client and self._authority is None:
+    #     self._authority = authority_from_headers(headers)
+
+    # store request method for _initialize_content_length
+    # self.request_method = extract_method_header(headers)
+
+    return frames
+
+def receive_headers(self, headers, end_stream, header_encoding):
+    """
+    Receive a set of headers (or trailers).
+    """
+    if False:
+        if end_stream:
+            raise ProtocolError(
+                "Cannot set END_STREAM on informational responses"
+            )
+        input_ = StreamInputs.RECV_INFORMATIONAL_HEADERS
+    else:
+        input_ = StreamInputs.RECV_HEADERS
+
+    events = self.state_machine.process_input(input_)
+
+    if end_stream:
+        es_events = self.state_machine.process_input(
+            StreamInputs.RECV_END_STREAM
+        )
+        events[0].stream_ended = es_events[0]
+        events += es_events
+
+    self._initialize_content_length(headers)
+
+    # if isinstance(events[0], TrailersReceived):
+    #     if not end_stream:
+    #         raise ProtocolError("Trailers must have END_STREAM set")
+
+    hdr_validation_flags = self._build_hdr_validation_flags(events)
+    events[0].headers = self._process_received_headers(
+        headers, hdr_validation_flags, header_encoding
+    )
+    return [], events
+
 redefine_methods(settings, {'_validate_setting': new_validate_setting})
 redefine_methods(H2Configuration, {'__init__': H2Configuration__init__})
 redefine_methods(H2Connection, {
-    '__init__': H2Connection__init__,
-    '_begin_new_stream': new_begin_new_stream, 
-    '_receive_push_promise_frame': new_receive_push_promise_frame, 
+    '__init__': H2Connection__init__modified,
+    '_begin_new_stream': new_begin_new_stream,
+    '_receive_push_promise_frame': new_receive_push_promise_frame,
     '_receive_priority_frame': new_receive_priority_frame,
     'initiate_connection': new_initiate_connection,
     '_receive_rst_stream_frame': new_receive_rst_stream_frame,
     '_receive_window_update_frame': new_receive_window_update_frame,
     'send_data': new_send_data,
+    '_receive_data_frame': new_receive_data_frame,
     '_receive_naked_continuation': new_receive_naked_continuation
 })
 redefine_methods(FrameBuffer, {
@@ -652,3 +696,4 @@ redefine_methods(RstStreamFrame, {'parse_body': new_rststream_parse_body})
 redefine_methods(SettingsFrame, {'parse_body': new_settings_parse_body})
 redefine_methods(PushPromiseFrame, {'parse_body': new_push_promise_parse_body})
 redefine_methods(WindowUpdateFrame, {'parse_body': new_window_update_parse_body})
+redefine_methods(H2Stream, {'receive_headers': receive_headers, 'send_headers': send_headers})

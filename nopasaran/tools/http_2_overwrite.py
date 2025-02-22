@@ -75,6 +75,10 @@ class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
                       ConnectionInputs.SEND_HEADERS, ConnectionInputs.RECV_HEADERS)):
             return []
             
+        # Allow PUSH_PROMISE frames regardless of client/server status
+        if input_ == ConnectionInputs.RECV_PUSH_PROMISE:
+            return []
+
         # Otherwise, use the original logic
         return super().process_input(input_)
 

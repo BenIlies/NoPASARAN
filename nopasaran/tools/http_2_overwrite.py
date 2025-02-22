@@ -244,41 +244,30 @@ def new_receive_push_promise_frame(self, frame):
         # Process as headers frame
         return self._receive_headers_frame(headers_frame)
 
-    # Original PUSH_PROMISE handling for clients
+    # Original PUSH_PROMISE handling for clients but without stream state checks
     pushed_headers = _decode_headers(self.decoder, frame.data)
     events = []
 
+    # Skip stream state checks - process even if stream is closed
     try:
         if frame.stream_id == 0:
-            stream = self._get_stream_by_id(1)
+            stream_id = 1
         else:
-            stream = self._get_stream_by_id(frame.stream_id)
-    except NoSuchStreamError:
-        if (self._stream_closed_by(frame.stream_id) ==
-                StreamClosedBy.SEND_RST_STREAM):
-            f = RstStreamFrame(frame.promised_stream_id)
-            f.error_code = ErrorCodes.REFUSED_STREAM
-            return [f], events
-        raise ProtocolError("Attempted to push on closed stream.")
+            stream_id = frame.stream_id
 
-    try:
-        frames, stream_events = stream.receive_push_promise_in_band(
-            frame.promised_stream_id,
-            pushed_headers,
-            self.config.header_encoding,
+        # Create new stream for promised stream ID regardless of parent stream state
+        new_stream = self._begin_new_stream(
+            frame.promised_stream_id, AllowedStreamIDs.EVEN
         )
-    except StreamClosedError:
-        f = RstStreamFrame(frame.promised_stream_id)
-        f.error_code = ErrorCodes.REFUSED_STREAM
-        return [f], events
+        self.streams[frame.promised_stream_id] = new_stream
+        new_stream.remotely_pushed(pushed_headers)
 
-    new_stream = self._begin_new_stream(
-        frame.promised_stream_id, AllowedStreamIDs.EVEN
-    )
-    self.streams[frame.promised_stream_id] = new_stream
-    new_stream.remotely_pushed(pushed_headers)
+        return [], events
 
-    return frames, events + stream_events
+    except Exception:
+        # If anything goes wrong, just process the headers
+        # without creating a new stream
+        return [], events
     
 def new_receive_priority_frame(self, frame):
     """

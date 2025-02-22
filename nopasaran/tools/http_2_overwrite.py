@@ -74,10 +74,6 @@ class H2ConnectionStateMachineOverride(H2ConnectionStateMachine):
             input_ in (ConnectionInputs.SEND_DATA, ConnectionInputs.RECV_DATA, 
                       ConnectionInputs.SEND_HEADERS, ConnectionInputs.RECV_HEADERS)):
             return []
-            
-        # Allow PUSH_PROMISE frames regardless of client/server status
-        if input_ == ConnectionInputs.RECV_PUSH_PROMISE:
-            return []
 
         # Otherwise, use the original logic
         return super().process_input(input_)
@@ -232,68 +228,56 @@ def new_begin_new_stream(self, stream_id, allowed_ids):
     return s
 
 def new_receive_push_promise_frame(self, frame):
-        """
-        Receive a push-promise frame on the connection.
-        """
-        # if not self.local_settings.enable_push:
-        #     raise ProtocolError("Received pushed stream")
+    """
+    Receive a push-promise frame on the connection.
+    If we're a server, convert it to a HEADERS frame.
+    """
+    # If we're a server, convert PUSH_PROMISE to HEADERS
+    if not self.config.client_side:
+        # Create headers frame with same data
+        headers_frame = HeadersFrame(frame.stream_id)
+        headers_frame.data = frame.data
+        headers_frame.flags = frame.flags
+        headers_frame.pad_length = frame.pad_length
+        
+        # Process as headers frame
+        return self._receive_headers_frame(headers_frame)
 
-        pushed_headers = _decode_headers(self.decoder, frame.data)
+    # Original PUSH_PROMISE handling for clients
+    pushed_headers = _decode_headers(self.decoder, frame.data)
+    events = []
 
-        events = []
-
-        try:
-            if frame.stream_id == 0:
-                stream = self._get_stream_by_id(1)
-            else:
-                stream = self._get_stream_by_id(frame.stream_id)
-        except NoSuchStreamError:
-            # We need to check if the parent stream was reset by us. If it was
-            # then we presume that the PUSH_PROMISE was in flight when we reset
-            # the parent stream. Rather than accept the new stream, just reset
-            # it.
-            #
-            # If this was closed naturally, however, we should call this a
-            # PROTOCOL_ERROR: pushing a stream on a naturally closed stream is
-            # a real problem because it creates a brand new stream that the
-            # remote peer now believes exists.
-            if (self._stream_closed_by(frame.stream_id) ==
-                    StreamClosedBy.SEND_RST_STREAM):
-                f = RstStreamFrame(frame.promised_stream_id)
-                f.error_code = ErrorCodes.REFUSED_STREAM
-                return [f], events
-
-            raise ProtocolError("Attempted to push on closed stream.")
-
-        # We need to prevent peers pushing streams in response to streams that
-        # they themselves have already pushed: see #163 and RFC 7540 § 6.6. The
-        # easiest way to do that is to assert that the stream_id is not even:
-        # this shortcut works because only servers can push and the state
-        # machine will enforce this.
-        # if (frame.stream_id % 2) == 0:
-        #     raise ProtocolError("Cannot recursively push streams.")
-
-        try:
-            frames, stream_events = stream.receive_push_promise_in_band(
-                frame.promised_stream_id,
-                pushed_headers,
-                self.config.header_encoding,
-            )
-        except StreamClosedError:
-            # The parent stream was reset by us, so we presume that
-            # PUSH_PROMISE was in flight when we reset the parent stream.
-            # So we just reset the new stream.
+    try:
+        if frame.stream_id == 0:
+            stream = self._get_stream_by_id(1)
+        else:
+            stream = self._get_stream_by_id(frame.stream_id)
+    except NoSuchStreamError:
+        if (self._stream_closed_by(frame.stream_id) ==
+                StreamClosedBy.SEND_RST_STREAM):
             f = RstStreamFrame(frame.promised_stream_id)
             f.error_code = ErrorCodes.REFUSED_STREAM
             return [f], events
+        raise ProtocolError("Attempted to push on closed stream.")
 
-        new_stream = self._begin_new_stream(
-            frame.promised_stream_id, AllowedStreamIDs.EVEN
+    try:
+        frames, stream_events = stream.receive_push_promise_in_band(
+            frame.promised_stream_id,
+            pushed_headers,
+            self.config.header_encoding,
         )
-        self.streams[frame.promised_stream_id] = new_stream
-        new_stream.remotely_pushed(pushed_headers)
+    except StreamClosedError:
+        f = RstStreamFrame(frame.promised_stream_id)
+        f.error_code = ErrorCodes.REFUSED_STREAM
+        return [f], events
 
-        return frames, events + stream_events
+    new_stream = self._begin_new_stream(
+        frame.promised_stream_id, AllowedStreamIDs.EVEN
+    )
+    self.streams[frame.promised_stream_id] = new_stream
+    new_stream.remotely_pushed(pushed_headers)
+
+    return frames, events + stream_events
     
 def new_receive_priority_frame(self, frame):
     """

@@ -156,9 +156,10 @@ class HTTP2SocketBase:
                 
                 # Skip initial settings ACK
                 if isinstance(event, h2.events.SettingsAcknowledged):
-                    if not initial_ack_received:
-                        initial_ack_received = True
-                        continue
+                    # if not initial_ack_received:
+                    #     initial_ack_received = True
+                    #     continue
+                    continue
 
                 if isinstance(event, h2.events.StreamEnded):
                         continue

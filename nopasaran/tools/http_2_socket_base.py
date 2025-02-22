@@ -36,17 +36,25 @@ class HTTP2SocketBase:
                 return frame
 
     def send_frames(self, frames):
-        """Send frames based on test case"""
+        """Send frames and check for GOAWAY response"""
         socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
         sent_frames = []
         
         for frame in frames:
             send_frame(self.conn, socket_to_use, frame)
             sent_frames.append(frame)
+            
+            # Check for GOAWAY response after sending each frame
+            data = self._receive_frame()
+            if data is not None:
+                events = self.conn.receive_data(data)
+                for event in events:
+                    if isinstance(event, h2.events.ConnectionTerminated):
+                        return (
+                            EventNames.GOAWAY_RECEIVED.name,
+                            str(sent_frames)
+                        )
         
-        # Add a small delay to ensure frames are transmitted
-        # time.sleep(0.1)
-
         return EventNames.FRAMES_SENT.name, str(sent_frames)
 
     def _handle_test(self, event, frame) -> bool | int | None:

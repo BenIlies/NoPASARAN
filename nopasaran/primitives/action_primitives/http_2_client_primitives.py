@@ -177,7 +177,7 @@ class HTTP2ClientPrimitives:
         state_machine.set_variable_value(outputs[2], frames_received)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=2)
+    @parsing_decorator(input_args=2, output_args=3)
     def send_client_frames(inputs, outputs, state_machine):
         """
         Send frames to the server.
@@ -186,9 +186,10 @@ class HTTP2ClientPrimitives:
             - The HTTP2SocketClient instance
             - The frames to send
 
-        Number of output arguments: 2
+        Number of output arguments: 3
             - The event name
             - The frames sent
+            - The message
 
         Args:
             inputs (List[str]): The list of input variable names containing:
@@ -198,6 +199,7 @@ class HTTP2ClientPrimitives:
             outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
                 - The name of the variable to store the frames sent
+                - The name of the variable to store the message
 
             state_machine: The state machine object.
 
@@ -206,9 +208,10 @@ class HTTP2ClientPrimitives:
         """
         client = state_machine.get_variable_value(inputs[0])
         client_frames = state_machine.get_variable_value(inputs[1])
-        event, frames_sent = client.send_frames(client_frames)
+        event, frames_sent, msg = client.send_frames(client_frames)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], frames_sent)
+        state_machine.set_variable_value(outputs[2], msg)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

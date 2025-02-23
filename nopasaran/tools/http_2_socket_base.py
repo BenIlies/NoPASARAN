@@ -52,10 +52,11 @@ class HTTP2SocketBase:
                     if isinstance(event, h2.events.ConnectionTerminated):
                         return (
                             EventNames.GOAWAY_RECEIVED.name,
-                            str(sent_frames)
+                            str(sent_frames),
+                            f"Proxy responded with a GOAWAY frame, with error code {event.error_code} and additional info {event.additional_data}"
                         )
         
-        return EventNames.FRAMES_SENT.name, str(sent_frames)
+        return EventNames.FRAMES_SENT.name, str(sent_frames), "Client sent all frames successfully"
 
     def _handle_test(self, event, frame) -> bool | int | None:
         """

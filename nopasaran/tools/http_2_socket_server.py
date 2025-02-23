@@ -17,7 +17,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
         self.client_socket = None
         self.conn = None  # HTTP/2 connection object
 
-    def start(self, tls_enabled=False, protocol='h2', connection_settings_server = {}):
+    def start(self, tls_enabled=False, protocol='h2', connection_settings_server = {}, client_frames = []):
         """Start the HTTP/2 server"""
 
         # Create a listening socket

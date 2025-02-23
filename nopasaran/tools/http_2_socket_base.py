@@ -53,10 +53,10 @@ class HTTP2SocketBase:
                         return (
                             EventNames.GOAWAY_RECEIVED.name,
                             str(sent_frames),
-                            f"Proxy responded with a GOAWAY frame, with error code {event.error_code} and additional info {event.additional_data}"
+                            f"Connection terminated by peer: Received GOAWAY frame with error code {event.error_code}. Additional data: {event.additional_data}."
                         )
         
-        return EventNames.FRAMES_SENT.name, str(sent_frames), "Client sent all frames successfully"
+        return EventNames.FRAMES_SENT.name, str(sent_frames), f"Successfully sent {len(sent_frames)} frames."
 
     def _handle_test(self, event, frame) -> bool | int | None:
         """
@@ -103,7 +103,7 @@ class HTTP2SocketBase:
         """Wait for preface"""
         data = self._receive_frame()
         if data is None:
-            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for proxy/server's preface", None
+            return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s while waiting for peer's preface (SETTINGS frame)", None
         
         events = self.conn.receive_data(data)
         for event in events:
@@ -113,16 +113,16 @@ class HTTP2SocketBase:
                     socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
                     socket_to_use.sendall(outbound_data)
 
-                return EventNames.PREFACE_RECEIVED.name, "Preface received", str(event)
+                return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", str(event)
 
-        return EventNames.ERROR.name, "Proxy responded with an error message", str(events)
+        return EventNames.ERROR.name, f"Expected SETTINGS frame for preface but received error instead", str(events)
     
         
     def wait_for_preface_ack(self) -> str:
         """Wait for PREFACE_ACK frame"""
         data = self._receive_frame()
         if data is None:
-            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for PREFACE_ACK frame"
+            return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s while waiting for peer's SETTINGS ACK frame"
         
         events = self.conn.receive_data(data)
         for event in events:
@@ -132,7 +132,9 @@ class HTTP2SocketBase:
                     socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
                     socket_to_use.sendall(outbound_data)
 
-        return EventNames.ACK_RECEIVED.name, "PREFACE_ACK frame received"
+            return EventNames.ACK_RECEIVED.name, "Successfully received peer's SETTINGS ACK frame"
+
+        return EventNames.ERROR.name, f"Expected SETTINGS ACK frame but received: {events}"
     
     def receive_test_frames(self, test_frames) -> str:
         """Wait for test frames with adaptive timeout"""
@@ -145,12 +147,11 @@ class HTTP2SocketBase:
             
             if data is not None:
                 last_frame_time = time.time()
-                
                 events = self.conn.receive_data(data)
                 
                 for event in events:
                     if isinstance(event, h2.events.ConnectionTerminated):
-                        return EventNames.CONNECTION_TERMINATED.name, "Proxy terminated the connection", str(frames_received)
+                        return EventNames.CONNECTION_TERMINATED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
                     
                     # Skip initial settings frame
                     if isinstance(event, h2.events.RemoteSettingsChanged):
@@ -171,23 +172,23 @@ class HTTP2SocketBase:
                     for expected_frame in test_frames:
                         result, test_index = self._handle_test(event, expected_frame)
                         if result is True:
-                            return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed with frame {event}', str(frames_received)
+                            return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed successfully. Matching frame: {event}', str(frames_received)
             
             # Check for timeout since last frame
             elif time.time() - last_frame_time > self.TIMEOUT:
-                return EventNames.TIMEOUT.name, f"No frame received for {self.TIMEOUT}s. Got {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
+                return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s. Received {len(frames_received)} of {expected_frame_count} expected frames.", str(frames_received)
         
         # If we get here with all frames but no test passed
         if expected_frame_count == 0:
             if len(frames_received) == 0:
-                return EventNames.TEST_COMPLETED.name, "No test frames were received or expected", str(frames_received)
+                return EventNames.TEST_COMPLETED.name, "No frames were expected or received", str(frames_received)
             else:
-                return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} frames but no frames were expected", str(frames_received)
+                return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} unexpected frames", str(frames_received)
         
         if result is False:
-            return EventNames.TEST_COMPLETED.name, f"Received all {expected_frame_count} frames but tests failed", str(frames_received)
+            return EventNames.TEST_COMPLETED.name, f"Successfully received all {expected_frame_count} frames but none matched test criteria.", str(frames_received)
         else:
-            return EventNames.TEST_COMPLETED.name, f"Received all {expected_frame_count} frames.", str(frames_received)
+            return EventNames.TEST_COMPLETED.name, f"Successfully received all {expected_frame_count} expected frames.", str(frames_received)
 
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

@@ -30,8 +30,10 @@ class HTTP2SocketClient(HTTP2SocketBase):
                     server_hostname=self.host
                 )
             
-        except (TimeoutError, ConnectionRefusedError) as e:
-            return EventNames.TIMEOUT.name, f"Timeout occurred while trying to connect to the server: {e}"
+        except TimeoutError as e:
+            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while trying to connect to server at {self.host}:{self.port}: {e}"
+        except ConnectionRefusedError as e:
+            return EventNames.TIMEOUT.name, f"Connection refused by server at {self.host}:{self.port}. Server may not be running or port may be blocked: {e}"
         
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_client)
@@ -42,4 +44,4 @@ class HTTP2SocketClient(HTTP2SocketBase):
         self.conn.initiate_connection()
         self.sock.sendall(self.conn.data_to_send())
         
-        return EventNames.CLIENT_STARTED.name, "Client started"
+        return EventNames.CLIENT_STARTED.name, f"Client successfully connected to {self.host}:{self.port} with {'TLS' if tls_enabled == 'true' else 'non-TLS'} connection."

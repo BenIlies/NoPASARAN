@@ -39,7 +39,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
 
         # Merge connection settings
         settings = {
-            SettingCodes.ENABLE_PUSH: 1  # Enable HTTP/2 Server Push
+            # SettingCodes.ENABLE_PUSH: 1  # Enable HTTP/2 Server Push
         }
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_server)

@@ -1,6 +1,7 @@
 import h2.connection
 import h2.config
 import nopasaran.tools.http_2_overwrite
+from h2.settings import SettingCodes
 from nopasaran.definitions.events import EventNames
 from nopasaran.http_2_utils import (
     create_ssl_context,
@@ -39,7 +40,10 @@ class HTTP2SocketClient(HTTP2SocketBase):
         config_settings.update(connection_settings_client)
         config = h2.config.H2Configuration(client_side=True, **config_settings)
         self.conn = h2.connection.H2Connection(config=config)
-        
+        settings = {
+            SettingCodes.ENABLE_PUSH.value: 1  # Enable HTTP/2 Server Push
+        }
+        config_settings.update(settings)
         # Send connection preface
         self.conn.initiate_connection()
         self.sock.sendall(self.conn.data_to_send())

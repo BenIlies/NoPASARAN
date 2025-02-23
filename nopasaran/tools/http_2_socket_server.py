@@ -51,9 +51,6 @@ class HTTP2SocketServer(HTTP2SocketBase):
         # Step 1: Initiate HTTP/2 Connection
         self.conn.initiate_connection()
 
-        # Step 2: Send SETTINGS frame to enable PUSH
-        self.conn.update_settings(settings)
-
         # Step 3: Serialize and send the connection preface along with settings
         self.client_socket.sendall(self.conn.data_to_send())
 

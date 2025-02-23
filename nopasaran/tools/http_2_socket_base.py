@@ -103,7 +103,7 @@ class HTTP2SocketBase:
         """Wait for preface"""
         data = self._receive_frame()
         if data is None:
-            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for preface", None
+            return EventNames.TIMEOUT.name, "Timeout occurred while waiting for proxy/server's preface", None
         
         events = self.conn.receive_data(data)
         for event in events:
@@ -115,7 +115,7 @@ class HTTP2SocketBase:
 
                 return EventNames.PREFACE_RECEIVED.name, "Preface received", str(event)
 
-        return EventNames.ERROR.name, "Proxy returned an error", str(events)
+        return EventNames.ERROR.name, "Proxy responded with an error message", str(events)
     
         
     def wait_for_preface_ack(self) -> str:

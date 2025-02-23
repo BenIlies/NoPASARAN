@@ -8,6 +8,7 @@ from nopasaran.http_2_utils import (
     H2_CONFIG_SETTINGS,
 )
 from nopasaran.tools.http_2_socket_base import HTTP2SocketBase
+from h2.settings import SettingCodes
 
 class HTTP2SocketServer(HTTP2SocketBase):
     def __init__(self, host: str, port: int):
@@ -37,7 +38,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
                 server_side=True
             )
         settings = {
-            0x2: 1  # SETTINGS_ENABLE_PUSH = 1
+            SettingCodes.ENABLE_PUSH: 1  # SETTINGS_ENABLE_PUSH = 1
         }
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_server)

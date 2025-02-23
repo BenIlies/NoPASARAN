@@ -36,9 +36,12 @@ class HTTP2SocketServer(HTTP2SocketBase):
                 self.client_socket,
                 server_side=True
             )
-        
+        settings = {
+            0x2: 1  # SETTINGS_ENABLE_PUSH = 1
+        }
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_server)
+        config_settings.update(settings)
         config = h2.config.H2Configuration(client_side=False, **config_settings)
         self.conn = h2.connection.H2Connection(config=config)
         

@@ -102,12 +102,12 @@ class HTTP2SocketBase:
     def wait_for_preface(self) -> str:
         """Wait for preface"""
         #skip function
-        return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", None
         data = self._receive_frame()
         if data is None:
             return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s while waiting for peer's preface (SETTINGS frame)", None
         
         events = self.conn.receive_data(data)
+        return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", str(events)
         for event in events:
             if isinstance(event, h2.events.RemoteSettingsChanged):
                 outbound_data = self.conn.data_to_send()  # This will generate SETTINGS ACK

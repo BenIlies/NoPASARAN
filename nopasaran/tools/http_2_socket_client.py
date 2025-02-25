@@ -10,6 +10,7 @@ from nopasaran.http_2_utils import (
 )
 from nopasaran.tools.http_2_socket_base import HTTP2SocketBase
 import socket
+import time
 
 class HTTP2SocketClient(HTTP2SocketBase):
     def start(self, tls_enabled = False, protocol = 'h2', connection_settings_client = {}):
@@ -57,20 +58,41 @@ class HTTP2SocketClient(HTTP2SocketBase):
             self.sock.sendall(self.conn.data_to_send())
             
             # Wait for ping acknowledgement
-            self.sock.settimeout(2.0)  # Short timeout for ping response
-            try:
-                response_data = self.sock.recv(1024)
-                if response_data:
-                    self.conn.receive_data(response_data)
-                    # We received some data, which is good enough to know the connection is alive
-            except socket.timeout:
-                # No response is concerning but we'll continue anyway
-                pass
-            finally:
-                # Reset timeout to original value
-                self.sock.settimeout(self.TIMEOUT)
+            self.sock.settimeout(5.0)  # Slightly longer timeout for ping response
+            ping_acknowledged = False
+            start_time = time.time()
+            
+            # Keep trying to receive data until we get ping acknowledgment or timeout
+            while not ping_acknowledged and (time.time() - start_time) < 5.0:
+                try:
+                    response_data = self.sock.recv(1024)
+                    if response_data:
+                        events = self.conn.receive_data(response_data)
+                        # Process events to check for ping acknowledgment
+                        for event in events:
+                            if hasattr(event, 'ping_acknowledged') and event.ping_acknowledged:
+                                ping_acknowledged = True
+                                break
+                        
+                        # Send any data that might have been generated in response
+                        data_to_send = self.conn.data_to_send()
+                        if data_to_send:
+                            self.sock.sendall(data_to_send)
+                        
+                        # If we got a response but no ping ack yet, keep trying
+                        if not ping_acknowledged:
+                            continue
+                except socket.timeout:
+                    # Timeout on this receive attempt, but we'll try again if time remains
+                    pass
+            
+            if not ping_acknowledged:
+                return EventNames.ERROR.name, "HTTP/2 ping acknowledgment not received"
         except Exception as e:
             # If ping fails, log but don't fail the connection
             return EventNames.ERROR.name, f"HTTP/2 ping failed: {e}"
+        finally:
+            # Reset timeout to original value
+            self.sock.settimeout(self.TIMEOUT)
         
         return EventNames.CLIENT_STARTED.name, f"Client successfully connected to {self.host}:{self.port} with {f'TLS with ALPN protocol {selected_protocol}' if tls_enabled == 'true' else 'non-TLS'} connection."

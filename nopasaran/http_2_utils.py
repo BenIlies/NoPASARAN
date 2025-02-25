@@ -277,7 +277,7 @@ def format_headers(headers_dict: Dict):
     return headers
 
 def send_frame(conn: h2.connection.H2Connection, sock: socket.socket, 
-               frame_data: Dict):
+               frame_data: Dict, is_server: bool = False):
     """Send a single H2 frame
     Args:
         conn: H2Connection instance
@@ -288,7 +288,7 @@ def send_frame(conn: h2.connection.H2Connection, sock: socket.socket,
     frame_type = frame_data.get('type')
     
     if frame_type == 'HEADERS':
-        send_headers_frame(conn, sock, frame_data)
+        send_headers_frame(conn, sock, frame_data, is_server)
     elif frame_type == 'DATA':
         send_data_frame(conn, frame_data)
     elif frame_type == 'UNKNOWN':
@@ -317,7 +317,7 @@ def send_frame(conn: h2.connection.H2Connection, sock: socket.socket,
     if outbound_data:
         sock.sendall(outbound_data)
 
-def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict) -> None:
+def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict, is_server: bool = False) -> None:
     """Send a HEADERS frame
     
     Args:
@@ -331,14 +331,18 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
                 - END_HEADERS (optional): Whether to end the headers
         - id: Test case ID
     """
-    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
+    next_legal_id = conn.get_next_available_stream_id()
+    stream_id = frame_data.get('stream_id', next_legal_id - 1 if is_server else next_legal_id)
     headers = frame_data.get('headers')
     duplicate_headers = frame_data.get('duplicate_headers')
 
     if headers:
         headers = format_headers(headers)
     else:
-        headers = [(':method', 'GET'), (':path', '/test-frame'), (':authority', conn.host), (':scheme', conn.scheme), ('user-agent', 'nopasaran-http2-client'), ('accept', '*/*')]
+        if is_server:
+            headers = [(':status', '200'), ('content-type', 'text/plain'), ('server', 'nopasaran-http2-server'), ('date', datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S GMT'))]
+        else:
+            headers = [(':method', 'GET'), (':path', '/test-frame'), (':authority', conn.host), (':scheme', conn.scheme), ('user-agent', 'nopasaran-http2-client'), ('accept', '*/*')]
     
     if duplicate_headers:
         duplicate_headers = format_headers(duplicate_headers)

@@ -39,9 +39,10 @@ class HTTP2SocketBase:
         """Send frames and check for GOAWAY response"""
         socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
         sent_frames = []
+        is_server = hasattr(self, 'client_socket')
         
         for frame in frames:
-            send_frame(self.conn, socket_to_use, frame)
+            send_frame(self.conn, socket_to_use, frame, is_server)
             sent_frames.append(frame)
             
             # Check for GOAWAY response after sending each frame

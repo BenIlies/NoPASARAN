@@ -331,7 +331,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
                 - END_HEADERS (optional): Whether to end the headers
         - id: Test case ID
     """
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     headers = frame_data.get('headers')
     duplicate_headers = frame_data.get('duplicate_headers')
 
@@ -403,7 +403,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
 
 def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a TRAILERS frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     headers = frame_data.get('headers')
     end_stream = frame_data.get('flags', {}).get('END_STREAM', True)
     if headers:
@@ -427,7 +427,7 @@ def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
 
 def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict) -> None:
     """Send a DATA frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     flags = frame_data.get('flags', {})
     payload = frame_data.get('payload', 'test')
     payload_size = frame_data.get('payload_size', None)
@@ -466,7 +466,7 @@ def send_unknown_frame(sock: socket.socket, frame_data: Dict):
 
 def send_rst_stream_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a RST_STREAM frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     if frame_data.get('payload_length'):
         payload_length = frame_data.get('payload_length', 4)  # Default to valid length of 4
         payload = b'\x00' * payload_length
@@ -485,7 +485,7 @@ def send_rst_stream_frame(conn: h2.connection.H2Connection, sock: socket.socket,
     sock.sendall(frame)
 
 def send_priority_frame(conn, sock, frame_data):
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     frame = PriorityFrame(stream_id)
 
     frame.stream_weight = frame_data.get('weight', 15)
@@ -566,8 +566,8 @@ def send_settings_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
 
 def send_push_promise_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a PUSH_PROMISE frame"""
-    stream_id = frame_data.get('stream_id', 1)
-    promised_stream_id = frame_data.get('promised_stream_id', 2)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
+    promised_stream_id = frame_data.get('promised_stream_id', conn.get_next_available_stream_id())
     headers = frame_data.get('headers')
     flags = frame_data.get('flags', {})
     end_headers = flags.get('END_HEADERS', True)

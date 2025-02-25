@@ -75,29 +75,29 @@ class HTTP2SocketServer(HTTP2SocketBase):
         self.client_socket.sendall(self.conn.data_to_send())
 
         # Wait for and handle initial client data (likely the ping or other setup frames)
-        self.client_socket.settimeout(5.0)  # Short timeout for initial communication
-        try:
-            data = self.client_socket.recv(65535)
-            if data:
-                events = self.conn.receive_data(data)
-                # wait for /connection-test
-                for event in events:
-                    if isinstance(event, h2.events.RequestReceived):
-                        for header_name, header_value in event.headers:
-                            if header_name == ':path':
-                                if header_value == '/connection-test':
-                                    # respond with 200
-                                    self.conn.send_headers(event.stream_id, [(':status', '200')], end_stream=True)
-                                    self.client_socket.sendall(self.conn.data_to_send())
-                                    break
-        except socket.timeout:
-            # No initial data received - this is unusual but not fatal
-            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting test request at {self.host}:{self.port}."
-        except Exception as e:
-            return EventNames.ERROR.name, f"Error occurred while waiting for test request at {self.host}:{self.port}: {str(e)}"
-        finally:
-            # Reset timeout to original value
-            self.client_socket.settimeout(self.TIMEOUT)
+        # self.client_socket.settimeout(5.0)  # Short timeout for initial communication
+        # try:
+        #     data = self.client_socket.recv(65535)
+        #     if data:
+        #         events = self.conn.receive_data(data)
+        #         # wait for /connection-test
+        #         for event in events:
+        #             if isinstance(event, h2.events.RequestReceived):
+        #                 for header_name, header_value in event.headers:
+        #                     if header_name == ':path':
+        #                         if header_value == '/connection-test':
+        #                             # respond with 200
+        #                             self.conn.send_headers(event.stream_id, [(':status', '200')], end_stream=True)
+        #                             self.client_socket.sendall(self.conn.data_to_send())
+        #                             break
+        # except socket.timeout:
+        #     # No initial data received - this is unusual but not fatal
+        #     return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting test request at {self.host}:{self.port}."
+        # except Exception as e:
+        #     return EventNames.ERROR.name, f"Error occurred while waiting for test request at {self.host}:{self.port}: {str(e)}"
+        # finally:
+        #     # Reset timeout to original value
+        #     self.client_socket.settimeout(self.TIMEOUT)
 
         selected_protocol = self.client_socket.selected_alpn_protocol() if tls_enabled == 'true' else None
 

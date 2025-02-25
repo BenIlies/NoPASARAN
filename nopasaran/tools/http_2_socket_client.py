@@ -54,53 +54,53 @@ class HTTP2SocketClient(HTTP2SocketBase):
         selected_protocol = self.sock.selected_alpn_protocol() if tls_enabled == 'true' else None
         
         # Send a test HTTP/2 request without waiting for response
-        # try:
-        #     # Create a new stream for our test message
-        #     stream_id = self.conn.get_next_available_stream_id()
+        try:
+            # Create a new stream for our test message
+            stream_id = self.conn.get_next_available_stream_id()
             
-        #     # Send headers
-        #     headers = [
-        #         (':method', 'GET'),
-        #         (':path', '/connection-test'),
-        #         (':scheme', 'https' if tls_enabled == 'true' else 'http'),
-        #         (':authority', self.host),
-        #         ('user-agent', 'nopasaran-http2-client'),
-        #     ]
-        #     self.conn.send_headers(stream_id, headers, end_stream=False)
+            # Send headers
+            headers = [
+                (':method', 'GET'),
+                (':path', '/connection-test'),
+                (':scheme', 'https' if tls_enabled == 'true' else 'http'),
+                (':authority', self.host),
+                ('user-agent', 'nopasaran-http2-client'),
+            ]
+            self.conn.send_headers(stream_id, headers, end_stream=False)
             
-        #     # # Send a small data frame with test message
-        #     test_data = "Connection test from client"
-        #     self.conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
+            # # Send a small data frame with test message
+            test_data = "Connection test from client"
+            self.conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
             
-        #     # Send the data to the server
-        #     self.sock.sendall(self.conn.data_to_send())
+            # Send the data to the server
+            self.sock.sendall(self.conn.data_to_send())
             
-        #     # wait for the 200 response
-        #     self.sock.settimeout(5.0)  # Short timeout for initial communication
-        #     try:
-        #         data = self.sock.recv(65535)
-        #         if data:
-        #             events = self.conn.receive_data(data)
-        #             # wait for 200 response
-        #             for event in events:
-        #                 if isinstance(event, h2.events.ResponseReceived):
-        #                     for header_name, header_value in event.headers:
-        #                         if header_name == ':status':
-        #                             if header_value == '200':
-        #                                 self.conn.send_headers(event.stream_id, [(':status', '200')], end_stream=True)
-        #                                 self.sock.sendall(self.conn.data_to_send())
-        #                                 break
-        #     except socket.timeout:
-        #         # No initial data received - this is unusual but not fatal
-        #         return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting test response at {self.host}:{self.port}."
-        #     except Exception as e:
-        #         return EventNames.ERROR.name, f"Error occurred while waiting for test response at {self.host}:{self.port}: {str(e)}"
-        #     finally:
-        #         # Reset timeout to original value
-        #         self.sock.settimeout(self.TIMEOUT)
+            # wait for the 200 response
+            self.sock.settimeout(5.0)  # Short timeout for initial communication
+            try:
+                data = self.sock.recv(65535)
+                if data:
+                    events = self.conn.receive_data(data)
+                    # wait for 200 response
+                    for event in events:
+                        if isinstance(event, h2.events.ResponseReceived):
+                            for header_name, header_value in event.headers:
+                                if header_name == ':status':
+                                    if header_value == '200':
+                                        self.conn.send_headers(event.stream_id, [(':status', '200')], end_stream=True)
+                                        self.sock.sendall(self.conn.data_to_send())
+                                        break
+            except socket.timeout:
+                # No initial data received - this is unusual but not fatal
+                return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting test response at {self.host}:{self.port}."
+            except Exception as e:
+                return EventNames.ERROR.name, f"Error occurred while waiting for test response at {self.host}:{self.port}: {str(e)}"
+            finally:
+                # Reset timeout to original value
+                self.sock.settimeout(self.TIMEOUT)
             
-        # except Exception as e:
-        #     # If test request fails, log but don't fail the connection
-        #     return EventNames.ERROR.name, f"Error occurred while waiting for test response at {self.host}:{self.port}: {str(e)}"
+        except Exception as e:
+            # If test request fails, log but don't fail the connection
+            return EventNames.ERROR.name, f"Error occurred while waiting for test response at {self.host}:{self.port}: {str(e)}"
         
         return EventNames.CLIENT_STARTED.name, f"Client successfully connected to {self.host}:{self.port} with {f'TLS with ALPN protocol {selected_protocol}' if tls_enabled == 'true' else 'non-TLS'} connection."

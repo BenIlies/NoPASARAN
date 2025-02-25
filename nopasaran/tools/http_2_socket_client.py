@@ -101,6 +101,6 @@ class HTTP2SocketClient(HTTP2SocketBase):
             
         except Exception as e:
             # If test request fails, log but don't fail the connection
-            print(f"Warning: HTTP/2 test request failed: {e}")
+            return EventNames.ERROR.name, f"Error occurred while waiting for test response at {self.host}:{self.port}: {str(e)}"
         
         return EventNames.CLIENT_STARTED.name, f"Client successfully connected to {self.host}:{self.port} with {f'TLS with ALPN protocol {selected_protocol}' if tls_enabled == 'true' else 'non-TLS'} connection."

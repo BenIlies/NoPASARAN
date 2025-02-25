@@ -43,6 +43,10 @@ class HTTP2SocketClient(HTTP2SocketBase):
         config = h2.config.H2Configuration(client_side=True, **config_settings)
         self.conn = h2.connection.H2Connection(config=config)
         
+        # Add these attributes to the connection object
+        self.conn.host = self.host
+        self.conn.scheme = 'https' if tls_enabled == 'true' else 'http'
+        
         # Send connection preface
         self.conn.initiate_connection()
         self.sock.sendall(self.conn.data_to_send())

@@ -769,13 +769,24 @@ def generate_temp_certificates():
     return cert_file.name, key_file.name
 
 def load_embedded_certificates(ssl_context):
-    """Load certificates directly from memory without using files"""
-    cert_buffer = io.StringIO(EMBEDDED_CERT)
-    key_buffer = io.StringIO(EMBEDDED_KEY)
+    """Load embedded certificates by writing to temporary files"""
+    # Create temporary files for the certificates
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.crt') as cert_temp:
+        cert_temp.write(EMBEDDED_CERT.encode('utf-8'))
+        cert_temp_path = cert_temp.name
     
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.key') as key_temp:
+        key_temp.write(EMBEDDED_KEY.encode('utf-8'))
+        key_temp_path = key_temp.name
+    
+    # Load the certificate and key from the temporary files
     ssl_context.load_cert_chain(
-        certfile=cert_buffer, 
-        keyfile=key_buffer
+        certfile=cert_temp_path,
+        keyfile=key_temp_path
     )
+    
+    # Clean up the temporary files
+    os.unlink(cert_temp_path)
+    os.unlink(key_temp_path)
     
     return ssl_context

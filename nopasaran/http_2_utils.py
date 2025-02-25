@@ -338,7 +338,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
     if headers:
         headers = format_headers(headers)
     else:
-        headers = [(':method', 'GET'), (':path', '/'), (':authority', 'localhost'), (':scheme', 'http')]
+        headers = [(':method', 'GET'), (':path', '/'), (':authority', conn.host), (':scheme', conn.scheme)]
     
     if duplicate_headers:
         duplicate_headers = format_headers(duplicate_headers)

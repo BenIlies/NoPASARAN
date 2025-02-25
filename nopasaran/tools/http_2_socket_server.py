@@ -28,26 +28,28 @@ class HTTP2SocketServer(HTTP2SocketBase):
             return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {self.host}:{self.port}. No client connection was established."
 
         if tls_enabled == 'true':
-            ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-            
-            # Force TLS 1.2 only (like OpenSSL's -tls1_2 flag)
-            ssl_context.options |= (
-                ssl.OP_NO_SSLv2 | 
-                ssl.OP_NO_SSLv3 | 
-                ssl.OP_NO_TLSv1 | 
-                ssl.OP_NO_TLSv1_1 |
-                ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
-            )
-            
-            # Set ALPN to only advertise h2
-            ssl_context.set_alpn_protocols(['h2'])
-            
-            # Load certificate and key from specific paths (like -cert and -key flags)
             if cloudflare_origin == 'true':
-                cert_path = "nopasaran/certs/cloudflare/server.crt"
-                key_path = "nopasaran/certs/cloudflare/server.key"
-            
-            ssl_context.load_cert_chain(cert_path, key_path)
+                # Use embedded certificates when cloudflare mode is enabled
+                ssl_context = create_ssl_context(protocol=protocol, is_client=False, cloudflare_origin=True, use_embedded_certs=True)
+            else:
+                ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+                
+                # Force TLS 1.2 only (like OpenSSL's -tls1_2 flag)
+                ssl_context.options |= (
+                    ssl.OP_NO_SSLv2 | 
+                    ssl.OP_NO_SSLv3 | 
+                    ssl.OP_NO_TLSv1 | 
+                    ssl.OP_NO_TLSv1_1 |
+                    ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
+                )
+                
+                # Set ALPN to only advertise h2
+                ssl_context.set_alpn_protocols(['h2'])
+                
+                # Load certificate and key from specific paths
+                cert_path = "/certs/server.crt"
+                key_path = "/certs/server.key"
+                ssl_context.load_cert_chain(cert_path, key_path)
             
             try:
                 self.client_socket = ssl_context.wrap_socket(

@@ -20,6 +20,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import tempfile
+import io
 
 class SSL_CONFIG:
     """SSL configuration constants"""
@@ -27,7 +28,65 @@ class SSL_CONFIG:
     KEY_PATH = "server.key"
     MAX_BUFFER_SIZE = 65535
 
-def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False):
+# Define your certificates as string constants
+EMBEDDED_CERT = """-----BEGIN CERTIFICATE-----
+MIIEpDCCA4ygAwIBAgIUCAI1jMFNjYW42UodjkGwsETOOUYwDQYJKoZIhvcNAQEL
+BQAwgYsxCzAJBgNVBAYTAlVTMRkwFwYDVQQKExBDbG91ZEZsYXJlLCBJbmMuMTQw
+MgYDVQQLEytDbG91ZEZsYXJlIE9yaWdpbiBTU0wgQ2VydGlmaWNhdGUgQXV0aG9y
+aXR5MRYwFAYDVQQHEw1TYW4gRnJhbmNpc2NvMRMwEQYDVQQIEwpDYWxpZm9ybmlh
+MB4XDTI1MDIyNTEwMjYwMFoXDTQwMDIyMjEwMjYwMFowYjEZMBcGA1UEChMQQ2xv
+dWRGbGFyZSwgSW5jLjEdMBsGA1UECxMUQ2xvdWRGbGFyZSBPcmlnaW4gQ0ExJjAk
+BgNVBAMTHUNsb3VkRmxhcmUgT3JpZ2luIENlcnRpZmljYXRlMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEArXyMWbyWYTiAFNmEIf5cE/3PAxSjGGonKEs3
+Ppn6effRgxwYTQLsdiVzXxgaKDEklUWwn0diWVX3eOym27O1EDwsJJHAsz+ph7pz
+c3b0FIMW2XoRFBczmsj3Jh3JBE61GlHfPIFPB3adO+e8kgoRg9Ac7vWGYkz9TY3n
+QH0locAHbziITua4FrPvrJEUot3bTdF6KmX20hDccSThKNi1xKbgfkFYsv/k9/jS
+aV/mbQVuxIIcKavAc/E2jD7M671m7TZkzcp0fVLxdQgO6YO4PoQS7prZTn+ORJZT
+UzlMypwf4bwAQsY0lZRdWKaSsngmXXRVoJI/C1cbXZHy35EmhQIDAQABo4IBJjCC
+ASIwDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+ATAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBQGdwBYQgTA3nHOX0nL+H/XUGgd8jAf
+BgNVHSMEGDAWgBQk6FNXXXw0QIep65TbuuEWePwppDBABggrBgEFBQcBAQQ0MDIw
+MAYIKwYBBQUHMAGGJGh0dHA6Ly9vY3NwLmNsb3VkZmxhcmUuY29tL29yaWdpbl9j
+YTAnBgNVHREEIDAegg4qLm5vcGFzYXJhbi5jb4IMbm9wYXNhcmFuLmNvMDgGA1Ud
+HwQxMC8wLaAroCmGJ2h0dHA6Ly9jcmwuY2xvdWRmbGFyZS5jb20vb3JpZ2luX2Nh
+LmNybDANBgkqhkiG9w0BAQsFAAOCAQEASOEB3ZP9LSXkhhdLD0bVACC3EAdefJmm
+v510EvT4lBKGYSOn7aiTAzjihlOhBWXR9TkZov+JtJXD8Dsq1pAy4bB7kDn+fhAE
+j6NtM0dKW8yfz6wYB567Cmi0TNoeS0hzCEarTjQEYEwbZN/KZ2KX28nwEtywC5W7
+5SaFHsjcpotV53erxxZmUGG9ZGeQhKXtlQHcISqF7JBYNSO0cViR25eS38l7q5Tk
+J6Xw/ti3A85jfeUp0vRlBb4EKAWP2FG9UPvzBVFolCJ4Rt4s44H8LCWuvBeC9Dkj
+XqFXTLBnd0nQn407YrW+1EoLSch/bxkE5f6RBOnZ2fgTVvFdawj7oQ==
+-----END CERTIFICATE-----"""
+
+EMBEDDED_KEY = """-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCtfIxZvJZhOIAU
+2YQh/lwT/c8DFKMYaicoSzc+mfp599GDHBhNAux2JXNfGBooMSSVRbCfR2JZVfd4
+7Kbbs7UQPCwkkcCzP6mHunNzdvQUgxbZehEUFzOayPcmHckETrUaUd88gU8Hdp07
+57ySChGD0Bzu9YZiTP1NjedAfSWhwAdvOIhO5rgWs++skRSi3dtN0XoqZfbSENxx
+JOEo2LXEpuB+QViy/+T3+NJpX+ZtBW7Eghwpq8Bz8TaMPszrvWbtNmTNynR9UvF1
+CA7pg7g+hBLumtlOf45EllNTOUzKnB/hvABCxjSVlF1YppKyeCZddFWgkj8LVxtd
+kfLfkSaFAgMBAAECggEAKriZbT2qAG3j6H558c8LyKZ/NECAOzJkyyDejU1op2FV
+2AXynABEz4FAbGHoiw4y9olPSaHP/7TSOJZ6Lm8N/t36dtTnkZxzOGe7J2tbBrQT
+S+Gp0/s0q4Cij+HUzvk80qrnoKQtHGbiqE5UGthc4Ms+XL/cZFeWJuNzV2eZ/T79
+/q8WgQQ/eFkbg+raYXtSV3ntPka6qmMzpzP3WbmcHfVlZWIRHyS54yE0QgdQl6uF
+ZN+d6DbLEj2NFEWVNJWxv3Sq3gMOfbooLjsbwO8U7XetVuFfMpfRUiN7k/ADb0kK
+mbulpLcJtthpNio/rY6e69wFaBapoRbgD/c7bMpw7wKBgQD04wRVGSnQIsZBqhIz
+tmwV+Lr8ZetxsJ0GscDAEIDYKwha3UO6L/ODqQG0kTyU3HsmQUISNBrv7hcy5Fos
+JOfkeYLrFnoMobdM+lGeBRZXvjpBcSjTBJl5I+ddMvD/8OESf9IOeMAvtjw0yoCH
+4UvwVWWkkyKRb/pxgpeK1XCjRwKBgQC1XAkZHz+hdSD5UUWV9YvgLN0e0XJgHwUI
+jqzHkCONkFTXlDrRPtFCZvzmetUdF1DR1GlTNTgvZ63ItoAC6Jdm4VZfSTZd9oRF
+MacH10mh8R40+NJx1pe22z1dgy9RiH+LkuDHHubhtvKzI3DggaX3KPcntCLaCMZY
+pBSlIFxV0wKBgEXyHcess0u20wfoauCIZ2DzNX1oIxLLDl7eIJ77V8HmsLE7Z9/j
+WFuvx0PrA/HE9AveMd//L/598/ReUv8u32lb56/8MIoxGqkLCornCxWuyPbuOmnj
+c26teaUeKsX/6FmfVsE5bjNyisnNWV72U/lmeuzB9eqyoEcRtPU7t7t7AoGAUJxq
+BtqW4+M2FtuC/Ja555jJaEtcdVEUYatZLRLqWqAOtgvS4PL0/HjebGuoklesureZ
+YTzEjn2dBxvnZmOP+FCsnYnjOny6ai8ZuSh+OBb+gDkhASyLHuHwMsJ+o9TyLE3K
+z3by1N0Gn41fPMsjw+pXgTRWUWeZEglMi+EIabUCgYBEf2hU27W6jiYOUf081oFK
+uVBdI0M1WSIMIaHkTWAbIBpvbYs6HPg3ahNL328fOgw2REwNqbdWhrkaXSDFuEOa
+lLYvHR05hvsABWzD7a4+VBt1wALrLvckl8zZIFYrY8B3KIjpcJI+SYmuZKEDNFFz
+Y/ryzgff8qQY7HLuCVsj5g==
+-----END PRIVATE KEY-----"""
+
+def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, use_embedded_certs=False):
     """Create SSL context with the specified protocol"""
     if is_client:
         ssl_context = ssl.create_default_context(
@@ -67,7 +126,10 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False):
         ssl_context.set_alpn_protocols(protocols)
     
     if not is_client:
-        if cloudflare_origin and os.path.exists("certs/cloudflare/server.crt") and os.path.exists("certs/cloudflare/server.key"):
+        if use_embedded_certs:
+            # Use the embedded certificates
+            ssl_context = load_embedded_certificates(ssl_context)
+        elif cloudflare_origin and os.path.exists("certs/cloudflare/server.crt") and os.path.exists("certs/cloudflare/server.key"):
             # Use Cloudflare Origin Certificate if available
             ssl_context.load_cert_chain("certs/cloudflare/server.crt", "certs/cloudflare/server.key")
         else:
@@ -705,3 +767,15 @@ def generate_temp_certificates():
     key_file.close()
 
     return cert_file.name, key_file.name
+
+def load_embedded_certificates(ssl_context):
+    """Load certificates directly from memory without using files"""
+    cert_buffer = io.StringIO(EMBEDDED_CERT)
+    key_buffer = io.StringIO(EMBEDDED_KEY)
+    
+    ssl_context.load_cert_chain(
+        certfile=cert_buffer, 
+        keyfile=key_buffer
+    )
+    
+    return ssl_context

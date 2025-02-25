@@ -44,11 +44,11 @@ class HTTP2SocketServer(HTTP2SocketBase):
             
             # Load certificate and key from specific paths (like -cert and -key flags)
             if cloudflare_origin == 'true':
-                cert_path = "certs/cloudflare/server.crt"
-                key_path = "certs/cloudflare/server.key"
+                cert_path = "nopasaran/certs/cloudflare/server.crt"
+                key_path = "nopasaran/certs/cloudflare/server.key"
             else:
-                cert_path = "/certs/server.crt"
-                key_path = "/certs/server.key"
+                cert_path = "nopasaran/certs/server.crt"
+                key_path = "nopasaran/certs/server.key"
             
             ssl_context.load_cert_chain(cert_path, key_path)
             

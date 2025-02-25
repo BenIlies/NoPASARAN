@@ -8,6 +8,7 @@ from nopasaran.http_2_utils import (
     H2_CONFIG_SETTINGS,
 )
 from nopasaran.tools.http_2_socket_base import HTTP2SocketBase
+import ssl
 
 class HTTP2SocketServer(HTTP2SocketBase):
     def __init__(self, host: str, port: int):
@@ -27,16 +28,42 @@ class HTTP2SocketServer(HTTP2SocketBase):
             return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {self.host}:{self.port}. No client connection was established."
 
         if tls_enabled == 'true':
-            ssl_context = create_ssl_context(
-                protocol=protocol,
-                is_client=False,
-                cloudflare_origin=True if cloudflare_origin == 'true' else False
+            ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            
+            # Force TLS 1.2 only (like OpenSSL's -tls1_2 flag)
+            ssl_context.options |= (
+                ssl.OP_NO_SSLv2 | 
+                ssl.OP_NO_SSLv3 | 
+                ssl.OP_NO_TLSv1 | 
+                ssl.OP_NO_TLSv1_1 |
+                ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
             )
             
-            self.client_socket = ssl_context.wrap_socket(
-                self.client_socket,
-                server_side=True
-            )
+            # Set ALPN to only advertise h2
+            ssl_context.set_alpn_protocols(['h2'])
+            
+            # Load certificate and key from specific paths (like -cert and -key flags)
+            if cloudflare_origin == 'true':
+                cert_path = "certs/cloudflare/server.crt"
+                key_path = "certs/cloudflare/server.key"
+            else:
+                cert_path = "/certs/server.crt"
+                key_path = "/certs/server.key"
+            
+            ssl_context.load_cert_chain(cert_path, key_path)
+            
+            try:
+                self.client_socket = ssl_context.wrap_socket(
+                    self.client_socket,
+                    server_side=True
+                )
+            except Exception as e:
+                return EventNames.ERROR.name, f"TLS handshake failed: {str(e)}"
+            
+            # Verify ALPN negotiation
+            selected_protocol = self.client_socket.selected_alpn_protocol()
+            if selected_protocol != 'h2':
+                return EventNames.ERROR.name, f"Client negotiated {selected_protocol or 'no protocol'} instead of HTTP/2"
         
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_server)
@@ -47,6 +74,6 @@ class HTTP2SocketServer(HTTP2SocketBase):
         self.conn.initiate_connection()
         self.client_socket.sendall(self.conn.data_to_send())
 
-        selected_protocol = self.client_socket.selected_alpn_protocol()
+        selected_protocol = self.client_socket.selected_alpn_protocol() if tls_enabled == 'true' else None
 
         return EventNames.SERVER_STARTED.name, f"Server successfully started at {self.host}:{self.port} with a {f'TLS with ALPN protocol {selected_protocol}' if tls_enabled == 'true' else 'non-TLS'} connection from {address}."

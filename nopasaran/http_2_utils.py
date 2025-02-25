@@ -27,7 +27,7 @@ class SSL_CONFIG:
     KEY_PATH = "server.key"
     MAX_BUFFER_SIZE = 65535
 
-def create_ssl_context(protocol='h2', is_client=True, cert_file=None, key_file=None):
+def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False):
     """Create SSL context with the specified protocol"""
     if is_client:
         ssl_context = ssl.create_default_context(
@@ -46,9 +46,9 @@ def create_ssl_context(protocol='h2', is_client=True, cert_file=None, key_file=N
     ssl_context.set_alpn_protocols([protocol])
     
     if not is_client:
-        # Server needs certificate and private key
-        if cert_file and key_file:
-            ssl_context.load_cert_chain(cert_file, key_file)
+        if cloudflare_origin and os.path.exists("certs/cloudflare/server.crt") and os.path.exists("certs/cloudflare/server.key"):
+            # Use Cloudflare Origin Certificate if available
+            ssl_context.load_cert_chain("certs/cloudflare/server.crt", "certs/cloudflare/server.key")
         else:
             # Generate temporary certificates if none provided
             temp_cert, temp_key = generate_temp_certificates()

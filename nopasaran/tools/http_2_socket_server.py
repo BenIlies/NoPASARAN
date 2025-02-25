@@ -14,7 +14,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
         super().__init__(host, port)
         self.client_socket = None
 
-    def start(self, tls_enabled = False, protocol = 'h2', connection_settings_server = {}, client_frames = []):
+    def start(self, tls_enabled = False, protocol = 'h2', connection_settings_server = {}, cloudflare_origin = False):
         """Start the HTTP/2 server"""
         self.sock = create_socket(self.host, self.port, is_server=True)
         self.sock.listen(5)
@@ -25,11 +25,12 @@ class HTTP2SocketServer(HTTP2SocketBase):
             self.client_socket, address = self.sock.accept()
         except TimeoutError:
             return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {self.host}:{self.port}. No client connection was established."
-        
+
         if tls_enabled == 'true':
             ssl_context = create_ssl_context(
                 protocol=protocol,
-                is_client=False
+                is_client=False,
+                cloudflare_origin=True if cloudflare_origin == 'true' else False
             )
             
             self.client_socket = ssl_context.wrap_socket(

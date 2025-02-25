@@ -166,10 +166,16 @@ class HTTP2SocketBase:
                     if isinstance(event, h2.events.StreamEnded):
                         continue
 
-                    # filter for these headers: ':path', '/connection-test'
+                    # Filter for connection-test headers
                     if isinstance(event, h2.events.RequestReceived):
-                        headers = event.headers
-                        if headers.get(':path') == '/connection-test':
+                        # Headers are a list of tuples in h2, not a dictionary
+                        path_header = None
+                        for header_name, header_value in event.headers:
+                            if header_name == ':path':
+                                path_header = header_value
+                                break
+                        
+                        if path_header == '/connection-test':
                             continue
 
                     frames_received.append(event)

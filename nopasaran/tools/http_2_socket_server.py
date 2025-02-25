@@ -26,7 +26,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
         try:
             self.client_socket, address = self.sock.accept()
         except TimeoutError:
-            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {self.host}:{self.port}. No client connection was established."
+            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {self.host}:{self.port}."
 
         if tls_enabled == 'true':
             if cloudflare_origin == 'true':
@@ -63,7 +63,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
             # Verify ALPN negotiation
             selected_protocol = self.client_socket.selected_alpn_protocol()
             if selected_protocol != 'h2':
-                return EventNames.ERROR.name, f"Client negotiated {selected_protocol or 'no protocol'} instead of HTTP/2"
+                return EventNames.ERROR.name, f"Connection established but client negotiated {selected_protocol or 'no protocol'} instead of HTTP/2"
         
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_server)
@@ -80,14 +80,21 @@ class HTTP2SocketServer(HTTP2SocketBase):
             data = self.client_socket.recv(65535)
             if data:
                 events = self.conn.receive_data(data)
-                # Process any necessary events (like PING)
+                # wait for /connection-test
                 for event in events:
-                    if hasattr(event, 'ping_acknowledged') and event.ping_acknowledged:
-                        # Acknowledge ping if needed
-                        self.client_socket.sendall(self.conn.data_to_send())
+                    if isinstance(event, h2.events.RequestReceived):
+                        for header_name, header_value in event.headers:
+                            if header_name == ':path':
+                                if header_value == '/connection-test':
+                                    # respond with 200
+                                    self.conn.send_headers(event.stream_id, [(':status', '200')], end_stream=True)
+                                    self.client_socket.sendall(self.conn.data_to_send())
+                                    break
         except socket.timeout:
             # No initial data received - this is unusual but not fatal
-            pass
+            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting test request at {self.host}:{self.port}."
+        except Exception as e:
+            return EventNames.ERROR.name, f"Error occurred while waiting for test request at {self.host}:{self.port}: {str(e)}"
         finally:
             # Reset timeout to original value
             self.client_socket.settimeout(self.TIMEOUT)

@@ -75,7 +75,30 @@ class HTTP2SocketClient(HTTP2SocketBase):
             # Send the data to the server
             self.sock.sendall(self.conn.data_to_send())
             
-            # Don't wait for a response - just continue
+            # wait for the 200 response
+            self.sock.settimeout(5.0)  # Short timeout for initial communication
+            try:
+                data = self.sock.recv(65535)
+                if data:
+                    events = self.conn.receive_data(data)
+                    # wait for 200 response
+                    for event in events:
+                        if isinstance(event, h2.events.ResponseReceived):
+                            for header_name, header_value in event.headers:
+                                if header_name == ':status':
+                                    if header_value == '200':
+                                        self.conn.send_headers(event.stream_id, [(':status', '200')], end_stream=True)
+                                        self.sock.sendall(self.conn.data_to_send())
+                                        break
+            except socket.timeout:
+                # No initial data received - this is unusual but not fatal
+                return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting test response at {self.host}:{self.port}."
+            except Exception as e:
+                return EventNames.ERROR.name, f"Error occurred while waiting for test response at {self.host}:{self.port}: {str(e)}"
+            finally:
+                # Reset timeout to original value
+                self.sock.settimeout(self.TIMEOUT)
+            
         except Exception as e:
             # If test request fails, log but don't fail the connection
             print(f"Warning: HTTP/2 test request failed: {e}")

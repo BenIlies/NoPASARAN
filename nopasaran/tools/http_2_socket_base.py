@@ -177,6 +177,13 @@ class HTTP2SocketBase:
                         if event.data == 'Connection test from client':
                             continue
 
+                    if isinstance(event, h2.events.ResponseReceived):
+                        # check for 5xx status code
+                        for header_name, header_value in event.headers:
+                            if header_name == ':status':
+                                if int(header_value) >= 500:
+                                    return EventNames.CONNECTION_TERMINATED.name, f"Received 5xx status code {header_value} after receiving {len(frames_received)}/{expected_frame_count} frames.", str(event)
+
                     # Filter for connection-test headers
                     if isinstance(event, h2.events.RequestReceived):
                         # Headers are a list of tuples in h2, not a dictionary

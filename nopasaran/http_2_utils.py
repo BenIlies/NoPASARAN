@@ -332,7 +332,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict,
         - id: Test case ID
     """
     next_legal_id = conn.get_next_available_stream_id()
-    stream_id = frame_data.get('stream_id', next_legal_id)
+    stream_id = frame_data.get('stream_id', 3)
     headers = frame_data.get('headers')
     duplicate_headers = frame_data.get('duplicate_headers')
 

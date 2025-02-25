@@ -7,7 +7,7 @@ import h2
 import json
 import h2.events
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import argparse
 import h2.connection
 from hyperframe.frame import (
@@ -340,7 +340,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict,
         headers = format_headers(headers)
     else:
         if is_server:
-            headers = [(':status', '200'), ('content-type', 'text/plain'), ('server', 'nopasaran-http2-server'), ('date', datetime.now(datetime.UTC).strftime('%a, %d %b %Y %H:%M:%S GMT'))]
+            headers = [(':status', '200'), ('content-type', 'text/plain'), ('server', 'nopasaran-http2-server'), ('date', datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT'))]
         else:
             headers = [(':method', 'GET'), (':path', '/test-frame'), (':authority', conn.host), (':scheme', conn.scheme), ('user-agent', 'nopasaran-http2-client'), ('accept', '*/*')]
     

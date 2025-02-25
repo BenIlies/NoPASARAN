@@ -42,8 +42,29 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False):
         )
         ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
-    # Configure for HTTP/2
-    ssl_context.set_alpn_protocols(['h2', 'http/1.1'])
+    # Configure ALPN protocols - order matters for server preference!
+    if protocol == 'h2':
+        # HTTP/2 only
+        ssl_context.set_alpn_protocols(['h2'])
+    elif protocol == 'h2,http/1.1' or protocol == 'http/1.1,h2':
+        # Always prioritize HTTP/2 over HTTP/1.1 regardless of input order
+        ssl_context.set_alpn_protocols(['h2', 'http/1.1'])
+    elif isinstance(protocol, str):
+        # Handle comma-separated protocol string
+        protocols = [p.strip() for p in protocol.split(',')]
+        # Always ensure h2 is first if it's in the list
+        if 'h2' in protocols:
+            protocols.remove('h2')
+            protocols.insert(0, 'h2')
+        ssl_context.set_alpn_protocols(protocols)
+    elif isinstance(protocol, list):
+        # Handle protocol list
+        protocols = protocol.copy()
+        # Always ensure h2 is first if it's in the list
+        if 'h2' in protocols:
+            protocols.remove('h2')
+            protocols.insert(0, 'h2')
+        ssl_context.set_alpn_protocols(protocols)
     
     if not is_client:
         if cloudflare_origin and os.path.exists("nopasaran/certs/cloudflare/server.crt") and os.path.exists("nopasaran/certs/cloudflare/server.key"):

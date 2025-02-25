@@ -150,6 +150,9 @@ class HTTP2SocketBase:
                 events = self.conn.receive_data(data)
                 
                 for event in events:
+                    if isinstance(event, h2.events.StreamReset):
+                        return EventNames.CONNECTION_TERMINATED.name, f"Stream {event.stream_id} reset after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(data)
+
                     if isinstance(event, h2.events.ConnectionTerminated):
                         return EventNames.CONNECTION_TERMINATED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(data)
                     

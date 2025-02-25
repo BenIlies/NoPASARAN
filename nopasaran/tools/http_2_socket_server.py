@@ -9,6 +9,7 @@ from nopasaran.http_2_utils import (
 )
 from nopasaran.tools.http_2_socket_base import HTTP2SocketBase
 import ssl
+import socket
 
 class HTTP2SocketServer(HTTP2SocketBase):
     def __init__(self, host: str, port: int):
@@ -72,6 +73,24 @@ class HTTP2SocketServer(HTTP2SocketBase):
         # Send connection preface
         self.conn.initiate_connection()
         self.client_socket.sendall(self.conn.data_to_send())
+
+        # Wait for and handle initial client data (likely the ping or other setup frames)
+        self.client_socket.settimeout(5.0)  # Short timeout for initial communication
+        try:
+            data = self.client_socket.recv(65535)
+            if data:
+                events = self.conn.receive_data(data)
+                # Process any necessary events (like PING)
+                for event in events:
+                    if hasattr(event, 'ping_acknowledged') and event.ping_acknowledged:
+                        # Acknowledge ping if needed
+                        self.client_socket.sendall(self.conn.data_to_send())
+        except socket.timeout:
+            # No initial data received - this is unusual but not fatal
+            pass
+        finally:
+            # Reset timeout to original value
+            self.client_socket.settimeout(self.TIMEOUT)
 
         selected_protocol = self.client_socket.selected_alpn_protocol() if tls_enabled == 'true' else None
 

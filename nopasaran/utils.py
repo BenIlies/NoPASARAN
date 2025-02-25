@@ -102,6 +102,26 @@ def set_UDP_packet_bytes(packet, size):
     payload_data = b"A" * int(size)
     return set_UDP_payload(packet, payload_data)
 
+def set_ICMP_type(packet, icmp_type):
+    packet['ICMP'].type = int(icmp_type)
+
+
+def set_ICMP_code(packet, icmp_code):
+    packet['ICMP'].code = int(icmp_code)
+
+
+def get_ICMP_type(packet):
+    return packet['ICMP'].type
+
+
+def get_ICMP_code(packet):
+    return packet['ICMP'].code
+
+
+
+
+
+
 def set_IP_dst(packet, dst):
     packet['IP'].dst = dst
 
@@ -252,11 +272,6 @@ def send_request(ip, port, request_packet):
     
     return response
 
-def get_ICMP_type(packet):
-    return packet[ICMP].type
-
-def get_ICMP_code(packet):
-    return packet[ICMP].code
 
 def get_UDP_payload_size(packet):
     """

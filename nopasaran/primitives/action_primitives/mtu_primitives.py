@@ -71,37 +71,7 @@ class MTUPrimitives:
         size = state_machine.get_variable_value(inputs[1])
         updated_packet = utils.set_ICMP_packet_bytes(packet, size)
         state_machine.set_variable_value(outputs[0], updated_packet)
-
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
-    def get_ICMP_type(inputs, outputs, state_machine):
-        """
-        Get the ICMP type from an ICMP packet in the machine's state.
-
-        Number of input arguments: 1
-            inputs[0]: The variable name for the ICMP packet (assumed to be a list-like container).
-        Number of output arguments: 1
-            outputs[0]: The variable name to store the ICMP type.
-        """
-        # Assuming the packet is stored as a list-like structure; we take the first element.
-        packet = state_machine.get_variable_value(inputs[0])[0]
-        state_machine.set_variable_value(outputs[0], packet['ICMP'].type)
-
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
-    def get_ICMP_code(inputs, outputs, state_machine):
-        """
-        Get the ICMP code from an ICMP packet in the machine's state.
-
-        Number of input arguments: 1
-            inputs[0]: The variable name for the ICMP packet (assumed to be a list-like container).
-        Number of output arguments: 1
-            outputs[0]: The variable name to store the ICMP code.
-        """
-        packet = state_machine.get_variable_value(inputs[0])[0]
-        state_machine.set_variable_value(outputs[0], packet['ICMP'].code)
-
-    
+ 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
     def set_UDP_payload(inputs, outputs, state_machine):

@@ -49,48 +49,64 @@ class HTTP2SocketClient(HTTP2SocketBase):
 
         selected_protocol = self.sock.selected_alpn_protocol() if tls_enabled == 'true' else None
         
-        # Send a minimal HTTP/2 ping to ensure connection establishment
-        # This helps prevent server timeout without interfering with your state machine
+        # Send a test HTTP/2 request to ensure connection establishment
         try:
-            # Send a PING frame (lightweight, doesn't create a stream)
-            ping_data = b'\x00\x00\x00\x00\x00\x00\x00\x00'  # 8 bytes of data
-            self.conn.ping(ping_data)
+            # Create a new stream for our test message
+            stream_id = self.conn.get_next_available_stream_id()
+            
+            # Send headers
+            headers = [
+                (':method', 'GET'),
+                (':path', '/connection-test'),
+                (':scheme', 'https' if tls_enabled == 'true' else 'http'),
+                (':authority', self.host),
+                ('user-agent', 'nopasaran-http2-client'),
+            ]
+            self.conn.send_headers(stream_id, headers, end_stream=False)
+            
+            # Send a small data frame with test message
+            test_data = "Connection test from client"
+            self.conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
+            
+            # Send the data to the server
             self.sock.sendall(self.conn.data_to_send())
             
-            # Wait for ping acknowledgement
-            self.sock.settimeout(5.0)  # Slightly longer timeout for ping response
-            ping_acknowledged = False
+            # Wait for response with timeout
+            self.sock.settimeout(5.0)  # Longer timeout for response
+            response_received = False
             start_time = time.time()
             
-            # Keep trying to receive data until we get ping acknowledgment or timeout
-            while not ping_acknowledged and (time.time() - start_time) < 5.0:
+            # Keep trying to receive data until we get a response or timeout
+            while not response_received and (time.time() - start_time) < 5.0:
                 try:
                     response_data = self.sock.recv(1024)
                     if response_data:
                         events = self.conn.receive_data(response_data)
-                        # Process events to check for ping acknowledgment
+                        # Look for any data or headers on our stream
                         for event in events:
-                            if hasattr(event, 'ping_acknowledged') and event.ping_acknowledged:
-                                ping_acknowledged = True
+                            if (hasattr(event, 'stream_id') and event.stream_id == stream_id) or \
+                               isinstance(event, h2.events.ResponseReceived) or \
+                               isinstance(event, h2.events.DataReceived):
+                                response_received = True
                                 break
                         
-                        # Send any data that might have been generated in response
+                        # Send any necessary data in response
                         data_to_send = self.conn.data_to_send()
                         if data_to_send:
                             self.sock.sendall(data_to_send)
                         
-                        # If we got a response but no ping ack yet, keep trying
-                        if not ping_acknowledged:
+                        # If we got data but no relevant response yet, keep trying
+                        if not response_received:
                             continue
                 except socket.timeout:
                     # Timeout on this receive attempt, but we'll try again if time remains
                     pass
             
-            if not ping_acknowledged:
-                return EventNames.ERROR.name, "HTTP/2 ping acknowledgment not received"
+            if not response_received:
+                return EventNames.ERROR.name, "HTTP/2 test request received no response"
         except Exception as e:
-            # If ping fails, log but don't fail the connection
-            return EventNames.ERROR.name, f"HTTP/2 ping failed: {e}"
+            # If test request fails, log but don't fail the connection
+            return EventNames.ERROR.name, f"HTTP/2 test request failed: {e}"
         finally:
             # Reset timeout to original value
             self.sock.settimeout(self.TIMEOUT)

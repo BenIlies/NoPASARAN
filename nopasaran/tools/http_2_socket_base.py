@@ -166,6 +166,14 @@ class HTTP2SocketBase:
                     if isinstance(event, h2.events.StreamEnded):
                         continue
 
+                    if isinstance(event, h2.events.WindowUpdated):
+                        continue
+
+                    if isinstance(event, h2.events.DataReceived):
+                        # check content if equal to 'Connection test from client'
+                        if event.data == 'Connection test from client':
+                            continue
+
                     # Filter for connection-test headers
                     if isinstance(event, h2.events.RequestReceived):
                         # Headers are a list of tuples in h2, not a dictionary

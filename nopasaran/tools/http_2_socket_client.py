@@ -47,5 +47,7 @@ class HTTP2SocketClient(HTTP2SocketBase):
         # Send connection preface
         self.conn.initiate_connection()
         self.sock.sendall(self.conn.data_to_send())
+
+        selected_protocol = self.sock.selected_alpn_protocol()
         
-        return EventNames.CLIENT_STARTED.name, f"Client successfully connected to {self.host}:{self.port} with {'TLS' if tls_enabled == 'true' else 'non-TLS'} connection."
+        return EventNames.CLIENT_STARTED.name, f"Client successfully connected to {self.host}:{self.port} with {f'TLS with ALPN protocol {selected_protocol}' if tls_enabled == 'true' else 'non-TLS'} connection."

@@ -43,12 +43,12 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False):
         ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
     # Configure for HTTP/2
-    ssl_context.set_alpn_protocols([protocol])
+    ssl_context.set_alpn_protocols(['h2', 'http/1.1'])
     
     if not is_client:
-        if cloudflare_origin and os.path.exists("certs/cloudflare/server.crt") and os.path.exists("certs/cloudflare/server.key"):
+        if cloudflare_origin and os.path.exists("nopasaran/certs/cloudflare/server.crt") and os.path.exists("nopasaran/certs/cloudflare/server.key"):
             # Use Cloudflare Origin Certificate if available
-            ssl_context.load_cert_chain("certs/cloudflare/server.crt", "certs/cloudflare/server.key")
+            ssl_context.load_cert_chain("nopasaran/certs/cloudflare/server.crt", "nopasaran/certs/cloudflare/server.key")
         else:
             # Generate temporary certificates if none provided
             temp_cert, temp_key = generate_temp_certificates()

@@ -402,6 +402,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
             )
     test_data = "Connection test from client"
     conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
+    sock.sendall(conn.data_to_send())
 
 def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a TRAILERS frame"""

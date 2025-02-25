@@ -115,7 +115,7 @@ class HTTP2SocketBase:
 
                 return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", str(event)
 
-        return EventNames.ERROR.name, f"Expected SETTINGS frame for preface but received error instead", str(events)
+        return EventNames.ERROR.name, f"Expected SETTINGS frame for preface but received error instead", str(data)
     
         
     def wait_for_preface_ack(self) -> str:

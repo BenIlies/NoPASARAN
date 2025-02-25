@@ -46,9 +46,6 @@ class HTTP2SocketServer(HTTP2SocketBase):
             if cloudflare_origin == 'true':
                 cert_path = "nopasaran/certs/cloudflare/server.crt"
                 key_path = "nopasaran/certs/cloudflare/server.key"
-            else:
-                cert_path = "nopasaran/certs/server.crt"
-                key_path = "nopasaran/certs/server.key"
             
             ssl_context.load_cert_chain(cert_path, key_path)
             

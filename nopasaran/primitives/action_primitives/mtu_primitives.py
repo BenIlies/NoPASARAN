@@ -63,14 +63,31 @@ class MTUPrimitives:
 
         Number of input arguments: 2
             inputs[0]: The variable name for the ICMP packet.
-            inputs[1]: The size (number of bytes) to fill with 'A'.
+            inputs[1]: The size (number of bytes) to fill with 'A'. 
+                    (Can be an int, a string like "80", or bytes like b'80'.)
         Number of output arguments: 1
             outputs[0]: The variable name to store the updated packet.
         """
+        # Retrieve packet and size from the state machine
         packet = state_machine.get_variable_value(inputs[0])
-        size = state_machine.get_variable_value(inputs[1])
+        size_val = state_machine.get_variable_value(inputs[1])
+
+        # Convert size_val into an integer
+        if isinstance(size_val, int):
+            size = size_val
+        elif isinstance(size_val, bytes):
+            size = int(size_val.decode())
+        elif isinstance(size_val, str):
+            size = int(size_val)
+        else:
+            raise TypeError(f"Unsupported type for size: {type(size_val)}. Must be int, str, or bytes.")
+
+        # Pass the final integer size to the utility function
         updated_packet = utils.set_ICMP_packet_bytes(packet, size)
+
+        # Store the updated packet back into the state machine’s variable
         state_machine.set_variable_value(outputs[0], updated_packet)
+
  
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)

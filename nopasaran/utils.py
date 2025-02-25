@@ -215,7 +215,8 @@ def create_ICMP_packet():
     return IP()/ICMP()
 
 def get_ICMP_payload(packet):
-    return packet[ICMP].payload
+    raw_layer = packet[ICMP].payload
+    return raw_layer.load if raw_layer is not None else b""
 
 
 def set_IP_df(packet):
@@ -234,6 +235,8 @@ def set_IP_df(packet):
 def set_ICMP_payload(packet, payload_bytes):
     packet[ICMP].remove_payload()          
     packet[ICMP].add_payload(payload_bytes)  
+
+    return packet
 
 def set_ICMP_packet_bytes(packet, size):
     # Generate a large payload of repeated 'A' characters

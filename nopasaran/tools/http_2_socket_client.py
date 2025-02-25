@@ -70,7 +70,7 @@ class HTTP2SocketClient(HTTP2SocketBase):
             
             # # Send a small data frame with test message
             test_data = "Connection test from client"
-            self.conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=False)
+            self.conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
             
             # Send the data to the server
             self.sock.sendall(self.conn.data_to_send())

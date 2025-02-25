@@ -151,7 +151,7 @@ class HTTP2SocketBase:
                 
                 for event in events:
                     if isinstance(event, h2.events.ConnectionTerminated):
-                        return EventNames.CONNECTION_TERMINATED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames", str(frames_received)
+                        return EventNames.CONNECTION_TERMINATED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames", str(data)
                     
                     # Skip initial settings frame
                     if isinstance(event, h2.events.RemoteSettingsChanged):
@@ -165,6 +165,12 @@ class HTTP2SocketBase:
 
                     if isinstance(event, h2.events.StreamEnded):
                         continue
+
+                    # filter for these headers: ':path', '/connection-test'
+                    if isinstance(event, h2.events.RequestReceived):
+                        headers = event.headers
+                        if headers.get(':path') == '/connection-test':
+                            continue
 
                     frames_received.append(event)
                     

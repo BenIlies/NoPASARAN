@@ -331,27 +331,6 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
                 - END_HEADERS (optional): Whether to end the headers
         - id: Test case ID
     """
-    stream_id = conn.get_next_available_stream_id()
-
-    # Send headers
-    headers = [
-        (':method', 'GET'),
-        (':path', '/connection-test'),
-        (':scheme', conn.scheme),
-        (':authority', conn.host),
-        ('user-agent', 'nopasaran-http2-client'),
-    ]
-    conn.send_headers(stream_id, headers, end_stream=False)
-
-    # # Send a small data frame with test message
-    test_data = "Connection test from client"
-    conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
-
-    # Send the data to the server
-    sock.sendall(conn.data_to_send())
-    #exit function
-    exit()
-
     stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     headers = frame_data.get('headers')
     duplicate_headers = frame_data.get('duplicate_headers')
@@ -421,9 +400,6 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
                 headers=headers,
                 end_stream=end_stream
             )
-    test_data = "Connection test from client"
-    conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
-    sock.sendall(conn.data_to_send())
 
 def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a TRAILERS frame"""

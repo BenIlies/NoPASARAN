@@ -18,6 +18,7 @@ class HTTP2SocketBase:
         self.conn = None
         self.MAX_RETRY_ATTEMPTS = 3
         self.TIMEOUT = 5
+        self.cloudflare_origin = False
 
     def _receive_frame(self) -> bytes:
         """Helper method to receive data"""

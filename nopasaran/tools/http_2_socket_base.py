@@ -183,7 +183,7 @@ class HTTP2SocketBase:
                         if event.data == 'Connection test from client':
                             continue
 
-                    if isinstance(event, h2.events.ResponseReceived):
+                    if isinstance(event, h2.events.ResponseReceived) or isinstance(event, h2.events.RequestReceived):
                         # check for 5xx status code
                         for header_name, header_value in event.headers:
                             if header_name == ':status':

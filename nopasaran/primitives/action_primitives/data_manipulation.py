@@ -400,5 +400,39 @@ class DataManipulationPrimitives:
         except ValueError:
             raise ValueError(f"Cannot convert value {state_machine.get_variable_value(inputs[0])} to an integer.")
         
- 
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def fetch_element_from_dict(inputs, outputs, state_machine):
+        """
+        Fetch an element from a dictionary stored in the machine's state.
+
+        Number of input arguments: 2
+        Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the dictionary variable.
+                - The name of the key whose value needs to be retrieved.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, 
+                which is the name of the variable to store the retrieved value.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dictionary = state_machine.get_variable_value(inputs[0])
+        key = inputs[1]
+        
+        # Fetch the value from the dictionary
+        value = dictionary.get(key, None)  # Returns None if key does not exist
+        
+        # Store the retrieved value in the state machine
+        state_machine.set_variable_value(outputs[0], value)
+
+            
+    
 

@@ -103,7 +103,9 @@ class HTTP2SocketBase:
     def wait_for_preface(self) -> str:
         """Wait for preface"""
         #skip function
-        return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", None
+        if self.cloudflare_origin:
+            return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", None
+
         data = self._receive_frame()
         if data is None:
             return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s while waiting for peer's preface (SETTINGS frame)", None

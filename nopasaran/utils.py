@@ -285,3 +285,12 @@ def get_UDP_payload_size(packet):
     else:
         payload = b""
     return len(payload)
+
+def get_next_hop_mtu(packet):
+    if packet.haslayer(ICMP):
+        icmp_layer = packet[ICMP]
+        # ICMP Destination Unreachable (type=3), code=4 => Frag needed (DF set)
+        if icmp_layer.type == 3 and icmp_layer.code == 4:
+            # The 'unused' field holds the next-hop MTU in this ICMP message
+            return icmp_layer.unused
+    return None

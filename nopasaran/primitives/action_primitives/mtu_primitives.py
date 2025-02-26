@@ -140,3 +140,30 @@ class MTUPrimitives:
         packet = state_machine.get_variable_value(inputs[0])
         payload_size = utils.get_UDP_payload_size(packet)
         state_machine.set_variable_value(outputs[0], payload_size)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_ICMP_next_hop_mtu(inputs, outputs, state_machine):
+        """
+        Extract the next-hop MTU from a previously stored ICMP packet.
+
+        Number of input arguments: 1
+            inputs[0] - the name of the variable holding the Scapy packet.
+        Number of output arguments: 1
+            outputs[0] - the variable name to store the next-hop MTU.
+
+        Args:
+            inputs (List[str]): List with one element—the name of the variable holding the packet.
+            outputs (List[str]): List with one element—the name of the variable where to store the next-hop MTU.
+            state_machine: The state machine object that manages variable values.
+        """
+        # Retrieve the packet from the state machine
+        packet_name = inputs[0]
+        packet = state_machine.get_variable_value(packet_name)
+
+        # Call our utility function to extract the next-hop MTU
+        next_hop_mtu = utils.get_next_hop_mtu(packet)
+
+        # Store the result in the state machine
+        output_name = outputs[0]
+        state_machine.set_variable_value(output_name, next_hop_mtu)

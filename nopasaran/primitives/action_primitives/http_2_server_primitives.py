@@ -48,8 +48,7 @@ class HTTP2ServerPrimitives:
             - The tls_enabled flag
             - The TLS protocol to use
             - The connection settings for the server
-            - The client frames to receive
-
+            - The cloudflare_origin flag
         Number of output arguments: 2
             - The event name
             - The message
@@ -60,7 +59,7 @@ class HTTP2ServerPrimitives:
                 - The name of the tls_enabled flag variable
                 - The name of the TLS protocol variable
                 - The name of the connection settings variable
-                - The name of the client frames variable
+                - The name of the cloudflare_origin flag variable
 
             outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
@@ -75,9 +74,9 @@ class HTTP2ServerPrimitives:
         tls_enabled = state_machine.get_variable_value(inputs[1])
         protocol = state_machine.get_variable_value(inputs[2])
         connection_settings_server = state_machine.get_variable_value(inputs[3])
-        client_frames = state_machine.get_variable_value(inputs[4])
+        cloudflare_origin = state_machine.get_variable_value(inputs[4])
 
-        event, msg = server.start(tls_enabled, protocol, connection_settings_server, client_frames)
+        event, msg = server.start(tls_enabled, protocol, connection_settings_server, cloudflare_origin)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
 

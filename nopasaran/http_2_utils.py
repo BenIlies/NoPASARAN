@@ -7,7 +7,7 @@ import h2
 import json
 import h2.events
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import argparse
 import h2.connection
 from hyperframe.frame import (
@@ -20,6 +20,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 import tempfile
+import io
 
 class SSL_CONFIG:
     """SSL configuration constants"""
@@ -27,7 +28,65 @@ class SSL_CONFIG:
     KEY_PATH = "server.key"
     MAX_BUFFER_SIZE = 65535
 
-def create_ssl_context(protocol='h2', is_client=True, cert_file=None, key_file=None):
+# Define your certificates as string constants
+EMBEDDED_CERT = """-----BEGIN CERTIFICATE-----
+MIIEpDCCA4ygAwIBAgIUCAI1jMFNjYW42UodjkGwsETOOUYwDQYJKoZIhvcNAQEL
+BQAwgYsxCzAJBgNVBAYTAlVTMRkwFwYDVQQKExBDbG91ZEZsYXJlLCBJbmMuMTQw
+MgYDVQQLEytDbG91ZEZsYXJlIE9yaWdpbiBTU0wgQ2VydGlmaWNhdGUgQXV0aG9y
+aXR5MRYwFAYDVQQHEw1TYW4gRnJhbmNpc2NvMRMwEQYDVQQIEwpDYWxpZm9ybmlh
+MB4XDTI1MDIyNTEwMjYwMFoXDTQwMDIyMjEwMjYwMFowYjEZMBcGA1UEChMQQ2xv
+dWRGbGFyZSwgSW5jLjEdMBsGA1UECxMUQ2xvdWRGbGFyZSBPcmlnaW4gQ0ExJjAk
+BgNVBAMTHUNsb3VkRmxhcmUgT3JpZ2luIENlcnRpZmljYXRlMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEArXyMWbyWYTiAFNmEIf5cE/3PAxSjGGonKEs3
+Ppn6effRgxwYTQLsdiVzXxgaKDEklUWwn0diWVX3eOym27O1EDwsJJHAsz+ph7pz
+c3b0FIMW2XoRFBczmsj3Jh3JBE61GlHfPIFPB3adO+e8kgoRg9Ac7vWGYkz9TY3n
+QH0locAHbziITua4FrPvrJEUot3bTdF6KmX20hDccSThKNi1xKbgfkFYsv/k9/jS
+aV/mbQVuxIIcKavAc/E2jD7M671m7TZkzcp0fVLxdQgO6YO4PoQS7prZTn+ORJZT
+UzlMypwf4bwAQsY0lZRdWKaSsngmXXRVoJI/C1cbXZHy35EmhQIDAQABo4IBJjCC
+ASIwDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+ATAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBQGdwBYQgTA3nHOX0nL+H/XUGgd8jAf
+BgNVHSMEGDAWgBQk6FNXXXw0QIep65TbuuEWePwppDBABggrBgEFBQcBAQQ0MDIw
+MAYIKwYBBQUHMAGGJGh0dHA6Ly9vY3NwLmNsb3VkZmxhcmUuY29tL29yaWdpbl9j
+YTAnBgNVHREEIDAegg4qLm5vcGFzYXJhbi5jb4IMbm9wYXNhcmFuLmNvMDgGA1Ud
+HwQxMC8wLaAroCmGJ2h0dHA6Ly9jcmwuY2xvdWRmbGFyZS5jb20vb3JpZ2luX2Nh
+LmNybDANBgkqhkiG9w0BAQsFAAOCAQEASOEB3ZP9LSXkhhdLD0bVACC3EAdefJmm
+v510EvT4lBKGYSOn7aiTAzjihlOhBWXR9TkZov+JtJXD8Dsq1pAy4bB7kDn+fhAE
+j6NtM0dKW8yfz6wYB567Cmi0TNoeS0hzCEarTjQEYEwbZN/KZ2KX28nwEtywC5W7
+5SaFHsjcpotV53erxxZmUGG9ZGeQhKXtlQHcISqF7JBYNSO0cViR25eS38l7q5Tk
+J6Xw/ti3A85jfeUp0vRlBb4EKAWP2FG9UPvzBVFolCJ4Rt4s44H8LCWuvBeC9Dkj
+XqFXTLBnd0nQn407YrW+1EoLSch/bxkE5f6RBOnZ2fgTVvFdawj7oQ==
+-----END CERTIFICATE-----"""
+
+EMBEDDED_KEY = """-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCtfIxZvJZhOIAU
+2YQh/lwT/c8DFKMYaicoSzc+mfp599GDHBhNAux2JXNfGBooMSSVRbCfR2JZVfd4
+7Kbbs7UQPCwkkcCzP6mHunNzdvQUgxbZehEUFzOayPcmHckETrUaUd88gU8Hdp07
+57ySChGD0Bzu9YZiTP1NjedAfSWhwAdvOIhO5rgWs++skRSi3dtN0XoqZfbSENxx
+JOEo2LXEpuB+QViy/+T3+NJpX+ZtBW7Eghwpq8Bz8TaMPszrvWbtNmTNynR9UvF1
+CA7pg7g+hBLumtlOf45EllNTOUzKnB/hvABCxjSVlF1YppKyeCZddFWgkj8LVxtd
+kfLfkSaFAgMBAAECggEAKriZbT2qAG3j6H558c8LyKZ/NECAOzJkyyDejU1op2FV
+2AXynABEz4FAbGHoiw4y9olPSaHP/7TSOJZ6Lm8N/t36dtTnkZxzOGe7J2tbBrQT
+S+Gp0/s0q4Cij+HUzvk80qrnoKQtHGbiqE5UGthc4Ms+XL/cZFeWJuNzV2eZ/T79
+/q8WgQQ/eFkbg+raYXtSV3ntPka6qmMzpzP3WbmcHfVlZWIRHyS54yE0QgdQl6uF
+ZN+d6DbLEj2NFEWVNJWxv3Sq3gMOfbooLjsbwO8U7XetVuFfMpfRUiN7k/ADb0kK
+mbulpLcJtthpNio/rY6e69wFaBapoRbgD/c7bMpw7wKBgQD04wRVGSnQIsZBqhIz
+tmwV+Lr8ZetxsJ0GscDAEIDYKwha3UO6L/ODqQG0kTyU3HsmQUISNBrv7hcy5Fos
+JOfkeYLrFnoMobdM+lGeBRZXvjpBcSjTBJl5I+ddMvD/8OESf9IOeMAvtjw0yoCH
+4UvwVWWkkyKRb/pxgpeK1XCjRwKBgQC1XAkZHz+hdSD5UUWV9YvgLN0e0XJgHwUI
+jqzHkCONkFTXlDrRPtFCZvzmetUdF1DR1GlTNTgvZ63ItoAC6Jdm4VZfSTZd9oRF
+MacH10mh8R40+NJx1pe22z1dgy9RiH+LkuDHHubhtvKzI3DggaX3KPcntCLaCMZY
+pBSlIFxV0wKBgEXyHcess0u20wfoauCIZ2DzNX1oIxLLDl7eIJ77V8HmsLE7Z9/j
+WFuvx0PrA/HE9AveMd//L/598/ReUv8u32lb56/8MIoxGqkLCornCxWuyPbuOmnj
+c26teaUeKsX/6FmfVsE5bjNyisnNWV72U/lmeuzB9eqyoEcRtPU7t7t7AoGAUJxq
+BtqW4+M2FtuC/Ja555jJaEtcdVEUYatZLRLqWqAOtgvS4PL0/HjebGuoklesureZ
+YTzEjn2dBxvnZmOP+FCsnYnjOny6ai8ZuSh+OBb+gDkhASyLHuHwMsJ+o9TyLE3K
+z3by1N0Gn41fPMsjw+pXgTRWUWeZEglMi+EIabUCgYBEf2hU27W6jiYOUf081oFK
+uVBdI0M1WSIMIaHkTWAbIBpvbYs6HPg3ahNL328fOgw2REwNqbdWhrkaXSDFuEOa
+lLYvHR05hvsABWzD7a4+VBt1wALrLvckl8zZIFYrY8B3KIjpcJI+SYmuZKEDNFFz
+Y/ryzgff8qQY7HLuCVsj5g==
+-----END PRIVATE KEY-----"""
+
+def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, use_embedded_certs=False):
     """Create SSL context with the specified protocol"""
     if is_client:
         ssl_context = ssl.create_default_context(
@@ -42,13 +101,37 @@ def create_ssl_context(protocol='h2', is_client=True, cert_file=None, key_file=N
         )
         ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
-    # Configure for HTTP/2
-    ssl_context.set_alpn_protocols([protocol])
+    # Configure ALPN protocols - order matters for server preference!
+    if protocol == 'h2':
+        # HTTP/2 only
+        ssl_context.set_alpn_protocols(['h2'])
+    elif protocol == 'h2,http/1.1' or protocol == 'http/1.1,h2':
+        # Always prioritize HTTP/2 over HTTP/1.1 regardless of input order
+        ssl_context.set_alpn_protocols(['h2', 'http/1.1'])
+    elif isinstance(protocol, str):
+        # Handle comma-separated protocol string
+        protocols = [p.strip() for p in protocol.split(',')]
+        # Always ensure h2 is first if it's in the list
+        if 'h2' in protocols:
+            protocols.remove('h2')
+            protocols.insert(0, 'h2')
+        ssl_context.set_alpn_protocols(protocols)
+    elif isinstance(protocol, list):
+        # Handle protocol list
+        protocols = protocol.copy()
+        # Always ensure h2 is first if it's in the list
+        if 'h2' in protocols:
+            protocols.remove('h2')
+            protocols.insert(0, 'h2')
+        ssl_context.set_alpn_protocols(protocols)
     
     if not is_client:
-        # Server needs certificate and private key
-        if cert_file and key_file:
-            ssl_context.load_cert_chain(cert_file, key_file)
+        if use_embedded_certs:
+            # Use the embedded certificates
+            ssl_context = load_embedded_certificates(ssl_context)
+        elif cloudflare_origin and os.path.exists("certs/cloudflare/server.crt") and os.path.exists("certs/cloudflare/server.key"):
+            # Use Cloudflare Origin Certificate if available
+            ssl_context.load_cert_chain("certs/cloudflare/server.crt", "certs/cloudflare/server.key")
         else:
             # Generate temporary certificates if none provided
             temp_cert, temp_key = generate_temp_certificates()
@@ -194,7 +277,7 @@ def format_headers(headers_dict: Dict):
     return headers
 
 def send_frame(conn: h2.connection.H2Connection, sock: socket.socket, 
-               frame_data: Dict):
+               frame_data: Dict, is_server: bool = False):
     """Send a single H2 frame
     Args:
         conn: H2Connection instance
@@ -205,9 +288,9 @@ def send_frame(conn: h2.connection.H2Connection, sock: socket.socket,
     frame_type = frame_data.get('type')
     
     if frame_type == 'HEADERS':
-        send_headers_frame(conn, sock, frame_data)
+        send_headers_frame(conn, sock, frame_data, is_server)
     elif frame_type == 'DATA':
-        send_data_frame(conn, frame_data)
+        send_data_frame(conn, frame_data, is_server)
     elif frame_type == 'UNKNOWN':
         send_unknown_frame(sock, frame_data)
     elif frame_type == 'RST_STREAM':
@@ -234,7 +317,7 @@ def send_frame(conn: h2.connection.H2Connection, sock: socket.socket,
     if outbound_data:
         sock.sendall(outbound_data)
 
-def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict) -> None:
+def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict, is_server: bool = False) -> None:
     """Send a HEADERS frame
     
     Args:
@@ -248,14 +331,18 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
                 - END_HEADERS (optional): Whether to end the headers
         - id: Test case ID
     """
-    stream_id = frame_data.get('stream_id', 1)
+    next_legal_id = conn.get_next_available_stream_id()
+    stream_id = frame_data.get('stream_id', 3)
     headers = frame_data.get('headers')
     duplicate_headers = frame_data.get('duplicate_headers')
 
     if headers:
         headers = format_headers(headers)
     else:
-        headers = [(':method', 'GET'), (':path', '/'), (':authority', 'localhost'), (':scheme', 'http')]
+        if is_server:
+            headers = [(':status', '200'), ('content-type', 'text/plain'), ('server', 'nopasaran-http2-server'), ('date', datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT'))]
+        else:
+            headers = [(':method', 'GET'), (':path', '/test-frame'), (':authority', conn.host), (':scheme', conn.scheme), ('user-agent', 'nopasaran-http2-client'), ('accept', '*/*')]
     
     if duplicate_headers:
         duplicate_headers = format_headers(duplicate_headers)
@@ -320,7 +407,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
 
 def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a TRAILERS frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     headers = frame_data.get('headers')
     end_stream = frame_data.get('flags', {}).get('END_STREAM', True)
     if headers:
@@ -342,9 +429,10 @@ def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
     # serialized = trailer_frame.serialize()
     # sock.sendall(serialized)
 
-def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict) -> None:
+def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict, is_server: bool = False) -> None:
     """Send a DATA frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    next_legal_id = conn.get_next_available_stream_id()
+    stream_id = frame_data.get('stream_id', next_legal_id - 1 if is_server else next_legal_id)
     flags = frame_data.get('flags', {})
     payload = frame_data.get('payload', 'test')
     payload_size = frame_data.get('payload_size', None)
@@ -383,7 +471,7 @@ def send_unknown_frame(sock: socket.socket, frame_data: Dict):
 
 def send_rst_stream_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a RST_STREAM frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     if frame_data.get('payload_length'):
         payload_length = frame_data.get('payload_length', 4)  # Default to valid length of 4
         payload = b'\x00' * payload_length
@@ -402,7 +490,7 @@ def send_rst_stream_frame(conn: h2.connection.H2Connection, sock: socket.socket,
     sock.sendall(frame)
 
 def send_priority_frame(conn, sock, frame_data):
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
     frame = PriorityFrame(stream_id)
 
     frame.stream_weight = frame_data.get('weight', 15)
@@ -483,8 +571,8 @@ def send_settings_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
 
 def send_push_promise_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a PUSH_PROMISE frame"""
-    stream_id = frame_data.get('stream_id', 1)
-    promised_stream_id = frame_data.get('promised_stream_id', 2)
+    stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
+    promised_stream_id = frame_data.get('promised_stream_id', conn.get_next_available_stream_id())
     headers = frame_data.get('headers')
     flags = frame_data.get('flags', {})
     end_headers = flags.get('END_HEADERS', True)
@@ -684,3 +772,26 @@ def generate_temp_certificates():
     key_file.close()
 
     return cert_file.name, key_file.name
+
+def load_embedded_certificates(ssl_context):
+    """Load embedded certificates by writing to temporary files"""
+    # Create temporary files for the certificates
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.crt') as cert_temp:
+        cert_temp.write(EMBEDDED_CERT.encode('utf-8'))
+        cert_temp_path = cert_temp.name
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.key') as key_temp:
+        key_temp.write(EMBEDDED_KEY.encode('utf-8'))
+        key_temp_path = key_temp.name
+    
+    # Load the certificate and key from the temporary files
+    ssl_context.load_cert_chain(
+        certfile=cert_temp_path,
+        keyfile=key_temp_path
+    )
+    
+    # Clean up the temporary files
+    os.unlink(cert_temp_path)
+    os.unlink(key_temp_path)
+    
+    return ssl_context

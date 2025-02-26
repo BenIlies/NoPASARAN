@@ -36,7 +36,7 @@ class HTTP2ClientPrimitives:
         state_machine.set_variable_value(outputs[0], client)
 
     @staticmethod
-    @parsing_decorator(input_args=4, output_args=2)
+    @parsing_decorator(input_args=5, output_args=2)
     def start_http_2_client(inputs, outputs, state_machine):
         """
         Start the HTTP/2 client.

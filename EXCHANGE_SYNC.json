@@ -1,0 +1,112 @@
+{
+    "id": "EXCHANGE_SYNC",
+    "initial": "INITIALIZING",
+    "states": {
+      "INITIALIZING": {
+        "on": {
+          "STARTED": [
+            {
+              "target": "LOADING_TWO_PARAMETERS",
+              "actions": [],
+              "internal": false
+            }
+          ]
+        }
+      },
+      "LOADING_TWO_PARAMETERS": {
+        "entry": [
+          {
+            "type": "get_parameters (ctrl local_dict)"
+          },
+          {
+            "type": "done"
+          }
+        ],
+        "on": {
+          "DONE": [
+            {
+              "target": "SYNC",
+              "actions": [
+                {
+                  "type": "assign (ctrl) (ctrl)"
+                },
+                {
+                  "type": "assign (local_dict) (local_dict)"
+                }
+              ],
+              "internal": false
+            }
+          ]
+        }
+      },
+      "SYNC": {
+        "entry": {
+          "type": "sync (ctrl local_dict)"
+        },
+        "on": {
+          "SYNC_SENT": [
+            {
+              "target": "WAITING_FOR_SYNC",
+              "actions": [
+                {
+                  "type": "assign (ctrl) (ctrl)"
+                }
+              ],
+              "internal": false
+            }
+          ]
+        }
+      },
+      "WAITING_FOR_SYNC": {
+        "entry": [
+          {
+            "type": "set (4) (timeout)"
+          },
+          {
+            "type": "wait_sync_signal (ctrl timeout) (remote_dict)"
+          }
+        ],
+        "on": {
+          "TIMEOUT": [
+            {
+              "target": "RETURNING_TIMEOUT",
+              "actions": []
+            }
+          ],
+          "SYNC_AVAILABLE": [
+            {
+              "target": "RETURNING_SYNC_MESSAGES",
+              "actions": [
+                {
+                  "type": "assign (remote_dict) (remote_dict)"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "RETURNING_TIMEOUT": {
+        "entry": [
+          {
+            "type": "set (TIMEOUT) (event)"
+          },
+          {
+            "type": "set (NULL) (remote_dict)"
+          },
+          {
+            "type": "return_values (event remote_dict)"
+          }
+        ]
+      },
+      "RETURNING_SYNC_MESSAGES": {
+        "entry": [
+          {
+            "type": "set (DONE) (event)"
+          },
+          {
+            "type": "return_values (event remote_dict)"
+          }
+        ]
+      }
+    }
+  }

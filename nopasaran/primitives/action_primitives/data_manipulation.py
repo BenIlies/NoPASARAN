@@ -433,6 +433,99 @@ class DataManipulationPrimitives:
         # Store the retrieved value in the state machine
         state_machine.set_variable_value(outputs[0], value)
 
-            
+    @staticmethod
+    @parsing_decorator(input_args=3, output_args=1)
+    def fetch_value_from_json_list(inputs, outputs, state_machine):
+        """
+        Fetch a specific key's value from a JSON list at a given index stored in the state machine.
+
+        Number of input arguments: 3
+        Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
+                - The name of the JSON list variable stored in the state machine.
+                - The name of the variable storing the index.
+                - The name of the variable storing the key to be retrieved.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the retrieved value.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        # Get JSON list from state machine
+        json_list = state_machine.get_variable_value(inputs[0])
+        # Get index value from state machine and convert it to an integer
+        index_variable = state_machine.get_variable_value(inputs[1])
+        # Get key value from state machine
+        key_variable = state_machine.get_variable_value(inputs[2])
+
+        # Validate JSON list type
+        if not isinstance(json_list, list):
+            raise ValueError(f"Expected a list, but got {type(json_list).__name__}")
+
+        try:
+            index = int(index_variable)  # Convert index to an integer inside the function
+        except ValueError:
+            raise ValueError(f"Index must be an integer, but got: {index_variable}")
+
+        # Ensure key is a string
+        if not isinstance(key_variable, str):
+            raise ValueError(f"Expected key to be a string, but got {type(key_variable).__name__}")
+
+        # Validate index range
+        if index < 0 or index >= len(json_list):
+            raise IndexError(f"Index {index} is out of range for the JSON list.")
+
+        # Retrieve the value for the given key
+        value = json_list[index].get(key_variable, None)
+
+        # Store the retrieved value in the state machine
+        state_machine.set_variable_value(outputs[0], value)
+    
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_json_list_length(inputs, outputs, state_machine):
+        """
+        Get the length of a JSON list stored in the state machine.
+
+        Number of input arguments: 1
+        Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the JSON list variable stored in the state machine.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the length of the list.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        # Get JSON list from state machine
+        json_list = state_machine.get_variable_value(inputs[0])
+
+        # Validate JSON list type
+        if not isinstance(json_list, list):
+            raise ValueError(f"Expected a list, but got {type(json_list).__name__}")
+
+        # Get the length of the list
+        list_length = len(json_list)
+
+        # Store the length in the state machine
+        state_machine.set_variable_value(outputs[0], list_length)
+
+
+
+                
     
 

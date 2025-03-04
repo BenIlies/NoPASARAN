@@ -1,5 +1,6 @@
 import nopasaran.utils as utils
 from nopasaran.decorators import parsing_decorator
+import json
 
 class DataManipulationPrimitives:
     """
@@ -433,11 +434,13 @@ class DataManipulationPrimitives:
         # Store the retrieved value in the state machine
         state_machine.set_variable_value(outputs[0], value)
 
+
+
     @staticmethod
     @parsing_decorator(input_args=3, output_args=1)
     def fetch_value_from_json_list(inputs, outputs, state_machine):
         """
-        Fetch a specific key's value from a JSON list at a given index stored in the state machine.
+        Fetch a specific key's value from a JSON list stored in a separate file at a given index.
 
         Number of input arguments: 3
         Number of output arguments: 1
@@ -446,7 +449,7 @@ class DataManipulationPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
-                - The name of the JSON list variable stored in the state machine.
+                - The file path of the JSON list.
                 - The name of the variable storing the index.
                 - The name of the variable storing the key to be retrieved.
 
@@ -458,16 +461,20 @@ class DataManipulationPrimitives:
         Returns:
             None
         """
-        # Get JSON list from state machine
-        json_list = state_machine.get_variable_value(inputs[0])
-        # Get index value from state machine and convert it to an integer
-        index_variable = state_machine.get_variable_value(inputs[1])
-        # Get key value from state machine
-        key_variable = state_machine.get_variable_value(inputs[2])
+        file_path = inputs[0]  # Path to JSON file
+        index_variable = state_machine.get_variable_value(inputs[1])  # Get index from state
+        key_variable = state_machine.get_variable_value(inputs[2])  # Get key from state
+
+        # Load JSON list from file
+        try:
+            with open(file_path, "r") as file:
+                json_list = json.load(file)
+        except Exception as e:
+            raise ValueError(f"Error reading JSON file: {e}")
 
         # Validate JSON list type
         if not isinstance(json_list, list):
-            raise ValueError(f"Expected a list, but got {type(json_list).__name__}")
+            raise ValueError(f"Expected a list in JSON file, but got {type(json_list).__name__}")
 
         try:
             index = int(index_variable)  # Convert index to an integer inside the function
@@ -487,12 +494,13 @@ class DataManipulationPrimitives:
 
         # Store the retrieved value in the state machine
         state_machine.set_variable_value(outputs[0], value)
-    
+
+
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def get_json_list_length(inputs, outputs, state_machine):
         """
-        Get the length of a JSON list stored in the state machine.
+        Get the length of a JSON list stored in a separate file.
 
         Number of input arguments: 1
         Number of output arguments: 1
@@ -501,7 +509,7 @@ class DataManipulationPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
-                - The name of the JSON list variable stored in the state machine.
+                - The file path of the JSON list.
 
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
                 which is the name of the variable to store the length of the list.
@@ -511,21 +519,21 @@ class DataManipulationPrimitives:
         Returns:
             None
         """
-        # Get JSON list from state machine
-        json_list = state_machine.get_variable_value(inputs[0])
+        file_path = inputs[0]  # Path to JSON file
+
+        # Load JSON list from file
+        try:
+            with open(file_path, "r") as file:
+                json_list = json.load(file)
+        except Exception as e:
+            raise ValueError(f"Error reading JSON file: {e}")
 
         # Validate JSON list type
         if not isinstance(json_list, list):
-            raise ValueError(f"Expected a list, but got {type(json_list).__name__}")
+            raise ValueError(f"Expected a list in JSON file, but got {type(json_list).__name__}")
 
         # Get the length of the list
         list_length = len(json_list)
 
         # Store the length in the state machine
         state_machine.set_variable_value(outputs[0], list_length)
-
-
-
-                
-    
-

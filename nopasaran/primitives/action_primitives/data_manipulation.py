@@ -500,7 +500,7 @@ class DataManipulationPrimitives:
     @parsing_decorator(input_args=1, output_args=1)
     def get_json_list_length(inputs, outputs, state_machine):
         """
-        Get the length of a JSON list stored in a separate file.
+        Get the length of a JSON list stored in a dynamically named file.
 
         Number of input arguments: 1
         Number of output arguments: 1
@@ -509,7 +509,7 @@ class DataManipulationPrimitives:
 
         Args:
             inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
-                - The file path of the JSON list.
+                - The base name of the JSON file (without the extension).
 
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
                 which is the name of the variable to store the length of the list.
@@ -519,18 +519,19 @@ class DataManipulationPrimitives:
         Returns:
             None
         """
-        file_path = inputs[0]  # Path to JSON file
+        # Construct the file name dynamically (e.g., "services.json" if input is "services")
+        file_path = '.'.join((inputs[0], 'json'))
 
         # Load JSON list from file
         try:
             with open(file_path, "r") as file:
                 json_list = json.load(file)
         except Exception as e:
-            raise ValueError(f"Error reading JSON file: {e}")
+            raise ValueError(f"Error reading JSON file {file_path}: {e}")
 
         # Validate JSON list type
         if not isinstance(json_list, list):
-            raise ValueError(f"Expected a list in JSON file, but got {type(json_list).__name__}")
+            raise ValueError(f"Expected a list in {file_path}, but got {type(json_list).__name__}")
 
         # Get the length of the list
         list_length = len(json_list)

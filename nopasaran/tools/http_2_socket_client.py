@@ -2,6 +2,7 @@ import h2.connection
 import h2.config
 import nopasaran.tools.http_2_overwrite
 from h2.settings import SettingCodes
+from h2.events import ResponseReceived, DataReceived
 from nopasaran.definitions.events import EventNames
 from nopasaran.http_2_utils import (
     create_ssl_context,
@@ -69,61 +70,65 @@ class HTTP2SocketClient(HTTP2SocketBase):
         except Exception as e:
             return EventNames.ERROR.name, f"Error receiving initial settings from {self.host}:{self.port}: {str(e)}"
         
-        # Send a test HTTP/2 request and wait for response
-        try:
-            # Create a new stream for our test message
-            stream_id = self.conn.get_next_available_stream_id()
-            
-            # Send headers
-            headers = [
-                (':method', 'GET'),
-                (':path', '/connection-test'),
-                (':scheme', 'https' if tls_enabled == 'true' else 'http'),
-                (':authority', self.host),
-                ('user-agent', 'nopasaran-http2-client'),
-            ]
-            self.conn.send_headers(stream_id, headers, end_stream=False)
-            
-            # Send a small data frame with test message
-            test_data = "Connection test from client"
-            self.conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
-            
-            # Send the data to the server
-            self.sock.sendall(self.conn.data_to_send())
-            
-            # Wait for response with timeout
-            self.sock.settimeout(3.0)  # Timeout for test response
-            response_received = False
-            
-            # Try up to 3 times to get a response
-            for _ in range(3):
-                try:
-                    data = self.sock.recv(65535)
-                    if data:
-                        events = self.conn.receive_data(data)
-                        # Process events and check for response
-                        for event in events:
-                            if hasattr(event, 'stream_id') and event.stream_id == stream_id:
-                                response_received = True
+        # Send a test HTTP/2 request and wait for response only if cloudflare_origin is true
+        if self.cloudflare_origin:
+            try:
+                # Create a new stream for our test message
+                stream_id = 1
+                
+                # Send headers
+                headers = [
+                    (':method', 'GET'),
+                    (':path', '/connection-test'),
+                    (':scheme', 'https' if tls_enabled == 'true' else 'http'),
+                    (':authority', self.host),
+                    ('user-agent', 'nopasaran-http2-client'),
+                ]
+                self.conn.send_headers(stream_id, headers, end_stream=False)
+                
+                # Send a small data frame with test message
+                test_data = "Connection test from client"
+                self.conn.send_data(stream_id, test_data.encode('utf-8'), end_stream=True)
+                
+                # Send the data to the server
+                self.sock.sendall(self.conn.data_to_send())
+                
+                # Wait for response with timeout
+                self.sock.settimeout(5.0)  # Timeout for test response
+                response_received = False
+                
+                # Try up to 3 times to get a response
+                for _ in range(3):
+                    try:
+                        data = self.sock.recv(65535)
+                        if data:
+                            events = self.conn.receive_data(data)
+                            # Process events and check for response
+                            for event in events:
+                                if (hasattr(event, 'stream_id') and 
+                                    event.stream_id == stream_id and
+                                    (isinstance(event, ResponseReceived) or 
+                                     isinstance(event, DataReceived))):
+                                    response_received = True
+                                    break
+                            
+                            # Send any necessary data to acknowledge
+                            data_to_send = self.conn.data_to_send()
+                            if data_to_send:
+                                self.sock.sendall(data_to_send)
+                            
+                            if response_received:
                                 break
-                        
-                        # Send any necessary data to acknowledge
-                        data_to_send = self.conn.data_to_send()
-                        if data_to_send:
-                            self.sock.sendall(data_to_send)
-                        
-                        if response_received:
-                            break
-                except socket.timeout:
-                    continue
-            
-            if not response_received:
-                return EventNames.ERROR.name, f"No response received for test request from {self.host}:{self.port}"
-            
-        except Exception as e:
-            return EventNames.ERROR.name, f"Error during HTTP/2 test request/response with {self.host}:{self.port}: {str(e)}"
-        finally:
-            # Reset timeout to original value
-            self.sock.settimeout(self.TIMEOUT)
+                    except socket.timeout:
+                        continue
+                
+                if not response_received:
+                    return EventNames.ERROR.name, f"No response received for test request from {self.host}:{self.port}"
+                
+            except Exception as e:
+                return EventNames.ERROR.name, f"Error during HTTP/2 test request/response with {self.host}:{self.port}: {str(e)}"
+            finally:
+                # Reset timeout to original value
+                self.sock.settimeout(self.TIMEOUT)
         
         return EventNames.CLIENT_STARTED.name, f"Client successfully connected to {self.host}:{self.port} with {f'TLS with ALPN protocol {selected_protocol}' if tls_enabled == 'true' else 'non-TLS'} connection."

@@ -47,11 +47,6 @@ class HTTP2SocketServer(HTTP2SocketBase):
                 
                 # Set ALPN to only advertise h2
                 ssl_context.set_alpn_protocols(['h2'])
-                
-                # # Load certificate and key from specific paths
-                # cert_path = "/certs/server.crt"
-                # key_path = "/certs/server.key"
-                # ssl_context.load_cert_chain(cert_path, key_path)
             
             try:
                 self.client_socket = ssl_context.wrap_socket(
@@ -75,70 +70,53 @@ class HTTP2SocketServer(HTTP2SocketBase):
         self.conn.initiate_connection()
         self.client_socket.sendall(self.conn.data_to_send())
 
-        # Wait for and handle initial client data including test request
-        self.client_socket.settimeout(5.0)  # Short timeout for initial communication
-        test_request_received = False
-    
-        try:
-            data = self.client_socket.recv(65535)
-            if data:
-                events = self.conn.receive_data(data)
-                # Process events - look for test request and respond
-                for event in events:
-                    if isinstance(event, h2.events.RequestReceived):
-                        path = None
-                        for header, value in event.headers:
-                            if header == ':path':
-                                path = value
-                                break
+        # Only handle test request/response if cloudflare_origin is true
+        if self.cloudflare_origin:
+            # Wait for and handle initial client data including test request
+            self.client_socket.settimeout(5.0)  # Short timeout for initial communication
+            test_request_received = False
+        
+            for _ in range(3):  # Try up to 3 times to receive the test request
+                try:
+                    data = self.client_socket.recv(65535)
+                    if data:
+                        events = self.conn.receive_data(data)
+                        # Process events - look for test request and respond
+                        for event in events:
+                            if isinstance(event, h2.events.RequestReceived):
+                                for header, value in event.headers:
+                                    if header == ':path' and value == '/connection-test':
+                                        # This is our test request - respond to it
+                                        self.conn.send_headers(event.stream_id, [
+                                            (':status', '200'),
+                                            ('server', 'nopasaran-http2-server'),
+                                            ('content-type', 'text/plain')
+                                        ], end_stream=False)
+                                        
+                                        response_data = "Test connection successful"
+                                        self.conn.send_data(event.stream_id, response_data.encode('utf-8'), end_stream=True)
+                                        self.client_socket.sendall(self.conn.data_to_send())
+                                        test_request_received = True
+                                        break
                         
-                        if path == '/connection-test':
-                            # This is our test request - respond to it
-                            self.conn.send_headers(event.stream_id, [
-                                (':status', '200'),
-                                ('server', 'nopasaran-http2-server'),
-                                ('content-type', 'text/plain')
-                            ], end_stream=False)
+                        # Send any queued data (like SETTINGS acknowledgements)
+                        data_to_send = self.conn.data_to_send()
+                        if data_to_send:
+                            self.client_socket.sendall(data_to_send)
                             
-                            response_data = "Test connection successful"
-                            self.conn.send_data(event.stream_id, response_data.encode('utf-8'), end_stream=True)
-                            self.client_socket.sendall(self.conn.data_to_send())
-                            test_request_received = True
+                        if test_request_received:
                             break
+                            
+                except socket.timeout:
+                    return EventNames.ERROR.name, f"Timeout occurred after 5s while waiting for initial client data at {self.host}:{self.port}."
+                except Exception as e:
+                    return EventNames.ERROR.name, f"Error occurred while handling initial client data at {self.host}:{self.port}: {str(e)}"
                 
-                # Send any queued data (like SETTINGS acknowledgements)
-                data_to_send = self.conn.data_to_send()
-                if data_to_send:
-                    self.client_socket.sendall(data_to_send)
-                    
-                # If we didn't get a test request yet, try once more
-                if not test_request_received:
-                    try:
-                        data = self.client_socket.recv(65535)
-                        if data:
-                            events = self.conn.receive_data(data)
-                            for event in events:
-                                if isinstance(event, h2.events.RequestReceived):
-                                    for header, value in event.headers:
-                                        if header == ':path' and value == '/connection-test':
-                                            self.conn.send_headers(event.stream_id, [(':status', '200')], end_stream=True)
-                                            self.client_socket.sendall(self.conn.data_to_send())
-                                            test_request_received = True
-                                            break
-                    except socket.timeout:
-                        # No additional data received - continue with warning
-                        pass
-                    
-        except socket.timeout:
-            return EventNames.ERROR.name, f"Timeout occurred after 5s while waiting for initial client data at {self.host}:{self.port}."
-        except Exception as e:
-            return EventNames.ERROR.name, f"Error occurred while handling initial client data at {self.host}:{self.port}: {str(e)}"
-        finally:
             # Reset timeout to original value
             self.client_socket.settimeout(self.TIMEOUT)
 
-        if not test_request_received:
-            return EventNames.ERROR.name, f"Connection established but no test request received at {self.host}:{self.port}."
+            if not test_request_received:
+                return EventNames.ERROR.name, f"Connection established but no test request received at {self.host}:{self.port}."
 
         selected_protocol = self.client_socket.selected_alpn_protocol() if tls_enabled == 'true' else None
 

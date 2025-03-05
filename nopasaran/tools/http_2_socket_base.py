@@ -77,6 +77,12 @@ class HTTP2SocketBase:
                                 str(sent_frames),
                                 f"Connection terminated by peer: Received GOAWAY frame after sending {len(sent_frames)} of {len(frames)} frames. Error code {event.error_code}. Additional data: {event.additional_data}."
                             )
+                        elif isinstance(event, h2.events.StreamReset):
+                            return (
+                                EventNames.GOAWAY_RECEIVED.name,
+                                str(sent_frames),
+                                f"Stream {event.stream_id} reset by peer: Received StreamReset frame after sending frame #{len(sent_frames)} of {len(frames)}: {frame.get('type')}. Error code {event.error_code}."
+                            )
         
         # Final check for GOAWAY with a slightly longer timeout
         data = self._receive_frame(0.1)

@@ -47,11 +47,12 @@ class HTTP2SocketBase:
             return None
 
     def send_frames(self, frames):
-        """Send frames and check for GOAWAY response"""
+        """Send frames and check for GOAWAY response only after all frames are sent"""
         socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
         sent_frames = []
         is_server = hasattr(self, 'client_socket')
         
+        # First, send all frames without waiting between them
         for frame in frames:
             send_frame(self.conn, socket_to_use, frame, is_server)
             sent_frames.append(frame)
@@ -60,18 +61,18 @@ class HTTP2SocketBase:
             outbound_data = self.conn.data_to_send()
             if outbound_data:
                 socket_to_use.sendall(outbound_data)
-            
-            # Check for GOAWAY response after sending each frame
-            data = self._receive_frame(1.0)
-            if data is not None:
-                events = self.conn.receive_data(data)
-                for event in events:
-                    if isinstance(event, h2.events.ConnectionTerminated):
-                        return (
-                            EventNames.GOAWAY_RECEIVED.name,
-                            str(sent_frames),
-                            f"Connection terminated by peer: Received GOAWAY frame with error code {event.error_code}. Additional data: {event.additional_data}."
-                        )
+        
+        # Only check for GOAWAY after all frames are sent
+        data = self._receive_frame(0.5)  # Short timeout just to check for immediate GOAWAY
+        if data is not None:
+            events = self.conn.receive_data(data)
+            for event in events:
+                if isinstance(event, h2.events.ConnectionTerminated):
+                    return (
+                        EventNames.GOAWAY_RECEIVED.name,
+                        str(sent_frames),
+                        f"Connection terminated by peer: Received GOAWAY frame with error code {event.error_code}. Additional data: {event.additional_data}."
+                    )
         
         return EventNames.FRAMES_SENT.name, str(sent_frames), f"Successfully sent {len(sent_frames)} frames."
 

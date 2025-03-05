@@ -157,8 +157,9 @@ class HTTP2SocketBase:
                 
                 for event in events:
                     if isinstance(event, h2.events.StreamReset):
-                        if event.stream_id != 1:
-                            return EventNames.CONNECTION_TERMINATED.name, f"Stream {event.stream_id} reset after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
+                        if event.stream_id == 1:
+                            continue
+                        return EventNames.CONNECTION_TERMINATED.name, f"Stream {event.stream_id} reset after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
 
                     if isinstance(event, h2.events.ConnectionTerminated):
                         return EventNames.CONNECTION_TERMINATED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)

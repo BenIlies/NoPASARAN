@@ -434,7 +434,7 @@ def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict, is_serve
     next_legal_id = conn.get_next_available_stream_id()
     stream_id = frame_data.get('stream_id', next_legal_id - 1 if is_server else next_legal_id)
     flags = frame_data.get('flags', {})
-    payload = frame_data.get('payload', 'test')
+    payload = frame_data.get('payload', 'Hello from server!' if is_server else 'Hello from client!')
     payload_size = frame_data.get('payload_size', None)
     
     if payload_size:

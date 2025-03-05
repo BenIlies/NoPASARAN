@@ -408,12 +408,12 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict,
 def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
     """Send a TRAILERS frame"""
     stream_id = frame_data.get('stream_id', conn.get_next_available_stream_id())
-    headers = frame_data.get('headers')
+    headers = frame_data.get('headers', [])
     end_stream = frame_data.get('flags', {}).get('END_STREAM', True)
-    if headers:
+    if headers != []:
         headers = format_headers(headers)
     else:
-        headers = [('content-type', 'text/plain')]
+        headers = [('x-extra-info', 'some trailer info')]
     
     # trailer_frame = HeadersFrame(stream_id)
     # trailer_frame.data = conn.encoder.encode(headers)

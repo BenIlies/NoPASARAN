@@ -17,7 +17,7 @@ class HTTP2SocketBase:
         self.sock = None
         self.conn = None
         self.MAX_RETRY_ATTEMPTS = 3
-        self.TIMEOUT = 5
+        self.TIMEOUT = 10
         self.cloudflare_origin = False
 
     def _receive_frame(self) -> bytes:
@@ -157,7 +157,8 @@ class HTTP2SocketBase:
                 
                 for event in events:
                     if isinstance(event, h2.events.StreamReset):
-                        return EventNames.CONNECTION_TERMINATED.name, f"Stream {event.stream_id} reset after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
+                        if event.stream_id != 1:
+                            return EventNames.CONNECTION_TERMINATED.name, f"Stream {event.stream_id} reset after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
 
                     if isinstance(event, h2.events.ConnectionTerminated):
                         return EventNames.CONNECTION_TERMINATED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)

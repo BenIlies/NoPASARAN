@@ -54,7 +54,7 @@ class HTTP2SocketBase:
         
         for frame in frames:
             # Send the current frame
-            send_frame(self.conn, socket_to_use, frame, is_server)
+            send_frame(self.conn, socket_to_use, frame, is_server, self.cloudflare_origin)
             sent_frames.append(frame)
 
             # Flush socket after each frame to ensure it's sent

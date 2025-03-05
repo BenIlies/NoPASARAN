@@ -57,7 +57,7 @@ class HTTP2SocketClient(HTTP2SocketBase):
         
         # Wait for server settings first
         try:
-            self.sock.settimeout(2.0)  # Short timeout for settings
+            self.sock.settimeout(self.TIMEOUT)  # Short timeout for settings
             data = self.sock.recv(65535)
             if data:
                 self.conn.receive_data(data)
@@ -94,11 +94,11 @@ class HTTP2SocketClient(HTTP2SocketBase):
                 self.sock.sendall(self.conn.data_to_send())
                 
                 # Wait for response with timeout
-                self.sock.settimeout(5.0)  # Timeout for test response
+                self.sock.settimeout(self.TIMEOUT)  # Timeout for test response
                 response_received = False
                 
                 # Try up to 3 times to get a response
-                for _ in range(3):
+                for _ in range(self.MAX_RETRY_ATTEMPTS):
                     try:
                         data = self.sock.recv(65535)
                         if data:

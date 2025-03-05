@@ -73,10 +73,10 @@ class HTTP2SocketServer(HTTP2SocketBase):
         # Only handle test request/response if cloudflare_origin is true
         if self.cloudflare_origin:
             # Wait for and handle initial client data including test request
-            self.client_socket.settimeout(5.0)  # Short timeout for initial communication
+            self.client_socket.settimeout(self.TIMEOUT)  # Short timeout for initial communication
             test_request_received = False
         
-            for _ in range(3):  # Try up to 3 times to receive the test request
+            for _ in range(self.MAX_RETRY_ATTEMPTS):  # Try up to 3 times to receive the test request
                 try:
                     data = self.client_socket.recv(65535)
                     if data:

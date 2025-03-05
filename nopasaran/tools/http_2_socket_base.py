@@ -47,13 +47,13 @@ class HTTP2SocketBase:
             return None
 
     def send_frames(self, frames):
-        """Send frames and check for GOAWAY response only after all frames are sent"""
+        """Send frames with GOAWAY checking after each frame"""
         socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
         sent_frames = []
         is_server = hasattr(self, 'client_socket')
         
-        # First, send all frames without waiting between them
         for frame in frames:
+            # Send the current frame
             send_frame(self.conn, socket_to_use, frame, is_server)
             sent_frames.append(frame)
 
@@ -61,9 +61,25 @@ class HTTP2SocketBase:
             outbound_data = self.conn.data_to_send()
             if outbound_data:
                 socket_to_use.sendall(outbound_data)
+            
+            # Use non-blocking check after each frame with minimal timeout
+            ready_to_read, _, _ = select.select([socket_to_use], [], [], 0.01)  # 10ms timeout
+            
+            if ready_to_read:
+                # Data is available, check for GOAWAY
+                data = self._receive_frame(timeout=0.05)  # Very short timeout
+                if data:
+                    events = self.conn.receive_data(data)
+                    for event in events:
+                        if isinstance(event, h2.events.ConnectionTerminated):
+                            return (
+                                EventNames.GOAWAY_RECEIVED.name,
+                                str(sent_frames),
+                                f"Connection terminated by peer: Received GOAWAY frame after sending {len(sent_frames)} of {len(frames)} frames. Error code {event.error_code}. Additional data: {event.additional_data}."
+                            )
         
-        # Only check for GOAWAY after all frames are sent
-        data = self._receive_frame(0.5)  # Short timeout just to check for immediate GOAWAY
+        # Final check for GOAWAY with a slightly longer timeout
+        data = self._receive_frame(0.1)
         if data is not None:
             events = self.conn.receive_data(data)
             for event in events:

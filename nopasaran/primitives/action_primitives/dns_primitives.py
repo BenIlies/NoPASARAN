@@ -325,10 +325,6 @@ class DNSPrimitives:
         Returns:
             None
         """
-        # Ensure query name is in bytes format
-        if isinstance(new_query_name, str):
-            new_query_name = new_query_name.encode()
-            
         dns_query = state_machine.get_variable_value(inputs[0])
         new_query_name = state_machine.get_variable_value(inputs[1])
         dns_query.qname = new_query_name

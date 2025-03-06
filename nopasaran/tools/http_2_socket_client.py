@@ -12,7 +12,6 @@ from nopasaran.http_2_utils import (
 from nopasaran.tools.http_2_socket_base import HTTP2SocketBase
 import socket
 import time
-import ssl
 
 class HTTP2SocketClient(HTTP2SocketBase):
     def start(self, tls_enabled = False, protocol = 'h2', connection_settings_client = {}, cloudflare_origin = False):
@@ -29,18 +28,6 @@ class HTTP2SocketClient(HTTP2SocketBase):
                 ssl_context = create_ssl_context(
                     protocol=protocol,
                     is_client=True
-                )
-                
-                # Set compatible cipher suites for mitmproxy
-                ssl_context.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384')
-                
-                # Force TLS 1.2 only to match mitmproxy settings
-                ssl_context.options |= (
-                    ssl.OP_NO_SSLv2 | 
-                    ssl.OP_NO_SSLv3 | 
-                    ssl.OP_NO_TLSv1 | 
-                    ssl.OP_NO_TLSv1_1 |
-                    ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
                 )
                 
                 self.sock = ssl_context.wrap_socket(

@@ -95,11 +95,17 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, u
         # For testing, disable certificate verification
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
+        
+        # Set compatible cipher suites for mitmproxy
+        ssl_context.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-GCM-SHA384:HIGH:!aNULL:!MD5:!RC4')
     else:
         ssl_context = ssl.create_default_context(
             purpose=ssl.Purpose.CLIENT_AUTH
         )
         ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
+        
+        # Set compatible cipher suites for mitmproxy
+        ssl_context.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-GCM-SHA384:HIGH:!aNULL:!MD5:!RC4')
     
     # Configure ALPN protocols - order matters for server preference!
     if protocol == 'h2':
@@ -137,8 +143,14 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, u
             os.unlink(temp_cert)
             os.unlink(temp_key)
     
-    # Additional security settings
-    ssl_context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # Only TLS 1.2+
+    # Force TLS 1.2 only to match mitmproxy settings
+    ssl_context.options |= (
+        ssl.OP_NO_SSLv2 | 
+        ssl.OP_NO_SSLv3 | 
+        ssl.OP_NO_TLSv1 | 
+        ssl.OP_NO_TLSv1_1 |
+        ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
+    )
     
     return ssl_context
 

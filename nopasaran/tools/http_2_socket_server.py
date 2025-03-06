@@ -47,9 +47,6 @@ class HTTP2SocketServer(HTTP2SocketBase):
                 
                 # Set ALPN to only advertise h2
                 ssl_context.set_alpn_protocols(['h2'])
-                
-                # Set cipher suites that are compatible with mitmproxy
-                ssl_context.set_ciphers('ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384')
             
             try:
                 self.client_socket = ssl_context.wrap_socket(

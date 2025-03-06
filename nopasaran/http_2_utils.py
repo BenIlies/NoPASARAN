@@ -129,9 +129,6 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, u
         if use_embedded_certs:
             # Use the embedded certificates
             ssl_context = load_embedded_certificates(ssl_context)
-        elif cloudflare_origin and os.path.exists("certs/cloudflare/server.crt") and os.path.exists("certs/cloudflare/server.key"):
-            # Use Cloudflare Origin Certificate if available
-            ssl_context.load_cert_chain("certs/cloudflare/server.crt", "certs/cloudflare/server.key")
         else:
             # Generate temporary certificates if none provided
             temp_cert, temp_key = generate_temp_certificates()

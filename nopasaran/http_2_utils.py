@@ -223,7 +223,7 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict,
         headers.extend(duplicate_headers)
         
     flags = frame_data.get('flags', {})
-    end_stream = flags.get('END_STREAM', True)
+    end_stream = flags.get('END_STREAM', False)
     end_headers = flags.get('END_HEADERS', True)
     
     if frame_data.get('reserved_bit') or frame_data.get('raw_frame'):
@@ -318,13 +318,13 @@ def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict, is_serve
     conn.send_data(
         stream_id=stream_id,
         data=payload,
-        end_stream=flags.get('END_STREAM', True)
+        end_stream=flags.get('END_STREAM', False)
     )
 
 def send_unknown_frame(sock: socket.socket, frame_data: Dict, cloudflare_origin: bool = False):
     """Send an UNKNOWN frame"""
-    payload = frame_data.get('payload', '').encode('utf-8')
-    frame_type_id = frame_data.get('frame_type_id')
+    payload = frame_data.get('payload', 'test payload').encode('utf-8')
+    frame_type_id = frame_data.get('frame_type_id', '99')
     flags = frame_data.get('flags', [])
     flags_byte = sum(1 << i for i, flag in enumerate(flags))
     stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
@@ -449,7 +449,7 @@ def send_push_promise_frame(conn: h2.connection.H2Connection, sock: socket.socke
     headers = frame_data.get('headers')
     flags = frame_data.get('flags', {})
     end_headers = flags.get('END_HEADERS', True)
-    end_stream = flags.get('END_STREAM', True)
+    end_stream = flags.get('END_STREAM', False)
     
     if headers:
         headers = format_headers(headers)

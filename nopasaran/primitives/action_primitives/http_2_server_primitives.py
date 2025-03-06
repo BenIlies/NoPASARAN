@@ -38,15 +38,14 @@ class HTTP2ServerPrimitives:
 
 
     @staticmethod
-    @parsing_decorator(input_args=5, output_args=2)
+    @parsing_decorator(input_args=4, output_args=2)
     def start_http_2_server(inputs, outputs, state_machine):
         """
         Start the HTTP/2 server.
 
-        Number of input arguments: 5
+        Number of input arguments: 4
             - The HTTP2SocketServer instance
             - The tls_enabled flag
-            - The TLS protocol to use
             - The connection settings for the server
             - The cloudflare_origin flag
         Number of output arguments: 2
@@ -57,7 +56,6 @@ class HTTP2ServerPrimitives:
             inputs (List[str]): The list of input variable names containing:
                 - The name of the HTTP2SocketServer instance variable
                 - The name of the tls_enabled flag variable
-                - The name of the TLS protocol variable
                 - The name of the connection settings variable
                 - The name of the cloudflare_origin flag variable
 
@@ -69,14 +67,18 @@ class HTTP2ServerPrimitives:
 
         Returns:
             None
+
+        Possible events:
+            - EventNames.ERROR
+            - EventNames.SERVER_STARTED
+            - EventNames.TIMEOUT
         """
         server = state_machine.get_variable_value(inputs[0])
         tls_enabled = state_machine.get_variable_value(inputs[1])
-        protocol = state_machine.get_variable_value(inputs[2])
-        connection_settings_server = state_machine.get_variable_value(inputs[3])
-        cloudflare_origin = state_machine.get_variable_value(inputs[4])
+        connection_settings_server = state_machine.get_variable_value(inputs[2])
+        cloudflare_origin = state_machine.get_variable_value(inputs[3])
 
-        event, msg = server.start(tls_enabled, protocol, connection_settings_server, cloudflare_origin)
+        event, msg = server.start(tls_enabled, connection_settings_server, cloudflare_origin)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
 
@@ -174,6 +176,13 @@ class HTTP2ServerPrimitives:
 
         Returns:
             None
+
+        Possible events:
+            - EventNames.TIMEOUT
+            - EventNames.RESET_RECEIVED
+            - EventNames.GOAWAY_RECEIVED
+            - EventNames.REJECTED
+            - EventNames.RECEIVED_FRAMES
         """
         server = state_machine.get_variable_value(inputs[0])
         test_frames = state_machine.get_variable_value(inputs[1])
@@ -211,6 +220,12 @@ class HTTP2ServerPrimitives:
 
         Returns:
             None
+
+        Possible events:
+            - EventNames.FRAMES_SENT
+            - EventNames.GOAWAY_RECEIVED
+            - EventNames.RESET_RECEIVED
+            - EventNames.REJECTED
         """
         server = state_machine.get_variable_value(inputs[0])
         server_frames = state_machine.get_variable_value(inputs[1])

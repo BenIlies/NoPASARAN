@@ -14,7 +14,7 @@ import socket
 import time
 
 class HTTP2SocketClient(HTTP2SocketBase):
-    def start(self, tls_enabled = False, protocol = 'h2', connection_settings_client = {}, cloudflare_origin = False):
+    def start(self, tls_enabled = False, connection_settings_client = {}, cloudflare_origin = False):
         """Start the HTTP/2 client"""
         self.cloudflare_origin = True if cloudflare_origin == 'true' else False
 
@@ -36,9 +36,9 @@ class HTTP2SocketClient(HTTP2SocketBase):
                 )
             
         except TimeoutError as e:
-            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while trying to connect to server at {self.host}:{self.port}: {e}"
+            return EventNames.ERROR.name, f"Timeout occurred after {self.TIMEOUT}s while trying to connect to server at {self.host}:{self.port}: {e}"
         except ConnectionRefusedError as e:
-            return EventNames.TIMEOUT.name, f"Connection refused by server at {self.host}:{self.port}. Server may not be running or port may be blocked: {e}"
+            return EventNames.ERROR.name, f"Connection refused by server at {self.host}:{self.port}. Server may not be running or port may be blocked: {e}"
         
         config_settings = H2_CONFIG_SETTINGS.copy()
         config_settings.update(connection_settings_client)
@@ -66,7 +66,7 @@ class HTTP2SocketClient(HTTP2SocketBase):
                 if data_to_send:
                     self.sock.sendall(data_to_send)
         except socket.timeout:
-            return EventNames.ERROR.name, f"No initial settings received from peer at {self.host}:{self.port}"
+            return EventNames.REJECTED.name, f"No initial settings received from peer at {self.host}:{self.port}"
         except Exception as e:
             return EventNames.ERROR.name, f"Error receiving initial settings from peer at {self.host}:{self.port}: {str(e)}"
         
@@ -123,7 +123,7 @@ class HTTP2SocketClient(HTTP2SocketBase):
                         continue
                 
                 if not response_received:
-                    return EventNames.ERROR.name, f"No response received for test request from {self.host}:{self.port}"
+                    return EventNames.TIMEOUT.name, f"No response received for test request from {self.host}:{self.port}"
                 
             except Exception as e:
                 return EventNames.ERROR.name, f"Error during HTTP/2 test request/response with {self.host}:{self.port}: {str(e)}"

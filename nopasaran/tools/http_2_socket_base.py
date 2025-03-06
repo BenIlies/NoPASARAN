@@ -79,11 +79,20 @@ class HTTP2SocketBase:
                             )
                         elif isinstance(event, h2.events.StreamReset):
                             return (
-                                EventNames.GOAWAY_RECEIVED.name,
+                                EventNames.RESET_RECEIVED.name,
                                 str(sent_frames),
                                 f"Stream {event.stream_id} reset by peer: Received StreamReset frame after sending frame #{len(sent_frames)} of {len(frames)}: {frame.get('type')}. Error code {event.error_code}."
                             )
-        
+                        elif isinstance(event, h2.events.ResponseReceived) or isinstance(event, h2.events.RequestReceived):
+                            # check for 5xx status code
+                            for header_name, header_value in event.headers:
+                                if header_name == ':status' and int(header_value) >= 500:
+                                        return (
+                                            EventNames.REJECTED.name,
+                                            str(sent_frames),
+                                            f"Received 5xx status code {header_value} after receiving {len(sent_frames)}/{len(frames)} frames."
+                                        )
+
         # Final check for GOAWAY with a slightly longer timeout
         data = self._receive_frame(0.1)
         if data is not None:
@@ -207,10 +216,10 @@ class HTTP2SocketBase:
                     if isinstance(event, h2.events.StreamReset):
                         if event.stream_id == 1:
                             continue
-                        return EventNames.CONNECTION_TERMINATED.name, f"Stream {event.stream_id} reset after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
+                        return EventNames.RESET_RECEIVED.name, f"Stream {event.stream_id} reset after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
 
                     if isinstance(event, h2.events.ConnectionTerminated):
-                        return EventNames.CONNECTION_TERMINATED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
+                        return EventNames.GOAWAY_RECEIVED.name, f"Peer terminated connection after receiving {len(frames_received)}/{expected_frame_count} frames. Got error code {event.error_code}.", str(events)
                     
                     # Skip initial settings frame
                     if isinstance(event, h2.events.RemoteSettingsChanged):
@@ -232,9 +241,8 @@ class HTTP2SocketBase:
                     if isinstance(event, h2.events.ResponseReceived) or isinstance(event, h2.events.RequestReceived):
                         # check for 5xx status code
                         for header_name, header_value in event.headers:
-                            if header_name == ':status':
-                                if int(header_value) >= 500:
-                                    return EventNames.CONNECTION_TERMINATED.name, f"Received 5xx status code {header_value} after receiving {len(frames_received)}/{expected_frame_count} frames.", str(event)
+                            if header_name == ':status' and int(header_value) >= 500:
+                                return EventNames.REJECTED.name, f"Received 5xx status code {header_value} after receiving {len(frames_received)}/{expected_frame_count} frames.", str(event)
 
                     # Filter for connection-test headers
                     if isinstance(event, h2.events.RequestReceived):
@@ -245,24 +253,7 @@ class HTTP2SocketBase:
                     frames_received.append(event)
 
                     if len(frames_received) == expected_frame_count:
-                        return EventNames.TEST_COMPLETED.name, f"Successfully received all {len(frames_received)}/{expected_frame_count} frames.", str(frames_received)
-                    
-                    # Check tests after each frame is received
-                    # for expected_frame in test_frames:
-                    #     result, test_index = self._handle_test(event, expected_frame)
-                    #     if result is True:
-                    #         return EventNames.TEST_COMPLETED.name, f'Test {test_index} passed successfully. Matching frame: {event}', str(frames_received)        
-        # If we get here with all frames but no test passed
-        # if expected_frame_count == 0:
-        #     if len(frames_received) == 0:
-        #         return EventNames.TEST_COMPLETED.name, "No frames were expected or received", str(frames_received)
-        #     else:
-        #         return EventNames.TEST_COMPLETED.name, f"Received {len(frames_received)} unexpected frames", str(frames_received)
-        
-        # if result is False:
-        #     return EventNames.TEST_COMPLETED.name, f"Successfully received all {expected_frame_count} frames but none matched test criteria.", str(frames_received)
-        # else:
-        #     return EventNames.TEST_COMPLETED.name, f"Successfully received all {expected_frame_count} expected frames.", str(frames_received)
+                        return EventNames.RECEIVED_FRAMES.name, f"Successfully received all {len(frames_received)}/{expected_frame_count} frames.", str(frames_received)
 
     def close(self):
         """Close the HTTP/2 connection and clean up resources"""

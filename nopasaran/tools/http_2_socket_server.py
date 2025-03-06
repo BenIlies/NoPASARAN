@@ -16,7 +16,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
         super().__init__(host, port)
         self.client_socket = None
 
-    def start(self, tls_enabled = False, protocol = 'h2', connection_settings_server = {}, cloudflare_origin = False):
+    def start(self, tls_enabled = False, connection_settings_server = {}, cloudflare_origin = False):
         """Start the HTTP/2 server"""
         self.cloudflare_origin = True if cloudflare_origin == 'true' else False
 

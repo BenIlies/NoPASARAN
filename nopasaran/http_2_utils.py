@@ -88,36 +88,63 @@ Y/ryzgff8qQY7HLuCVsj5g==
 
 def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, use_embedded_certs=False):
     """Create SSL context with the specified protocol"""
-    # Create a completely fresh context with minimal restrictions
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+    if is_client:
+        ssl_context = ssl.create_default_context(
+            purpose=ssl.Purpose.SERVER_AUTH
+        )
+        # For testing, disable certificate verification
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+    else:
+        ssl_context = ssl.create_default_context(
+            purpose=ssl.Purpose.CLIENT_AUTH
+        )
+        ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
-    # Disable certificate verification for testing
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-    
-    # Use a very permissive cipher list that should work with mitmproxy
-    ssl_context.set_ciphers('ALL:@SECLEVEL=0')
-    
-    # Configure ALPN protocols
+    # Configure ALPN protocols - order matters for server preference!
     if protocol == 'h2':
+        # HTTP/2 only
         ssl_context.set_alpn_protocols(['h2'])
     elif protocol == 'h2,http/1.1' or protocol == 'http/1.1,h2':
+        # Always prioritize HTTP/2 over HTTP/1.1 regardless of input order
         ssl_context.set_alpn_protocols(['h2', 'http/1.1'])
     elif isinstance(protocol, str):
+        # Handle comma-separated protocol string
         protocols = [p.strip() for p in protocol.split(',')]
+        # Always ensure h2 is first if it's in the list
+        if 'h2' in protocols:
+            protocols.remove('h2')
+            protocols.insert(0, 'h2')
         ssl_context.set_alpn_protocols(protocols)
     elif isinstance(protocol, list):
-        ssl_context.set_alpn_protocols(protocol)
+        # Handle protocol list
+        protocols = protocol.copy()
+        # Always ensure h2 is first if it's in the list
+        if 'h2' in protocols:
+            protocols.remove('h2')
+            protocols.insert(0, 'h2')
+        ssl_context.set_alpn_protocols(protocols)
     
-    # Load certificates for server mode
     if not is_client:
         if use_embedded_certs:
+            # Use the embedded certificates
             ssl_context = load_embedded_certificates(ssl_context)
         else:
+            # Generate temporary certificates if none provided
             temp_cert, temp_key = generate_temp_certificates()
             ssl_context.load_cert_chain(temp_cert, temp_key)
+            # Clean up temporary files
             os.unlink(temp_cert)
             os.unlink(temp_key)
+    
+    # Force TLS 1.2 only to match mitmproxy settings
+    ssl_context.options |= (
+        ssl.OP_NO_SSLv2 | 
+        ssl.OP_NO_SSLv3 | 
+        ssl.OP_NO_TLSv1 | 
+        ssl.OP_NO_TLSv1_1 |
+        ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
+    )
     
     return ssl_context
 

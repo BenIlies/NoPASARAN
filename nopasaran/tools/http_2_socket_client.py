@@ -15,8 +15,9 @@ import time
 
 class HTTP2SocketClient(HTTP2SocketBase):
     def start(self, tls_enabled = False, protocol = 'h2', connection_settings_client = {}, cloudflare_origin = False):
-        """Handle IDLE state: Create connection and move to WAITING_PREFACE"""
+        """Start the HTTP/2 client"""
         self.cloudflare_origin = True if cloudflare_origin == 'true' else False
+
         self.sock = create_socket(self.host, self.port)
         self.sock.settimeout(self.TIMEOUT)  # Set socket timeout
         
@@ -26,7 +27,6 @@ class HTTP2SocketClient(HTTP2SocketBase):
             
             if tls_enabled == 'true':
                 ssl_context = create_ssl_context(
-                    protocol=protocol,
                     is_client=True
                 )
                 
@@ -66,9 +66,9 @@ class HTTP2SocketClient(HTTP2SocketBase):
                 if data_to_send:
                     self.sock.sendall(data_to_send)
         except socket.timeout:
-            return EventNames.ERROR.name, f"No initial settings received from server at {self.host}:{self.port}"
+            return EventNames.ERROR.name, f"No initial settings received from peer at {self.host}:{self.port}"
         except Exception as e:
-            return EventNames.ERROR.name, f"Error receiving initial settings from {self.host}:{self.port}: {str(e)}"
+            return EventNames.ERROR.name, f"Error receiving initial settings from peer at {self.host}:{self.port}: {str(e)}"
         
         # Send a test HTTP/2 request and wait for response only if cloudflare_origin is true
         if self.cloudflare_origin:

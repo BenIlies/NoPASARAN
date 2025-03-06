@@ -24,8 +24,6 @@ import io
 
 class SSL_CONFIG:
     """SSL configuration constants"""
-    CERT_PATH = "server.crt"
-    KEY_PATH = "server.key"
     MAX_BUFFER_SIZE = 65535
 
 # Define your certificates as string constants
@@ -86,7 +84,7 @@ lLYvHR05hvsABWzD7a4+VBt1wALrLvckl8zZIFYrY8B3KIjpcJI+SYmuZKEDNFFz
 Y/ryzgff8qQY7HLuCVsj5g==
 -----END PRIVATE KEY-----"""
 
-def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, use_embedded_certs=False):
+def create_ssl_context(is_client=False, use_embedded_certs=False):
     """Create SSL context with the specified protocol"""
     if is_client:
         ssl_context = ssl.create_default_context(
@@ -101,29 +99,7 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, u
         )
         ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
-    # Configure ALPN protocols - order matters for server preference!
-    if protocol == 'h2':
-        # HTTP/2 only
-        ssl_context.set_alpn_protocols(['h2'])
-    elif protocol == 'h2,http/1.1' or protocol == 'http/1.1,h2':
-        # Always prioritize HTTP/2 over HTTP/1.1 regardless of input order
-        ssl_context.set_alpn_protocols(['h2', 'http/1.1'])
-    elif isinstance(protocol, str):
-        # Handle comma-separated protocol string
-        protocols = [p.strip() for p in protocol.split(',')]
-        # Always ensure h2 is first if it's in the list
-        if 'h2' in protocols:
-            protocols.remove('h2')
-            protocols.insert(0, 'h2')
-        ssl_context.set_alpn_protocols(protocols)
-    elif isinstance(protocol, list):
-        # Handle protocol list
-        protocols = protocol.copy()
-        # Always ensure h2 is first if it's in the list
-        if 'h2' in protocols:
-            protocols.remove('h2')
-            protocols.insert(0, 'h2')
-        ssl_context.set_alpn_protocols(protocols)
+    ssl_context.set_alpn_protocols(['h2'])
     
     if not is_client:
         if use_embedded_certs:
@@ -137,14 +113,8 @@ def create_ssl_context(protocol='h2', is_client=True, cloudflare_origin=False, u
             os.unlink(temp_cert)
             os.unlink(temp_key)
     
-    # Force TLS 1.2 only to match mitmproxy settings
-    ssl_context.options |= (
-        ssl.OP_NO_SSLv2 | 
-        ssl.OP_NO_SSLv3 | 
-        ssl.OP_NO_TLSv1 | 
-        ssl.OP_NO_TLSv1_1 |
-        ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
-    )
+    # Additional security settings
+    ssl_context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # Only TLS 1.2+
     
     return ssl_context
 

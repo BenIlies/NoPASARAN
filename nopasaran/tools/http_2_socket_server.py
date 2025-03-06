@@ -19,6 +19,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
     def start(self, tls_enabled = False, protocol = 'h2', connection_settings_server = {}, cloudflare_origin = False):
         """Start the HTTP/2 server"""
         self.cloudflare_origin = True if cloudflare_origin == 'true' else False
+
         self.sock = create_socket(self.host, self.port, is_server=True)
         self.sock.listen(5)
         
@@ -30,23 +31,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
             return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {self.host}:{self.port}."
 
         if tls_enabled == 'true':
-            if self.cloudflare_origin:
-                # Use embedded certificates when cloudflare mode is enabled
-                ssl_context = create_ssl_context(protocol=protocol, is_client=False, cloudflare_origin=True, use_embedded_certs=True)
-            else:
-                ssl_context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-                
-                # Force TLS 1.2 only (like OpenSSL's -tls1_2 flag)
-                ssl_context.options |= (
-                    ssl.OP_NO_SSLv2 | 
-                    ssl.OP_NO_SSLv3 | 
-                    ssl.OP_NO_TLSv1 | 
-                    ssl.OP_NO_TLSv1_1 |
-                    ssl.OP_NO_TLSv1_3  # Exclude TLS 1.3
-                )
-                
-                # Set ALPN to only advertise h2
-                ssl_context.set_alpn_protocols(['h2'])
+            ssl_context = create_ssl_context(use_embedded_certs=self.cloudflare_origin)
             
             try:
                 self.client_socket = ssl_context.wrap_socket(

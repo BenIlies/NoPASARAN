@@ -769,9 +769,7 @@ class DNSPrimitives:
 
 
 
-from scapy.all import IP, UDP, DNS, DNSQR, sr1
 
-class DNSPrimitives:
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def modify_DNS_packet_for_authoritative_response(inputs, outputs, state_machine):

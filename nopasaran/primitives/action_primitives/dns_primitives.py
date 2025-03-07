@@ -737,6 +737,8 @@ class DNSPrimitives:
             nonce_value = None
 
         state_machine.set_variable_value(outputs[0], nonce_value)
+    
+    @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def change_EDNS_nonce_in_DNS_packet(inputs, outputs, state_machine):
         """

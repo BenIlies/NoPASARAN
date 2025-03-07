@@ -769,6 +769,9 @@ class DNSPrimitives:
 
 
 
+from scapy.all import IP, UDP, DNS, DNSQR, sr1
+
+class DNSPrimitives:
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def modify_DNS_packet_for_authoritative_response(inputs, outputs, state_machine):
@@ -795,21 +798,35 @@ class DNSPrimitives:
         dns_packet = state_machine.get_variable_value(inputs[0])
 
         # Ensure the packet contains a DNS query
-        if dns_packet.haslayer(DNS) and dns_packet[DNS].qdcount > 0:
-            domain_name = dns_packet[DNSQR].qname.decode()  # Extract the queried domain name
-
-            # Preserve the original destination IP (assumed resolver)
-            resolver_ip = dns_packet[IP].dst
-
-            # Construct a new DNS query with recursion disabled (RD=0)
-            modified_dns_query = IP(dst=resolver_ip) / UDP() / DNS(
-                id=dns_packet[DNS].id,  # Keep the original transaction ID
-                rd=0,  # Disable recursion to request an authoritative response
-                qd=DNSQR(qname=domain_name)  # Keep the original domain query
-            )
-
-            # Store the modified DNS packet in the state machine
-            state_machine.set_variable_value(outputs[0], modified_dns_query)
-        else:
-            # If no valid DNS query is found, return the original packet unmodified
+        if not dns_packet or not dns_packet.haslayer(DNS):
+            print("[Error] Invalid DNS packet: Missing DNS layer.")
             state_machine.set_variable_value(outputs[0], dns_packet)
+            return
+
+        # Check if qdcount exists and is greater than zero
+        if getattr(dns_packet[DNS], "qdcount", 0) == 0 or not dns_packet.haslayer(DNSQR):
+            print("[Error] DNS packet does not contain a valid query section (qd).")
+            state_machine.set_variable_value(outputs[0], dns_packet)
+            return
+
+        # Extract the queried domain name safely
+        domain_name = dns_packet[DNSQR].qname.decode() if dns_packet[DNSQR].qname else None
+
+        if domain_name is None:
+            print("[Error] Failed to extract domain name from DNS query.")
+            state_machine.set_variable_value(outputs[0], dns_packet)
+            return
+
+        # Preserve the original resolver's IP address
+        resolver_ip = dns_packet[IP].dst if dns_packet.haslayer(IP) else "8.8.8.8"  # Default to Google DNS if missing
+
+        # Construct a new DNS query with recursion disabled (RD=0)
+        modified_dns_query = IP(dst=resolver_ip) / UDP() / DNS(
+            id=dns_packet[DNS].id,  # Keep the original transaction ID
+            rd=0,  # Disable recursion to request an authoritative response
+            qd=DNSQR(qname=domain_name)  # Keep the original domain query
+        )
+
+        # Store the modified DNS packet in the state machine
+        state_machine.set_variable_value(outputs[0], modified_dns_query)
+

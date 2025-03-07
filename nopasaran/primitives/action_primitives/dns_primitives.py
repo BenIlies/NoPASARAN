@@ -1,4 +1,4 @@
-from scapy.all import IP, UDP, DNS, DNSQR, DNSRR
+from scapy.all import IP, UDP, DNS, DNSQR, DNSRR, DNSRROPT
 from nopasaran.decorators import parsing_decorator
 
 
@@ -677,3 +677,62 @@ class DNSPrimitives:
         dns_additional_answer = dns_packet.ar
 
         state_machine.set_variable_value(outputs[0], dns_additional_answer)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def add_EDNS_nonce_to_DNS_packet(inputs, outputs, state_machine):
+        """
+        Add an EDNS(0) nonce to an existing DNS packet to bypass caching.
+
+        Number of input arguments: 1
+        - The DNS packet to modify.
+
+        Number of output arguments: 1
+        - The name of the variable to store the modified DNS packet.
+
+        Args:
+            inputs (List[str]): The list of input variable names containing the DNS packet.
+            outputs (List[str]): The list of output variable names containing the modified DNS packet.
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        random_nonce = random.randint(100000, 999999)  # Generate a random nonce
+
+        # Ensure EDNS(0) is added
+        if not dns_packet.haslayer(DNSRROPT):
+            dns_packet /= DNSRROPT(rclass=4096, rdata=bytes([random_nonce % 256]))
+        else:
+            dns_packet[DNSRROPT].rdata = bytes([random_nonce % 256])
+        
+        state_machine.set_variable_value(outputs[0], dns_packet)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_DNS_nonce_from_packet(inputs, outputs, state_machine):
+        """
+        Extract the EDNS(0) nonce from a DNS packet.
+
+        Number of input arguments: 1
+        - The DNS packet.
+
+        Number of output arguments: 1
+        - The extracted nonce value.
+
+        Args:
+            inputs (List[str]): The list of input variable names containing the DNS packet.
+            outputs (List[str]): The list of output variable names containing the extracted nonce.
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        if dns_packet.haslayer(DNSRROPT):
+            nonce_value = dns_packet[DNSRROPT].rdata[0]
+        else:
+            nonce_value = None
+
+        state_machine.set_variable_value(outputs[0], nonce_value)

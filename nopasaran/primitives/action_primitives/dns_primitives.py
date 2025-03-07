@@ -1,4 +1,5 @@
 from scapy.all import IP, UDP, DNS, DNSQR, DNSRR, DNSRROPT
+import random
 from nopasaran.decorators import parsing_decorator
 
 

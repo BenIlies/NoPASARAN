@@ -679,6 +679,8 @@ class DNSPrimitives:
 
         state_machine.set_variable_value(outputs[0], dns_additional_answer)
 
+
+
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def add_EDNS_nonce_to_DNS_packet(inputs, outputs, state_machine):
@@ -700,14 +702,14 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        random_nonce = random.randint(100000, 999999)  # Generate a random nonce
+        random_nonce = random.randint(100000, 999999)  # Generate a 6-digit random nonce
 
-        # Ensure EDNS(0) is added
+        # Ensure EDNS(0) is added with a 4-byte nonce
         if not dns_packet.haslayer(DNSRROPT):
-            dns_packet /= DNSRROPT(rclass=4096, rdata=bytes([random_nonce % 256]))
+            dns_packet /= DNSRROPT(rclass=4096, rdata=random_nonce.to_bytes(4, "big"))
         else:
-            dns_packet[DNSRROPT].rdata = bytes([random_nonce % 256])
-        
+            dns_packet[DNSRROPT].rdata = random_nonce.to_bytes(4, "big")
+
         state_machine.set_variable_value(outputs[0], dns_packet)
 
     @staticmethod
@@ -731,13 +733,14 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        if dns_packet.haslayer(DNSRROPT):
-            nonce_value = dns_packet[DNSRROPT].rdata[0]
+
+        if dns_packet.haslayer(DNSRROPT) and len(dns_packet[DNSRROPT].rdata) >= 4:
+            nonce_value = int.from_bytes(dns_packet[DNSRROPT].rdata[:4], "big")
         else:
-            nonce_value = None
+            nonce_value = None  # No valid nonce found
 
         state_machine.set_variable_value(outputs[0], nonce_value)
-    
+
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def change_EDNS_nonce_in_DNS_packet(inputs, outputs, state_machine):
@@ -759,15 +762,13 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        random_nonce = random.randint(100000, 999999)  # Generate a new random nonce
+        new_nonce = random.randint(100000, 999999)  # Generate a new 6-digit random nonce
 
         # Modify only the EDNS(0) nonce, keeping EDNS(0) enabled
         if dns_packet.haslayer(DNSRROPT):
-            dns_packet[DNSRROPT].rdata = bytes([random_nonce % 256])
-        
+            dns_packet[DNSRROPT].rdata = new_nonce.to_bytes(4, "big")
+
         state_machine.set_variable_value(outputs[0], dns_packet)
-
-
 
 
     @staticmethod

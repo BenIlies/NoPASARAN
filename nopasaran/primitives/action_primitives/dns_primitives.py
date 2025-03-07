@@ -737,3 +737,30 @@ class DNSPrimitives:
             nonce_value = None
 
         state_machine.set_variable_value(outputs[0], nonce_value)
+    @parsing_decorator(input_args=1, output_args=1)
+    def change_EDNS_nonce_in_DNS_packet(inputs, outputs, state_machine):
+        """
+        Change the EDNS(0) nonce in an existing DNS packet while keeping EDNS(0) enabled.
+
+        Number of input arguments: 1
+        - The DNS packet to modify.
+
+        Number of output arguments: 1
+        - The name of the variable to store the modified DNS packet.
+
+        Args:
+            inputs (List[str]): The list of input variable names containing the DNS packet.
+            outputs (List[str]): The list of output variable names containing the modified DNS packet.
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        random_nonce = random.randint(100000, 999999)  # Generate a new random nonce
+
+        # Modify only the EDNS(0) nonce, keeping EDNS(0) enabled
+        if dns_packet.haslayer(DNSRROPT):
+            dns_packet[DNSRROPT].rdata = bytes([random_nonce % 256])
+        
+        state_machine.set_variable_value(outputs[0], dns_packet)

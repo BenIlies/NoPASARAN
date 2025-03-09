@@ -1,5 +1,6 @@
 from scapy.all import IP, UDP, DNS, DNSQR, DNSRR, DNSRROPT
 import random
+import string
 from nopasaran.decorators import parsing_decorator
 
 
@@ -680,152 +681,48 @@ class DNSPrimitives:
         state_machine.set_variable_value(outputs[0], dns_additional_answer)
 
 
-
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def add_EDNS_nonce_to_DNS_packet(inputs, outputs, state_machine):
+    def append_random_label_to_qname(inputs, outputs, state_machine):
         """
-        Add an EDNS(0) nonce to an existing DNS packet to bypass caching.
+        Append a random label to the existing qname in a DNS query packet.
 
         Number of input arguments: 1
-        - The DNS packet to modify.
+        - The name of the variable containing the DNS packet (which must have a DNSQR layer).
 
         Number of output arguments: 1
         - The name of the variable to store the modified DNS packet.
 
         Args:
-            inputs (List[str]): The list of input variable names containing the DNS packet.
-            outputs (List[str]): The list of output variable names containing the modified DNS packet.
+            inputs (List[str]): The list of input variable names, containing one mandatory argument:
+                - The DNS query packet variable name.
+            outputs (List[str]): The list of output variable names, containing one mandatory argument:
+                - The modified DNS packet variable name.
             state_machine: The state machine object.
-
-        Returns:
-            None
         """
+     
+        
         dns_packet = state_machine.get_variable_value(inputs[0])
-        random_nonce = random.randint(100000, 999999)  # Generate a 6-digit random nonce
 
-        # Ensure EDNS(0) is added with a 4-byte nonce
-        if not dns_packet.haslayer(DNSRROPT):
-            dns_packet /= DNSRROPT(rclass=4096, rdata=random_nonce.to_bytes(4, "big"))
-        else:
-            dns_packet[DNSRROPT].rdata = random_nonce.to_bytes(4, "big")
+        # Safety check: Ensure the packet actually has a DNS query
+        if not dns_packet.haslayer(DNSQR):
+            print("[Error] DNS packet has no DNSQR layer; cannot append random label.")
+            state_machine.set_variable_value(outputs[0], dns_packet)
+            return
 
+        # Decode the current qname
+        original_qname = dns_packet[DNSQR].qname.decode().rstrip('.')
+
+        # Generate a random 8-character label of letters and digits
+        rand_label = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+
+        # Append the random label to the front of the domain (e.g. randlabel.originaldomain.com)
+        new_qname = f"{rand_label}.{original_qname}"
+
+        # Reassign the qname with the new randomized label
+        dns_packet[DNSQR].qname = new_qname.encode()
+
+        # Store the modified packet back
         state_machine.set_variable_value(outputs[0], dns_packet)
 
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
-    def get_DNS_nonce_from_packet(inputs, outputs, state_machine):
-        """
-        Extract the EDNS(0) nonce from a DNS packet.
-
-        Number of input arguments: 1
-        - The DNS packet.
-
-        Number of output arguments: 1
-        - The extracted nonce value.
-
-        Args:
-            inputs (List[str]): The list of input variable names containing the DNS packet.
-            outputs (List[str]): The list of output variable names containing the extracted nonce.
-            state_machine: The state machine object.
-
-        Returns:
-            None
-        """
-        dns_packet = state_machine.get_variable_value(inputs[0])
-
-        if dns_packet.haslayer(DNSRROPT) and len(dns_packet[DNSRROPT].rdata) >= 4:
-            nonce_value = int.from_bytes(dns_packet[DNSRROPT].rdata[:4], "big")
-        else:
-            nonce_value = None  # No valid nonce found
-
-        state_machine.set_variable_value(outputs[0], nonce_value)
-
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
-    def change_EDNS_nonce_in_DNS_packet(inputs, outputs, state_machine):
-        """
-        Change the EDNS(0) nonce in an existing DNS packet while keeping EDNS(0) enabled.
-
-        Number of input arguments: 1
-        - The DNS packet to modify.
-
-        Number of output arguments: 1
-        - The name of the variable to store the modified DNS packet.
-
-        Args:
-            inputs (List[str]): The list of input variable names containing the DNS packet.
-            outputs (List[str]): The list of output variable names containing the modified DNS packet.
-            state_machine: The state machine object.
-
-        Returns:
-            None
-        """
-        dns_packet = state_machine.get_variable_value(inputs[0])
-        new_nonce = random.randint(100000, 999999)  # Generate a new 6-digit random nonce
-
-        # Modify only the EDNS(0) nonce, keeping EDNS(0) enabled
-        if dns_packet.haslayer(DNSRROPT):
-            dns_packet[DNSRROPT].rdata = new_nonce.to_bytes(4, "big")
-
-        state_machine.set_variable_value(outputs[0], dns_packet)
-
-
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
-    def modify_DNS_packet_for_authoritative_response(inputs, outputs, state_machine):
-        """
-        Modifies an existing DNS query packet to disable recursion, encouraging an authoritative response.
-
-        Number of input arguments: 1
-        - The DNS query packet.
-
-        Number of output arguments: 1
-        - The modified DNS query packet requesting an authoritative response.
-
-        Args:
-            inputs (List[str]): 
-                - A list with one mandatory input: the name of the variable containing the DNS packet.
-            outputs (List[str]): 
-                - A list with one mandatory output: the name of the variable to store the modified DNS packet.
-            state_machine: The state machine object.
-
-        Returns:
-            None
-        """
-        # Retrieve the DNS packet from the state machine
-        dns_packet = state_machine.get_variable_value(inputs[0])
-
-        # Ensure the packet contains a DNS query
-        if not dns_packet or not dns_packet.haslayer(DNS):
-            print("[Error] Invalid DNS packet: Missing DNS layer.")
-            state_machine.set_variable_value(outputs[0], dns_packet)
-            return
-
-        # Check if qdcount exists and is greater than zero
-        if getattr(dns_packet[DNS], "qdcount", 0) == 0 or not dns_packet.haslayer(DNSQR):
-            print("[Error] DNS packet does not contain a valid query section (qd).")
-            state_machine.set_variable_value(outputs[0], dns_packet)
-            return
-
-        # Extract the queried domain name safely
-        domain_name = dns_packet[DNSQR].qname.decode() if dns_packet[DNSQR].qname else None
-
-        if domain_name is None:
-            print("[Error] Failed to extract domain name from DNS query.")
-            state_machine.set_variable_value(outputs[0], dns_packet)
-            return
-
-        # Preserve the original resolver's IP address
-        resolver_ip = dns_packet[IP].dst if dns_packet.haslayer(IP) else "8.8.8.8"  # Default to Google DNS if missing
-
-        # Construct a new DNS query with recursion disabled (RD=0)
-        modified_dns_query = IP(dst=resolver_ip) / UDP() / DNS(
-            id=dns_packet[DNS].id,  # Keep the original transaction ID
-            rd=0,  # Disable recursion to request an authoritative response
-            qd=DNSQR(qname=domain_name)  # Keep the original domain query
-        )
-
-        # Store the modified DNS packet in the state machine
-        state_machine.set_variable_value(outputs[0], modified_dns_query)
 

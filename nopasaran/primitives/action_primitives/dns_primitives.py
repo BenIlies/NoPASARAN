@@ -704,25 +704,19 @@ class DNSPrimitives:
         
         dns_packet = state_machine.get_variable_value(inputs[0])
 
-        # Safety check: Ensure the packet actually has a DNS query
+        # Copy the packet so we don't mutate the original in place:
+        dns_packet = dns_packet.copy()
+
         if not dns_packet.haslayer(DNSQR):
             print("[Error] DNS packet has no DNSQR layer; cannot append random label.")
             state_machine.set_variable_value(outputs[0], dns_packet)
             return
 
-        # Decode the current qname
         original_qname = dns_packet[DNSQR].qname.decode().rstrip('.')
-
-        # Generate a random 8-character label of letters and digits
         rand_label = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
-
-        # Append the random label to the front of the domain (e.g. randlabel.originaldomain.com)
         new_qname = f"{rand_label}.{original_qname}"
 
-        # Reassign the qname with the new randomized label
         dns_packet[DNSQR].qname = new_qname.encode()
-
-        # Store the modified packet back
         state_machine.set_variable_value(outputs[0], dns_packet)
 
 

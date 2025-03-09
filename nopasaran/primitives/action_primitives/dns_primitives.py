@@ -708,7 +708,6 @@ class DNSPrimitives:
         dns_packet = dns_packet.copy()
 
         if not dns_packet.haslayer(DNSQR):
-            print("[Error] DNS packet has no DNSQR layer; cannot append random label.")
             state_machine.set_variable_value(outputs[0], dns_packet)
             return
 

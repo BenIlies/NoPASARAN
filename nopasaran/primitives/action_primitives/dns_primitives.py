@@ -719,3 +719,71 @@ class DNSPrimitives:
         state_machine.set_variable_value(outputs[0], dns_packet)
 
 
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_dns_query_as_string(inputs, outputs, state_machine):
+        """
+        Extract the DNS query (DNSQR) layer from a DNS packet as a plain string.
+
+        Number of input arguments: 1
+            - The name of the variable containing the DNS packet.
+        Number of output arguments: 1
+            - The name of the variable in which to store the string version of the DNS query.
+
+        Args:
+            inputs (List[str]): Contains one mandatory argument:
+                1) The variable name of the DNS packet in the state machine.
+            outputs (List[str]): Contains one mandatory argument:
+                1) The output variable name to store the DNS query as a string.
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dns_packet_var_name = inputs[0]
+        output_var_name = outputs[0]
+
+        dns_packet = state_machine.get_variable_value(dns_packet_var_name)
+
+        # Default to an empty string if there's no DNS query layer.
+        query_str = ""
+
+        # Ensure this packet has a DNS layer and at least one query (qd).
+        if dns_packet.haslayer(DNS) and dns_packet[DNS].qdcount > 0:
+            # Convert the DNSQR object to a string. You could also extract just qname, etc.
+            query_str = str(dns_packet[DNS].qd)
+
+        # Store the plain string version in the output variable.
+        state_machine.set_variable_value(output_var_name, query_str)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_dns_rcode_from_dns_packet(inputs, outputs, state_machine):
+        """
+        Extract the DNS RCODE (e.g., NXDOMAIN is 3) from a DNS packet.
+
+        Number of input arguments: 1 (the name of the variable containing the DNS packet)
+        Number of output arguments: 1 (the name of the variable to store the DNS rcode)
+
+        Args:
+            inputs (List[str]): The list of input variable names. 
+                                inputs[0] is the variable name storing the DNS packet.
+            outputs (List[str]): The list of output variable names.
+                                outputs[0] is the variable name to store the DNS rcode.
+            state_machine: Your state machine object for variable management.
+
+        Returns:
+            None
+        """
+        # Get the DNS packet from the state machine
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        
+        # Extract the DNS response code (0 = NoError, 3 = NXDOMAIN, etc.)
+        dns_rcode = dns_packet.rcode
+        
+        # Store the rcode in the specified output variable
+        state_machine.set_variable_value(outputs[0], dns_rcode)
+
+
+
+

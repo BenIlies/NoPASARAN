@@ -784,6 +784,43 @@ class DNSPrimitives:
         # Store the rcode in the specified output variable
         state_machine.set_variable_value(outputs[0], dns_rcode)
 
+    @staticmethod
+    @parsing_decorator(input_args=0, output_args=1)
+    def create_malformed_dns_packet(inputs, outputs, state_machine):
+            """
+            Create a malformed DNS packet (e.g., claims QDCOUNT=1 but provides no DNSQR).
+            
+            Number of input arguments: 0
+            Number of output arguments: 1
+            Optional input arguments: No
+            Optional output arguments: No
+
+            Args:
+                inputs (List[str]): The list of input variable names. Not used in this method.
+                outputs (List[str]): The list of output variable names. Contains one mandatory output argument:
+                    - The name of the variable to store the malformed DNS packet.
+                state_machine: The state machine object.
+
+            Returns:
+                None
+            """
+            # Create a baseline IP/UDP/DNS packet
+            dns_packet = IP()/UDP()/DNS()
+
+            # Assign some arbitrary Transaction ID, flags, etc. (optional)
+            dns_packet[DNS].id = 0x1234
+            dns_packet[DNS].rd = 1       # "Recursion Desired" set just for demonstration
+
+            # Force QDCOUNT = 1 (meaning "we have 1 question")...
+            dns_packet[DNS].qdcount = 1
+
+            # ...but DO NOT actually attach a DNSQR object, so it's inconsistent and malformed
+            dns_packet[DNS].qd = None
+
+            # Store the malformed DNS packet in the state machine
+            state_machine.set_variable_value(outputs[0], dns_packet)
+
+
 
 
 

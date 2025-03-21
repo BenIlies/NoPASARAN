@@ -61,6 +61,7 @@ class HTTP1ResponsePrimitives:
         server = state_machine.get_variable_value(inputs[0])
         host = state_machine.get_variable_value(inputs[1])
         port = state_machine.get_variable_value(inputs[2])
+        port = int(port)
         event, message = server.start(host, port)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], message)

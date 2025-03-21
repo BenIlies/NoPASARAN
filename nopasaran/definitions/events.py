@@ -35,3 +35,4 @@ class EventNames(Enum):
     REJECTED = 24
     RESET_RECEIVED = 25
     RECEIVED_FRAMES = 26
+    RECEIVED_REQUESTS = 27

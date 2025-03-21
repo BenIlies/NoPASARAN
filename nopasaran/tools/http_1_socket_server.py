@@ -115,21 +115,14 @@ class HTTP1SocketServer:
 
     def start(self, host, port):
         """
-        Start the HTTP/1.1 server to recieve HTTP/1.1 requests.
+        Start the HTTP/1.1 server to receive HTTP/1.1 requests.
         """
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((host, port))
         self.sock.listen(5)
         
-        self.sock.settimeout(self.TIMEOUT)
-        
-        try:
-            self.client_socket, address = self.sock.accept()
-        except TimeoutError:
-            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {host}:{port}."
-
-        return EventNames.SERVER_STARTED.name, f"Server successfully started at {host}:{port} with a non-TLS connection from {address}."
+        return EventNames.SERVER_STARTED.name, f"Server successfully started at {host}:{port}."
 
     def receive_test_frames(self):
         """

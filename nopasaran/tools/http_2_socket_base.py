@@ -199,7 +199,7 @@ class HTTP2SocketBase:
                     frames_received.append(event)
 
                     for frame in test_frames:
-                        if frame.get('tests'):
+                        if frame.get('test'):
                             result = self._handle_test(event, frame)
                             if result is None:
                                 continue

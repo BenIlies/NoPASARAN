@@ -107,87 +107,33 @@ class HTTP2SocketBase:
         
         return EventNames.FRAMES_SENT.name, str(sent_frames), f"Successfully sent {len(sent_frames)} frames."
 
-    def _handle_test(self, event, frame) -> bool | int | None:
+    def _handle_test(self, event, frame) -> None | str:
         """
         Handle test cases for received frames.
-        Each scenario can have multiple tests, where each test contains multiple checks.
-        A test passes if all its checks pass. A scenario passes if one of its tests passes.
+        Tests contain a single check with dictionary parameters and conditional results.
 
         Returns:
-            - True if the test passed
-            - False if the test failed
+            - The result of the test if it passed
             - None if no tests were found for that frame
         """
         tests = frame.get('tests', [])
-
-        if not tests:
-            return None, None
         
-        for test_index, test in enumerate(tests, 1):
-            all_checks_passed = True
+        for test in tests:
+            function_name = test.get('function')
+            params = test.get('params', {})
             
-            # Try all checks in this test
-            for check in test:
-                function_name = check['function']
-                params = check['params']
-                
-                function = function_map.get(function_name)
+            function = function_map.get(function_name)
 
-                # check if check exists
-                if not function:
-                    all_checks_passed = False
-                    break
-                
-                if not function(event, *params):
-                    all_checks_passed = False
-                    break
+            # Execute the function with unpacked dictionary parameters
+            result = function(event, **params)
             
-            if all_checks_passed:
-                return True, test_index  # Exit after first successful test
-        
-        # If we get here, all tests failed
-        return False, None
-    
-    def wait_for_preface(self) -> str:
-        """Wait for preface"""
-        #skip function
-        # if self.cloudflare_origin:
-        return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", None
-
-        data = self._receive_frame()
-        if data is None:
-            return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s while waiting for peer's preface (SETTINGS frame)", None
-        
-        events = self.conn.receive_data(data)
-        for event in events:
-            if isinstance(event, h2.events.RemoteSettingsChanged):
-                outbound_data = self.conn.data_to_send()  # This will generate SETTINGS ACK
-                if outbound_data:
-                    socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
-                    socket_to_use.sendall(outbound_data)
-
-                return EventNames.PREFACE_RECEIVED.name, f"Successfully received peer's preface.", str(event)
-
-        return EventNames.ERROR.name, f"Expected SETTINGS frame for preface but received error instead", str(events)
-    
-        
-    def wait_for_preface_ack(self) -> str:
-        """Wait for PREFACE_ACK frame"""
-        data = self._receive_frame()
-        if data is None:
-            return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s while waiting for peer's SETTINGS ACK frame"
-        
-        events = self.conn.receive_data(data)
-        for event in events:
-            if isinstance(event, h2.events.SettingsAcknowledged):
-                outbound_data = self.conn.data_to_send()
-                if outbound_data:
-                    socket_to_use = self.sock if not hasattr(self, 'client_socket') else self.client_socket
-                    socket_to_use.sendall(outbound_data)
-
-            return EventNames.ACK_RECEIVED.name, "Successfully received peer's SETTINGS ACK frame"
-
-        return EventNames.ERROR.name, f"Expected SETTINGS ACK frame but received: {events}"
+            # Return based on the test result and specified conditions
+            if result == True:
+                return test['if_true']
+            elif result == False:
+                return test['if_false']
+            elif result is None:
+                return None
     
     def receive_test_frames(self, test_frames) -> str:
         """Wait for test frames with adaptive timeout"""
@@ -252,6 +198,14 @@ class HTTP2SocketBase:
 
                     frames_received.append(event)
 
+                    for frame in test_frames:
+                        if frame.get('tests'):
+                            result = self._handle_test(event, frame)
+                            if result is None:
+                                continue
+                            else:
+                                return EventNames.RECEIVED_FRAMES.name, f"Received {result} test frame.", str(frames_received)
+                            
                     if len(frames_received) == expected_frame_count:
                         return EventNames.RECEIVED_FRAMES.name, f"Successfully received all {len(frames_received)}/{expected_frame_count} frames.", str(frames_received)
 

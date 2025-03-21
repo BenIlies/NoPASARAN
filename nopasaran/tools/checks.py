@@ -5,16 +5,31 @@
 # If the test passes, the function should return True
 # If the test fails, the function should return False
 
-def check_header_field(event, name, value = None):
+def check_header_field(event, name, value=None):
+    """
+    Check if a header field exists and optionally check its value.
+    
+    Args:
+        event: The event containing headers
+        name: The header name to check for
+        value: Optional value to match against. If None, only checks header presence
+    
+    Returns:
+        - True if:
+            * value is None and header is found
+            * value is provided and matches the header value
+        - False if:
+            * header is not found
+            * value is provided but doesn't match
+        - None if the event doesn't have headers
+    """
     if hasattr(event, 'headers'):
         for header_name, header_value in event.headers:
             if header_name == name:
                 if value is None:
                     return True
-                elif header_value == value:
-                    return True
-                else:
-                    return False
+                return header_value == value
+        return False
     return None
 
 function_map = {

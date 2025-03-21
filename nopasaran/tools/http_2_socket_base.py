@@ -197,14 +197,13 @@ class HTTP2SocketBase:
 
                     frames_received.append(event)
 
+                    # Move test handling before the frame count check
                     for frame in test_frames:
                         if frame.get('test'):
                             result = self._handle_test(event, frame)
-                            if result is None:
-                                continue
-                            else:
-                                return EventNames.RECEIVED_FRAMES.name, f"Received {result} test frame.", str(frames_received)
-                            
+                            if result is not None:
+                                return EventNames.RECEIVED_FRAMES.name, f"Test result: {result}", str(frames_received)
+                    
                     if len(frames_received) == expected_frame_count:
                         return EventNames.RECEIVED_FRAMES.name, f"Successfully received all {len(frames_received)}/{expected_frame_count} frames.", str(frames_received)
 

@@ -32,6 +32,40 @@ class HTTP1ResponsePrimitives:
         state_machine.set_variable_value(outputs[0], server)
 
     @staticmethod
+    @parsing_decorator(input_args=3, output_args=2)
+    def start_http_1_server(inputs, outputs, state_machine):
+        """
+        Start the HTTP server.
+
+        Number of input arguments: 3
+            - The HTTP1SocketServer instance
+            - The host to run the server on.
+            - The port to run the server on.
+
+        Number of output arguments: 2
+            - The event name
+            - The message
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
+                - The name of the variable containing the HTTP1SocketServer instance.
+                - The name of the variable containing the host.
+                - The name of the variable containing the port.
+
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
+                - The name of the variable to store the event name.
+                - The name of the variable to store the message.
+
+            state_machine: The state machine object.
+        """
+        server = state_machine.get_variable_value(inputs[0])
+        host = state_machine.get_variable_value(inputs[1])
+        port = state_machine.get_variable_value(inputs[2])
+        event, message = server.start(host, port)
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], message)
+
+    @staticmethod
     @parsing_decorator(input_args=2, output_args=0)
     def add_http_1_route(inputs, outputs, state_machine):
         """
@@ -113,3 +147,62 @@ class HTTP1ResponsePrimitives:
         received_request_data, event = server.wait_for_request(port=port, timeout=timeout)
         state_machine.set_variable_value(outputs[0], received_request_data)
         state_machine.trigger_event(event)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=3)
+    def receive_http_1_requests(inputs, outputs, state_machine):
+        """
+        Receive HTTP/1.1 requests.
+
+        Number of input arguments: 1
+            - The HTTP1SocketServer instance
+
+        Number of output arguments: 2
+            - The event name
+            - The message
+            - The received data
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the HTTP1SocketServer instance.
+
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
+                - The name of the variable to store the event name.
+                - The name of the variable to store the message.
+                - The name of the variable to store the received data.
+
+            state_machine: The state machine object.
+        """
+        server = state_machine.get_variable_value(inputs[0])
+        event, message, received_data = server.receive_test_frames()
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], message)
+        state_machine.set_variable_value(outputs[2], received_data)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=2)
+    def close_http_1_server(inputs, outputs, state_machine):
+        """
+        Close the HTTP server.
+
+        Number of input arguments: 1
+            - The HTTP1SocketServer instance
+
+        Number of output arguments: 2
+            - The event name
+            - The message
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the HTTP1SocketServer instance.
+
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
+                - The name of the variable to store the event name.
+                - The name of the variable to store the message.
+
+            state_machine: The state machine object.
+        """
+        server = state_machine.get_variable_value(inputs[0])
+        event, message = server.close()
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], message)

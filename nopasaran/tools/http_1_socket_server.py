@@ -13,6 +13,9 @@ class HTTP1SocketServer:
         self.routes = {}
         self.request_received = None
         self.received_request_data = None
+        self.sock = None
+        self.client_socket = None
+        self.TIMEOUT = 5.0
 
     def handle_client_connection(self, client_socket):
         """
@@ -72,8 +75,6 @@ class HTTP1SocketServer:
             with self.request_received:
                 self.request_received.notify_all()
 
-
-
     def wait_for_request(self, port, timeout):
         """
         Wait for an HTTP request or timeout.
@@ -111,3 +112,113 @@ class HTTP1SocketServer:
                     client_socket, _ = server_socket.accept()
                     self.handle_client_connection(client_socket)
                     return self.received_request_data, EventNames.REQUEST_RECEIVED.name
+
+    def start(self, host, port):
+        """
+        Start the HTTP/1.1 server to recieve HTTP/1.1 requests.
+        """
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.bind((host, port))
+        self.sock.listen(5)
+        
+        self.sock.settimeout(self.TIMEOUT)
+        
+        try:
+            self.client_socket, address = self.sock.accept()
+        except TimeoutError:
+            return EventNames.TIMEOUT.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for client connection at {host}:{port}."
+
+        return EventNames.SERVER_STARTED.name, f"Server successfully started at {host}:{port} with a non-TLS connection from {address}."
+
+    def receive_test_frames(self):
+        """
+        Listen for HTTP/1.1 requests until a timeout occurs, then process all received requests.
+        
+        Returns:
+            Tuple[str, str, str]: (event_name, message, received_data)
+                - event_name: The type of event that occurred (from EventNames)
+                    - TIMEOUT: Timeout occurred before all requests were received
+                    - REJECTED: Received a 4xx or 5xx status code
+                    - RECEIVED_REQUESTS: All requests have been received
+                    - ERROR: Error occurred while receiving requests
+                - message: A descriptive message about what happened
+                - received_data: String representation of the received requests or None
+        """
+        if not self.client_socket:
+            return EventNames.ERROR.name, "No client connection established", None
+        
+        requests_received = []
+        start_time = time.time()
+        last_request_time = None
+        
+        # Set a shorter timeout for each receive attempt to detect the end of requests
+        self.client_socket.settimeout(0.5)
+        
+        # Keep receiving until we hit a timeout
+        while True:
+            # Check for overall timeout - but only if we haven't received anything yet
+            elapsed_time = time.time() - start_time
+            if len(requests_received) == 0 and elapsed_time > self.TIMEOUT:
+                return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s and received no packets.", None
+            
+            # If we've received at least one request and had a pause, consider it done
+            if last_request_time and (time.time() - last_request_time > 1.0):
+                # We've waited 1 second with no new requests, assume we're done
+                break
+            
+            try:
+                data = self.client_socket.recv(4096)
+                
+                if not data:  # Connection closed by peer
+                    break
+                    
+                # Update the last request time
+                last_request_time = time.time()
+                
+                # Parse the HTTP/1.1 request
+                request_str = data.decode('utf-8', errors='ignore')
+                requests_received.append(request_str)
+                
+                # Check for error status codes immediately
+                if "HTTP/1.1 5" in request_str or "HTTP/1.1 4" in request_str:
+                    try:
+                        status_line = request_str.split("\r\n")[0]
+                        status_code = status_line.split(" ")[1]
+                        return EventNames.REJECTED.name, f"Received {status_code} status code.", request_str
+                    except (IndexError, ValueError):
+                        # If we can't parse the status code, still report the error
+                        return EventNames.REJECTED.name, "Received 4xx or 5xx status code.", request_str
+                        
+            except socket.timeout:
+                # If we've already received at least one request, a timeout might mean we're done
+                if len(requests_received) > 0:
+                    if not last_request_time:
+                        last_request_time = time.time()
+                # Otherwise, just continue waiting
+                continue
+            except Exception as e:
+                return EventNames.ERROR.name, f"Error while receiving requests: {str(e)}", \
+                       str(requests_received) if requests_received else None
+        
+        # If we get here, we've either collected all requests or the connection was closed
+        if len(requests_received) == 0:
+            return EventNames.TIMEOUT.name, "No requests received before timeout.", None
+        
+        return EventNames.RECEIVED_REQUESTS.name, f"Received {len(requests_received)} HTTP/1.1 requests.", str(requests_received)
+
+    def close(self):
+        """Close the HTTP/1.1 connection and clean up resources"""
+        try:
+            if self.client_socket:
+                self.client_socket.close()
+            if self.sock:
+                self.sock.close()
+            
+            # Clear references
+            self.client_socket = None
+            self.sock = None
+            
+            return EventNames.CONNECTION_CLOSED.name, "HTTP/1.1 connection closed."
+        except Exception as e:
+            return EventNames.CONNECTION_CLOSED.name, f"Error closing connection: {str(e)}"

@@ -7,11 +7,11 @@
 
 def check_header_field(event, name, value = None):
     if hasattr(event, 'headers'):
-        for header in event.headers:
-            if header.name == name:
+        for header_name, header_value in event.headers:
+            if header_name == name:
                 if value is None:
                     return True
-                elif header.value == value:
+                elif header_value == value:
                     return True
                 else:
                     return False

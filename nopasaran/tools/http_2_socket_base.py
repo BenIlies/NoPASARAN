@@ -116,24 +116,23 @@ class HTTP2SocketBase:
             - The result of the test if it passed
             - None if no tests were found for that frame
         """
-        tests = frame.get('tests', [])
+        test = frame.get('test', {})
         
-        for test in tests:
-            function_name = test.get('function')
-            params = test.get('params', {})
-            
-            function = function_map.get(function_name)
+        function_name = test.get('function')
+        params = test.get('params', {})
+        
+        function = function_map.get(function_name)
 
-            # Execute the function with unpacked dictionary parameters
-            result = function(event, **params)
-            
-            # Return based on the test result and specified conditions
-            if result == True:
-                return test['if_true']
-            elif result == False:
-                return test['if_false']
-            elif result is None:
-                return None
+        # Execute the function with unpacked dictionary parameters
+        result = function(event, **params)
+        
+        # Return based on the test result and specified conditions
+        if result == True:
+            return test['if_true']
+        elif result == False:
+            return test['if_false']
+        elif result is None:
+            return None
     
     def receive_test_frames(self, test_frames) -> str:
         """Wait for test frames with adaptive timeout"""

@@ -209,6 +209,6 @@ class HTTP1SocketServer:
             self.client_socket = None
             self.sock = None
             
-            return EventNames.CONNECTION_CLOSED.name, "HTTP/1.1 connection closed."
+            return EventNames.CONNECTION_CLOSED.name
         except Exception as e:
-            return EventNames.CONNECTION_CLOSED.name, f"Error closing connection: {str(e)}"
+            return EventNames.CONNECTION_CLOSED.name

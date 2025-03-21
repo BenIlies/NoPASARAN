@@ -181,7 +181,7 @@ class HTTP1ResponsePrimitives:
         state_machine.set_variable_value(outputs[2], received_data)
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=2)
+    @parsing_decorator(input_args=1, output_args=1)
     def close_http_1_server(inputs, outputs, state_machine):
         """
         Close the HTTP server.
@@ -189,9 +189,8 @@ class HTTP1ResponsePrimitives:
         Number of input arguments: 1
             - The HTTP1SocketServer instance
 
-        Number of output arguments: 2
+        Number of output arguments: 1
             - The event name
-            - The message
 
         Args:
             inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
@@ -199,11 +198,9 @@ class HTTP1ResponsePrimitives:
 
             outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name.
-                - The name of the variable to store the message.
 
             state_machine: The state machine object.
         """
         server = state_machine.get_variable_value(inputs[0])
-        event, message = server.close()
+        event = server.close()
         state_machine.set_variable_value(outputs[0], event)
-        state_machine.set_variable_value(outputs[1], message)

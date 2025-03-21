@@ -138,63 +138,60 @@ class HTTP1SocketServer:
                 - message: A descriptive message about what happened
                 - received_data: String representation of the received requests or None
         """
-        if not self.client_socket:
-            return EventNames.ERROR.name, "No client connection established", None
+        if not self.sock:
+            return EventNames.ERROR.name, "Server not started", None
         
         requests_received = []
         start_time = time.time()
-        last_request_time = None
         
-        # Set a shorter timeout for each receive attempt to detect the end of requests
-        self.client_socket.settimeout(0.5)
+        # Make the server socket non-blocking for accepting connections
+        self.sock.setblocking(False)
         
-        # Keep receiving until we hit a timeout
+        # Keep accepting connections until we hit a timeout
         while True:
-            # Check for overall timeout - but only if we haven't received anything yet
+            # Check for overall timeout
             elapsed_time = time.time() - start_time
-            if len(requests_received) == 0 and elapsed_time > self.TIMEOUT:
-                return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s and received no packets.", None
-            
-            # If we've received at least one request and had a pause, consider it done
-            if last_request_time and (time.time() - last_request_time > 1.0):
-                # We've waited 1 second with no new requests, assume we're done
-                break
+            if elapsed_time > self.TIMEOUT:
+                if len(requests_received) == 0:
+                    return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s and received no requests.", None
+                else:
+                    break  # We've received some requests, so consider it done
             
             try:
-                data = self.client_socket.recv(4096)
+                # Try to accept a new connection
+                ready_to_read, _, _ = select.select([self.sock], [], [], 0.5)
                 
-                if not data:  # Connection closed by peer
-                    break
+                if ready_to_read:
+                    client_socket, _ = self.sock.accept()
+                    client_socket.settimeout(0.5)
                     
-                # Update the last request time
-                last_request_time = time.time()
-                
-                # Parse the HTTP/1.1 request
-                request_str = data.decode('utf-8', errors='ignore')
-                requests_received.append(request_str)
-                
-                # Check for error status codes immediately
-                if "HTTP/1.1 5" in request_str or "HTTP/1.1 4" in request_str:
                     try:
-                        status_line = request_str.split("\r\n")[0]
-                        status_code = status_line.split(" ")[1]
-                        return EventNames.REJECTED.name, f"Received {status_code} status code.", request_str
-                    except (IndexError, ValueError):
-                        # If we can't parse the status code, still report the error
-                        return EventNames.REJECTED.name, "Received 4xx or 5xx status code.", request_str
+                        data = client_socket.recv(4096)
                         
+                        if data:
+                            # Parse the HTTP/1.1 request
+                            request_str = data.decode('utf-8', errors='ignore')
+                            requests_received.append(request_str)
+                            
+                            # Check for error status codes
+                            if "HTTP/1.1 5" in request_str or "HTTP/1.1 4" in request_str:
+                                try:
+                                    status_line = request_str.split("\r\n")[0]
+                                    status_code = status_line.split(" ")[1]
+                                    client_socket.close()
+                                    return EventNames.REJECTED.name, f"Received {status_code} status code.", request_str
+                                except (IndexError, ValueError):
+                                    client_socket.close()
+                                    return EventNames.REJECTED.name, "Received 4xx or 5xx status code.", request_str
+                    finally:
+                        client_socket.close()
             except socket.timeout:
-                # If we've already received at least one request, a timeout might mean we're done
-                if len(requests_received) > 0:
-                    if not last_request_time:
-                        last_request_time = time.time()
-                # Otherwise, just continue waiting
                 continue
             except Exception as e:
                 return EventNames.ERROR.name, f"Error while receiving requests: {str(e)}", \
                        str(requests_received) if requests_received else None
         
-        # If we get here, we've either collected all requests or the connection was closed
+        # If we get here, we've either collected all requests or hit the timeout
         if len(requests_received) == 0:
             return EventNames.TIMEOUT.name, "No requests received before timeout.", None
         

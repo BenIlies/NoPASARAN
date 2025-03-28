@@ -36,8 +36,8 @@ Create or save a script with the commands from the previous step, then run it. F
 
 .. code-block:: bash
 
-   nano shell.sh
    # Paste the commands from above into shell.sh, then save and exit.
+   nano shell.sh
 
    bash shell.sh
 

@@ -4,14 +4,14 @@ Tests and Tests-Trees: Deployment Guide
 1. Fork & Clone the Main Repository (Tests Library)
 --------------------------------------------------------
 
-1. **Fork** the main repository to your GitHub account:
+**Fork** the main repository to your GitHub account:
 
    `https://github.com/nopasaran-org/nopasaran-tests`
 
-2. **Clone** your forked repository locally:
+**Clone** your forked repository locally:
 
-   .. code-block:: bash
-      git clone https://github.com/your-username/nopasaran-tests.git
+.. code-block:: bash
+   git clone https://github.com/your-username/nopasaran-tests.git
 
 2. Add State Machine Directories & JSON Configurations
 ------------------------------------------------------
@@ -30,22 +30,19 @@ This directory must contain the required JSON configuration files, including:
 
 Follow these steps to save and submit your changes:
 
-1. **Stage your files**:
+**Stage your files**:
+.. code-block:: bash
+   git add NAT_TRANSLATION
 
-   .. code-block:: bash
-      git add NAT_TRANSLATION
+**Commit your changes**:
+.. code-block:: bash
+   git commit -m "Added NAT_TRANSLATION test"
 
-2. **Commit your changes**:
+**Push to your fork**:
+.. code-block:: bash
+   git push origin main
 
-   .. code-block:: bash
-      git commit -m "Added NAT_TRANSLATION test"
-
-3. **Push to your fork**:
-
-   .. code-block:: bash
-      git push origin main
-
-4. **Create a Pull Request**:
+**Create a Pull Request**:
    - Navigate to your fork on GitHub.
    - Click **Compare & pull request**.
    - Ensure the changes are correct, then submit the request.
@@ -53,31 +50,28 @@ Follow these steps to save and submit your changes:
 4. Fork & Clone the Main Repository (Tests-Trees Library)
 -------------------------------------------------------------
 
-1. **Fork** the main repository to your GitHub account:
+**Fork** the main repository to your GitHub account:
 
    `https://github.com/nopasaran-org/nopasaran-tests-trees`
 
-2. **Clone** your forked repository locally:
+**Clone** your forked repository locally:
 
-   .. code-block:: bash
-      git clone https://github.com/your-username/nopasaran-tests-trees.git
+.. code-block:: bash
+   git clone https://github.com/your-username/nopasaran-tests-trees.git
 
 5. Modify `tests_tree.py`
 ----------------------------
 
 In the **nopasaran-tests-trees** repository, locate and open `example/tests_tree.py`. This file contains a sample tests-tree. You can copy this file to the root folder and modify it to create a tests-tree that uses the **NAT_TRANSLATION** test with a single node in the tree.
 
-### Steps to Modify:
+**Remove the following line (if present)**:
+.. code-block::
+   TestsTreeTest.load_and_evaluate_tree()
 
-1. **Remove the following line (if present)**:
-
-   .. code-block:: python
-      TestsTreeTest.load_and_evaluate_tree()
-
-2. **Delete child workers**:
+**Delete child workers**:
    Remove them from both `load_and_evaluate_tree()` and `save_tree()`.
 
-3. **Update PNG image filename**:
+**Update PNG image filename**:
    Modify the name of the generated image file to `nat_debugger.png`. Unlike test directories, tests-trees use lowercase naming conventions.
 
 6. Update the `save_tree()` Method
@@ -85,7 +79,7 @@ In the **nopasaran-tests-trees** repository, locate and open `example/tests_tree
 
 Modify the `save_tree()` function in `tests_tree.py` to include appropriate inputs:
 
-.. code-block:: python
+```python
    def save_tree():
        root = TestsTreeNode(
            'Root',
@@ -107,8 +101,9 @@ Modify the `save_tree()` function in `tests_tree.py` to include appropriate inpu
            ],
            test='NAT_TRANSLATION'
        )
+```
 
-### Match Test Names
+**Match Test Names**
 Ensure the test name in your node matches the folder name created in the **nopasaran-tests** repository, in this case, **NAT_TRANSLATION**.
 
 **Note:**
@@ -118,46 +113,39 @@ Ensure the test name in your node matches the folder name created in the **nopas
 7. Run the Code
 ------------------
 
-1. **Install dependencies**:
-
-   .. code-block:: bash
-      python -m pip install -r requirements.txt
-
-2. **Generate the image**:
-
-   .. code-block:: bash
-      python example.py
+**Install dependencies**:
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+**Generate the image**:
+   ```bash
+   python example.py
+   ```
 
 8. Generate & Handle the PNG Image
 -------------------------------------
 
 When the tests-tree is generated, a PNG image (`nat_debugger.png`) may be created in **nopasaran-tests-trees**.
 
-### Steps to Handle the Image:
-
-1. **Ensure** that the PNG file is located in the **root folder** of your **nopasaran-tests** fork.
-
-2. **Stage the file**:
-
-   .. code-block:: bash
-      git add nat_debugger.png
-
-3. **Do not push** modifications to `tests_tree.py` back to **nopasaran-tests-trees**; only push the **new image** to your **nopasaran-tests** fork.
+**Ensure** that the PNG file is located in the **root folder** of your **nopasaran-tests** fork.
+**Stage the file**:
+   ```bash
+   git add nat_debugger.png
+   ```
+**Do not push** modifications to `tests_tree.py` back to **nopasaran-tests-trees**; only push the **new image** to your **nopasaran-tests** fork.
 
 9. Prepare & Submit a Pull Request
 -------------------------------------
 
-1. **Commit the new image**:
-
-   .. code-block:: bash
-      git commit -m "Added nat_debugger.png"
-
-2. **Push changes**:
-
-   .. code-block:: bash
-      git push origin main
-
-3. **Open a Pull Request**:
+**Commit the new image**:
+   ```bash
+   git commit -m "Added nat_debugger.png"
+   ```
+**Push changes**:
+   ```bash
+   git push origin main
+   ```
+**Open a Pull Request**:
    - Navigate to your fork on GitHub.
    - Click **Compare & pull request**.
    - Submit the request to **nopasaran-tests**.

@@ -39,6 +39,25 @@ SSH authentication are used to enhance security through mutual authentication. T
 
    SSH Certificates & Node Authentication <ssh_certificates>
 
+Configuring a Worker with a Coordinator
+---------------------------------------
+
+Configuring a worker from scratch requires an existing coordinator with a pre-registered worker.
+
+.. toctree::
+   :maxdepth: 1
+
+   Worker Deployment <configuring_worker>
+
+Store Developed Tests in Public Library
+---------------------------------------
+
+GitHub is used as a mechanism to store public tests and tests-trees. Coordinators can locate and execute the tests stored in these libraries.
+
+.. toctree::
+   :maxdepth: 1
+
+   Deploying tests and test trees in the public libraries <tests_deployment>
 
 Temporary Section: Unaddressed Problems
 ---------------------------------------

@@ -6,7 +6,7 @@ Tests and Tests-Trees: Deployment Guide
 
 **Fork** the main repository to your GitHub account:
 
-   `https://github.com/nopasaran-org/nopasaran-tests`
+`https://github.com/nopasaran-org/nopasaran-tests`
 
 **Clone** your forked repository locally:
 
@@ -55,7 +55,7 @@ Follow these steps to save and submit your changes:
 
 **Fork** the main repository to your GitHub account:
 
-   `https://github.com/nopasaran-org/nopasaran-tests-trees`
+`https://github.com/nopasaran-org/nopasaran-tests-trees`
 
 **Clone** your forked repository locally:
 

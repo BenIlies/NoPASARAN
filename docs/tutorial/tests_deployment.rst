@@ -31,14 +31,17 @@ This directory must contain the required JSON configuration files, including:
 Follow these steps to save and submit your changes:
 
 **Stage your files**:
+
 .. code-block:: bash
    git add NAT_TRANSLATION
 
 **Commit your changes**:
+
 .. code-block:: bash
    git commit -m "Added NAT_TRANSLATION test"
 
 **Push to your fork**:
+
 .. code-block:: bash
    git push origin main
 
@@ -65,7 +68,8 @@ Follow these steps to save and submit your changes:
 In the **nopasaran-tests-trees** repository, locate and open `example/tests_tree.py`. This file contains a sample tests-tree. You can copy this file to the root folder and modify it to create a tests-tree that uses the **NAT_TRANSLATION** test with a single node in the tree.
 
 **Remove the following line (if present)**:
-.. code-block::
+
+.. code-block:: python
    TestsTreeTest.load_and_evaluate_tree()
 
 **Delete child workers**:
@@ -79,7 +83,7 @@ In the **nopasaran-tests-trees** repository, locate and open `example/tests_tree
 
 Modify the `save_tree()` function in `tests_tree.py` to include appropriate inputs:
 
-```python
+.. code-block:: python
    def save_tree():
        root = TestsTreeNode(
            'Root',
@@ -101,7 +105,6 @@ Modify the `save_tree()` function in `tests_tree.py` to include appropriate inpu
            ],
            test='NAT_TRANSLATION'
        )
-```
 
 **Match Test Names**
 Ensure the test name in your node matches the folder name created in the **nopasaran-tests** repository, in this case, **NAT_TRANSLATION**.
@@ -114,13 +117,14 @@ Ensure the test name in your node matches the folder name created in the **nopas
 ------------------
 
 **Install dependencies**:
-   ```bash
+
+.. code-block:: bash
    python -m pip install -r requirements.txt
-   ```
+
 **Generate the image**:
-   ```bash
+
+.. code-block:: bash
    python example.py
-   ```
 
 8. Generate & Handle the PNG Image
 -------------------------------------
@@ -128,23 +132,27 @@ Ensure the test name in your node matches the folder name created in the **nopas
 When the tests-tree is generated, a PNG image (`nat_debugger.png`) may be created in **nopasaran-tests-trees**.
 
 **Ensure** that the PNG file is located in the **root folder** of your **nopasaran-tests** fork.
+
 **Stage the file**:
-   ```bash
+
+.. code-block:: bash
    git add nat_debugger.png
-   ```
+
 **Do not push** modifications to `tests_tree.py` back to **nopasaran-tests-trees**; only push the **new image** to your **nopasaran-tests** fork.
 
 9. Prepare & Submit a Pull Request
 -------------------------------------
 
 **Commit the new image**:
-   ```bash
+
+.. code-block:: bash
    git commit -m "Added nat_debugger.png"
-   ```
+
 **Push changes**:
-   ```bash
+
+.. code-block:: bash
    git push origin main
-   ```
+
 **Open a Pull Request**:
    - Navigate to your fork on GitHub.
    - Click **Compare & pull request**.

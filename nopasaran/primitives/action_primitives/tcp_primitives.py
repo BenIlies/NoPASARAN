@@ -413,3 +413,30 @@ class TCPPrimitives:
         tcp_packet = state_machine.get_variable_value(inputs[0])
         ack_number = utils.get_TCP_ack(tcp_packet)
         state_machine.set_variable_value(outputs[0], ack_number)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_TCP_fields(inputs, outputs, state_machine):
+        """
+        Get all fields from the TCP layer of a packet.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the TCP packet.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the dictionary of TCP fields.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        tcp_packet = state_machine.get_variable_value(inputs[0])
+        tcp_fields = dict(tcp_packet['TCP'].fields)
+
+        state_machine.set_variable_value(outputs[0], tcp_fields)

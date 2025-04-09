@@ -179,7 +179,7 @@ class UDPPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
-    def set_UDP_packet_bytes(inputs, outputs, state_machine):
+    def fill_UDP_packet_with_placeholder (inputs, outputs, state_machine):
         """
         Attach a payload of repeated 'A' characters to a UDP packet.
 

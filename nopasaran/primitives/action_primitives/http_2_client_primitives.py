@@ -44,44 +44,8 @@ class HTTP2ClientPrimitives:
         Number of input arguments: 4
             - The HTTP2SocketClient instance
             - The tls_enabled flag
-            - The TLS protocol to use
             - The connection settings for the client
-
-        Number of output arguments: 1
-            - The event name
-
-        Args:
-            inputs (List[str]): The list of input variable names containing:
-                - The name of the HTTP2SocketClient instance variable
-                - The name of the tls_enabled flag variable
-                - The name of the TLS protocol variable
-                - The name of the connection settings variable
-
-            outputs (List[str]): The list of output variable names. It contains one output argument:
-                - The name of the variable to store the event name
-
-            state_machine: The state machine object.
-
-        Returns:
-            None
-        """
-        client = state_machine.get_variable_value(inputs[0])
-        tls_enabled = state_machine.get_variable_value(inputs[1])
-        protocol = state_machine.get_variable_value(inputs[2])
-        connection_settings_client = state_machine.get_variable_value(inputs[3])
-
-        event, msg = client.start(tls_enabled, protocol, connection_settings_client)
-        state_machine.set_variable_value(outputs[0], event)
-        state_machine.set_variable_value(outputs[1], msg)
-
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=2)
-    def wait_for_server_preface(inputs, outputs, state_machine):
-        """
-        Wait for the server's SETTINGS frame.
-
-        Number of input arguments: 1
-            - The HTTP2SocketClient instance
+            - The cloudflare_origin flag
 
         Number of output arguments: 2
             - The event name
@@ -90,6 +54,9 @@ class HTTP2ClientPrimitives:
         Args:
             inputs (List[str]): The list of input variable names containing:
                 - The name of the HTTP2SocketClient instance variable
+                - The name of the tls_enabled flag variable
+                - The name of the connection settings variable
+                - The name of the cloudflare_origin flag variable
 
             outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
@@ -99,11 +66,55 @@ class HTTP2ClientPrimitives:
 
         Returns:
             None
+
+        Possible events:
+            - EventNames.TIMEOUT
+            - EventNames.ERROR
+            - EventNames.REJECTED
+            - EventNames.CLIENT_STARTED
         """
         client = state_machine.get_variable_value(inputs[0])
-        event, msg = client.wait_for_preface()
+        tls_enabled = state_machine.get_variable_value(inputs[1])
+        connection_settings_client = state_machine.get_variable_value(inputs[2])
+        cloudflare_origin = state_machine.get_variable_value(inputs[3])
+
+        event, msg = client.start(tls_enabled, connection_settings_client, cloudflare_origin)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], msg)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=3)
+    def wait_for_server_preface(inputs, outputs, state_machine):
+        """
+        Wait for the server's SETTINGS frame.
+
+        Number of input arguments: 1
+            - The HTTP2SocketClient instance
+
+        Number of output arguments: 3
+            - The event name
+            - The message
+            - The frames received
+
+        Args:
+            inputs (List[str]): The list of input variable names containing:
+                - The name of the HTTP2SocketClient instance variable
+
+            outputs (List[str]): The list of output variable names. It contains three output arguments:
+                - The name of the variable to store the event name
+                - The name of the variable to store the message
+                - The name of the variable to store the frames received
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        client = state_machine.get_variable_value(inputs[0])
+        event, msg, frames = client.wait_for_preface()
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], msg)
+        state_machine.set_variable_value(outputs[2], frames)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=2)
@@ -165,6 +176,13 @@ class HTTP2ClientPrimitives:
 
         Returns:
             None
+
+        Possible events:
+            - EventNames.TIMEOUT
+            - EventNames.RESET_RECEIVED
+            - EventNames.GOAWAY_RECEIVED
+            - EventNames.REJECTED
+            - EventNames.RECEIVED_FRAMES
         """
         client = state_machine.get_variable_value(inputs[0])
         test_frames = state_machine.get_variable_value(inputs[1])
@@ -174,7 +192,7 @@ class HTTP2ClientPrimitives:
         state_machine.set_variable_value(outputs[2], frames_received)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=2)
+    @parsing_decorator(input_args=2, output_args=3)
     def send_client_frames(inputs, outputs, state_machine):
         """
         Send frames to the server.
@@ -183,9 +201,10 @@ class HTTP2ClientPrimitives:
             - The HTTP2SocketClient instance
             - The frames to send
 
-        Number of output arguments: 2
+        Number of output arguments: 3
             - The event name
             - The frames sent
+            - The message
 
         Args:
             inputs (List[str]): The list of input variable names containing:
@@ -195,17 +214,25 @@ class HTTP2ClientPrimitives:
             outputs (List[str]): The list of output variable names. It contains two output arguments:
                 - The name of the variable to store the event name
                 - The name of the variable to store the frames sent
+                - The name of the variable to store the message
 
             state_machine: The state machine object.
 
         Returns:
             None
+
+        Possible events:
+            - EventNames.FRAMES_SENT
+            - EventNames.GOAWAY_RECEIVED
+            - EventNames.RESET_RECEIVED
+            - EventNames.REJECTED
         """
         client = state_machine.get_variable_value(inputs[0])
         client_frames = state_machine.get_variable_value(inputs[1])
-        event, frames_sent = client.send_frames(client_frames)
+        event, frames_sent, msg = client.send_frames(client_frames)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], frames_sent)
+        state_machine.set_variable_value(outputs[2], msg)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

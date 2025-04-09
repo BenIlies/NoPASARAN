@@ -62,10 +62,7 @@ class UDPPrimitives:
             None
         """
         state_machine.set_variable_value(outputs[0], state_machine.get_variable_value(inputs[0]))
-
-        utils.set_UDP_sport(
-        state_machine.get_variable_value(outputs[0]),
-        state_machine.get_variable_value(inputs[1]))
+        utils.set_UDP_sport(state_machine.get_variable_value(outputs[0]), state_machine.get_variable_value(inputs[1]))
 
 
     @staticmethod
@@ -96,11 +93,7 @@ class UDPPrimitives:
             None
         """
         state_machine.set_variable_value(outputs[0], state_machine.get_variable_value(inputs[0]))
-
-        utils.set_UDP_dport(
-        state_machine.get_variable_value(outputs[0]),
-        state_machine.get_variable_value(inputs[1])) 
-
+        utils.set_UDP_dport(state_machine.get_variable_value(outputs[0]), state_machine.get_variable_value(inputs[1]))
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

@@ -7,7 +7,7 @@ import h2
 import json
 import h2.events
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import argparse
 import h2.connection
 from hyperframe.frame import (
@@ -15,32 +15,108 @@ from hyperframe.frame import (
     PingFrame, SettingsFrame, RstStreamFrame, PriorityFrame,
     ContinuationFrame
 )
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+import tempfile
+import io
 
 class SSL_CONFIG:
     """SSL configuration constants"""
-    CERT_PATH = "server.crt"
-    KEY_PATH = "server.key"
     MAX_BUFFER_SIZE = 65535
 
-def create_ssl_context(protocol: str, is_client: bool = True):
-    """Create SSL context for client or server"""
+# Define your certificates as string constants
+EMBEDDED_CERT = """-----BEGIN CERTIFICATE-----
+MIIEpDCCA4ygAwIBAgIUCAI1jMFNjYW42UodjkGwsETOOUYwDQYJKoZIhvcNAQEL
+BQAwgYsxCzAJBgNVBAYTAlVTMRkwFwYDVQQKExBDbG91ZEZsYXJlLCBJbmMuMTQw
+MgYDVQQLEytDbG91ZEZsYXJlIE9yaWdpbiBTU0wgQ2VydGlmaWNhdGUgQXV0aG9y
+aXR5MRYwFAYDVQQHEw1TYW4gRnJhbmNpc2NvMRMwEQYDVQQIEwpDYWxpZm9ybmlh
+MB4XDTI1MDIyNTEwMjYwMFoXDTQwMDIyMjEwMjYwMFowYjEZMBcGA1UEChMQQ2xv
+dWRGbGFyZSwgSW5jLjEdMBsGA1UECxMUQ2xvdWRGbGFyZSBPcmlnaW4gQ0ExJjAk
+BgNVBAMTHUNsb3VkRmxhcmUgT3JpZ2luIENlcnRpZmljYXRlMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEArXyMWbyWYTiAFNmEIf5cE/3PAxSjGGonKEs3
+Ppn6effRgxwYTQLsdiVzXxgaKDEklUWwn0diWVX3eOym27O1EDwsJJHAsz+ph7pz
+c3b0FIMW2XoRFBczmsj3Jh3JBE61GlHfPIFPB3adO+e8kgoRg9Ac7vWGYkz9TY3n
+QH0locAHbziITua4FrPvrJEUot3bTdF6KmX20hDccSThKNi1xKbgfkFYsv/k9/jS
+aV/mbQVuxIIcKavAc/E2jD7M671m7TZkzcp0fVLxdQgO6YO4PoQS7prZTn+ORJZT
+UzlMypwf4bwAQsY0lZRdWKaSsngmXXRVoJI/C1cbXZHy35EmhQIDAQABo4IBJjCC
+ASIwDgYDVR0PAQH/BAQDAgWgMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcD
+ATAMBgNVHRMBAf8EAjAAMB0GA1UdDgQWBBQGdwBYQgTA3nHOX0nL+H/XUGgd8jAf
+BgNVHSMEGDAWgBQk6FNXXXw0QIep65TbuuEWePwppDBABggrBgEFBQcBAQQ0MDIw
+MAYIKwYBBQUHMAGGJGh0dHA6Ly9vY3NwLmNsb3VkZmxhcmUuY29tL29yaWdpbl9j
+YTAnBgNVHREEIDAegg4qLm5vcGFzYXJhbi5jb4IMbm9wYXNhcmFuLmNvMDgGA1Ud
+HwQxMC8wLaAroCmGJ2h0dHA6Ly9jcmwuY2xvdWRmbGFyZS5jb20vb3JpZ2luX2Nh
+LmNybDANBgkqhkiG9w0BAQsFAAOCAQEASOEB3ZP9LSXkhhdLD0bVACC3EAdefJmm
+v510EvT4lBKGYSOn7aiTAzjihlOhBWXR9TkZov+JtJXD8Dsq1pAy4bB7kDn+fhAE
+j6NtM0dKW8yfz6wYB567Cmi0TNoeS0hzCEarTjQEYEwbZN/KZ2KX28nwEtywC5W7
+5SaFHsjcpotV53erxxZmUGG9ZGeQhKXtlQHcISqF7JBYNSO0cViR25eS38l7q5Tk
+J6Xw/ti3A85jfeUp0vRlBb4EKAWP2FG9UPvzBVFolCJ4Rt4s44H8LCWuvBeC9Dkj
+XqFXTLBnd0nQn407YrW+1EoLSch/bxkE5f6RBOnZ2fgTVvFdawj7oQ==
+-----END CERTIFICATE-----"""
+
+EMBEDDED_KEY = """-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCtfIxZvJZhOIAU
+2YQh/lwT/c8DFKMYaicoSzc+mfp599GDHBhNAux2JXNfGBooMSSVRbCfR2JZVfd4
+7Kbbs7UQPCwkkcCzP6mHunNzdvQUgxbZehEUFzOayPcmHckETrUaUd88gU8Hdp07
+57ySChGD0Bzu9YZiTP1NjedAfSWhwAdvOIhO5rgWs++skRSi3dtN0XoqZfbSENxx
+JOEo2LXEpuB+QViy/+T3+NJpX+ZtBW7Eghwpq8Bz8TaMPszrvWbtNmTNynR9UvF1
+CA7pg7g+hBLumtlOf45EllNTOUzKnB/hvABCxjSVlF1YppKyeCZddFWgkj8LVxtd
+kfLfkSaFAgMBAAECggEAKriZbT2qAG3j6H558c8LyKZ/NECAOzJkyyDejU1op2FV
+2AXynABEz4FAbGHoiw4y9olPSaHP/7TSOJZ6Lm8N/t36dtTnkZxzOGe7J2tbBrQT
+S+Gp0/s0q4Cij+HUzvk80qrnoKQtHGbiqE5UGthc4Ms+XL/cZFeWJuNzV2eZ/T79
+/q8WgQQ/eFkbg+raYXtSV3ntPka6qmMzpzP3WbmcHfVlZWIRHyS54yE0QgdQl6uF
+ZN+d6DbLEj2NFEWVNJWxv3Sq3gMOfbooLjsbwO8U7XetVuFfMpfRUiN7k/ADb0kK
+mbulpLcJtthpNio/rY6e69wFaBapoRbgD/c7bMpw7wKBgQD04wRVGSnQIsZBqhIz
+tmwV+Lr8ZetxsJ0GscDAEIDYKwha3UO6L/ODqQG0kTyU3HsmQUISNBrv7hcy5Fos
+JOfkeYLrFnoMobdM+lGeBRZXvjpBcSjTBJl5I+ddMvD/8OESf9IOeMAvtjw0yoCH
+4UvwVWWkkyKRb/pxgpeK1XCjRwKBgQC1XAkZHz+hdSD5UUWV9YvgLN0e0XJgHwUI
+jqzHkCONkFTXlDrRPtFCZvzmetUdF1DR1GlTNTgvZ63ItoAC6Jdm4VZfSTZd9oRF
+MacH10mh8R40+NJx1pe22z1dgy9RiH+LkuDHHubhtvKzI3DggaX3KPcntCLaCMZY
+pBSlIFxV0wKBgEXyHcess0u20wfoauCIZ2DzNX1oIxLLDl7eIJ77V8HmsLE7Z9/j
+WFuvx0PrA/HE9AveMd//L/598/ReUv8u32lb56/8MIoxGqkLCornCxWuyPbuOmnj
+c26teaUeKsX/6FmfVsE5bjNyisnNWV72U/lmeuzB9eqyoEcRtPU7t7t7AoGAUJxq
+BtqW4+M2FtuC/Ja555jJaEtcdVEUYatZLRLqWqAOtgvS4PL0/HjebGuoklesureZ
+YTzEjn2dBxvnZmOP+FCsnYnjOny6ai8ZuSh+OBb+gDkhASyLHuHwMsJ+o9TyLE3K
+z3by1N0Gn41fPMsjw+pXgTRWUWeZEglMi+EIabUCgYBEf2hU27W6jiYOUf081oFK
+uVBdI0M1WSIMIaHkTWAbIBpvbYs6HPg3ahNL328fOgw2REwNqbdWhrkaXSDFuEOa
+lLYvHR05hvsABWzD7a4+VBt1wALrLvckl8zZIFYrY8B3KIjpcJI+SYmuZKEDNFFz
+Y/ryzgff8qQY7HLuCVsj5g==
+-----END PRIVATE KEY-----"""
+
+def create_ssl_context(is_client=False, use_embedded_certs=False):
+    """Create SSL context with the specified protocol"""
     if is_client:
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-    else:
-        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        context.load_cert_chain(
-            certfile=SSL_CONFIG.CERT_PATH,
-            keyfile=SSL_CONFIG.KEY_PATH
+        ssl_context = ssl.create_default_context(
+            purpose=ssl.Purpose.SERVER_AUTH
         )
-
-    if not protocol:
-        protocol = 'h2'
-
-    context.set_alpn_protocols([protocol])
+        # For testing, disable certificate verification
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+    else:
+        ssl_context = ssl.create_default_context(
+            purpose=ssl.Purpose.CLIENT_AUTH
+        )
+        ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
-    return context
+    ssl_context.set_alpn_protocols(['h2'])
+    
+    if not is_client:
+        if use_embedded_certs:
+            # Use the embedded certificates
+            ssl_context = load_embedded_certificates(ssl_context)
+        else:
+            # Generate temporary certificates if none provided
+            temp_cert, temp_key = generate_temp_certificates()
+            ssl_context.load_cert_chain(temp_cert, temp_key)
+            # Clean up temporary files
+            os.unlink(temp_cert)
+            os.unlink(temp_key)
+    
+    # Additional security settings
+    ssl_context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # Only TLS 1.2+
+    
+    return ssl_context
 
 def create_socket(host: str, port: int, is_server: bool = False):
     """Create and configure a socket"""
@@ -49,106 +125,6 @@ def create_socket(host: str, port: int, is_server: bool = False):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((host, port))
     return sock
-
-def handle_socket_error(logger: logging.Logger, error: Exception, context: str):
-    """Handle socket-related errors"""
-    logger.error(f"Socket error in {context}: {error}", exc_info=True)
-    raise
-
-def log_h2_frame(logger: logging.Logger, direction: str, event: Any):
-    """Log HTTP/2 frame details"""
-    event_type = event.__class__.__name__
-    
-    separator = "=" * 50
-    logger.info(f"\n{separator}")
-    logger.info(f"{direction} {event_type} FRAME")
-    
-    # Log basic frame info
-    logger.info(f"Stream ID: {getattr(event, 'stream_id', 'N/A')}")
-    
-    # Add specific details based on frame type
-    if isinstance(event, h2.events.RequestReceived):
-        headers = dict(event.headers)
-        logger.info("Headers:")
-        for k, v in headers.items():
-            logger.info(f"  {k}: {v}")
-            
-    elif isinstance(event, h2.events.ResponseReceived):
-        headers = dict(event.headers)
-        logger.info("Headers:")
-        for k, v in headers.items():
-            logger.info(f"  {k}: {v}")
-            
-    elif isinstance(event, h2.events.TrailersReceived):
-        headers = dict(event.headers)
-        logger.info("Trailers:")
-        for k, v in headers.items():
-            logger.info(f"  {k}: {v}")
-            
-    elif isinstance(event, h2.events.PushedStreamReceived):
-        # Add PUSH_PROMISE specific logging
-        logger.info(f"Parent Stream ID: {event.parent_stream_id}")
-        logger.info(f"Pushed Stream ID: {event.pushed_stream_id}")
-        headers = dict(event.headers)
-        logger.info("Push Promise Headers:")
-        for k, v in headers.items():
-            logger.info(f"  {k}: {v}")
-            
-    elif isinstance(event, h2.events.SettingsAcknowledged):
-        logger.info("Settings: ACK received")
-        
-    elif isinstance(event, h2.events.RemoteSettingsChanged):
-        logger.info("Changed Settings:")
-        for setting, value in event.changed_settings.items():
-            if isinstance(setting, int):
-                setting_name = setting
-            else:
-                setting_name = setting.name
-            logger.info(f"  {setting_name}: {value}")
-            
-    elif isinstance(event, h2.events.WindowUpdated):
-        logger.info(f"Window Update Delta: {event.delta}")
-        
-    elif isinstance(event, h2.events.DataReceived):
-        logger.info(f"Data Length: {len(event.data)}")
-        logger.info(f"Flow Controlled Length: {event.flow_controlled_length}")
-        
-    elif isinstance(event, h2.events.PriorityUpdated):
-        logger.info(f"Depends On: {event.depends_on}")
-        logger.info(f"Weight: {event.weight}")
-        logger.info(f"Exclusive: {event.exclusive}")
-        
-    elif isinstance(event, h2.events.StreamReset):
-        logger.info(f"Error Code: {event.error_code}")
-        logger.info(f"Remote Reset: {event.remote_reset}")
-        
-    elif isinstance(event, h2.events.StreamEnded):
-        logger.info("Stream Ended")
-        
-    logger.info(separator)
-
-def load_test_case(logger: logging.Logger, test_id: int):
-    """Load a specific test case by ID from the test cases file"""
-    try:
-        with open('tests/test_cases.json', 'r') as f:
-            test_data = json.load(f)
-            
-        # Search through all test suites for the specified test ID
-        for test_case in test_data:
-            if test_case['id'] == test_id:
-                logger.info(f"\nLoaded test case {test_id}:")
-                logger.info(f"Description: {test_case['description']}\n")
-                return test_case
-                    
-        logger.error(f"Test case with ID {test_id} not found")
-        return None
-        
-    except FileNotFoundError:
-        logger.error("test_cases.json file not found")
-        return None
-    except json.JSONDecodeError:
-        logger.error("Error parsing test_cases.json")
-        return None
     
 # Default H2Configuration settings
 H2_CONFIG_SETTINGS = {
@@ -174,30 +150,31 @@ def format_headers(headers_dict: Dict):
     return headers
 
 def send_frame(conn: h2.connection.H2Connection, sock: socket.socket, 
-               frame_data: Dict):
+               frame_data: Dict, is_server: bool = False, cloudflare_origin: bool = False):
     """Send a single H2 frame
     Args:
         conn: H2Connection instance
         sock: Socket to send data on
         frame_data: Frame configuration from test case
-        logger: Logger instance
+        is_server: Whether the frame is being sent from the server
+        cloudflare_origin: Whether the frame is being sent from the cloudflare origin
     """
     frame_type = frame_data.get('type')
     
     if frame_type == 'HEADERS':
-        send_headers_frame(conn, sock, frame_data)
+        send_headers_frame(conn, sock, frame_data, is_server, cloudflare_origin)
     elif frame_type == 'DATA':
-        send_data_frame(conn, frame_data)
+        send_data_frame(conn, frame_data, is_server, cloudflare_origin)
     elif frame_type == 'UNKNOWN':
-        send_unknown_frame(sock, frame_data)
+        send_unknown_frame(sock, frame_data, cloudflare_origin)
     elif frame_type == 'RST_STREAM':
-        send_rst_stream_frame(conn, sock, frame_data)
+        send_rst_stream_frame(conn, sock, frame_data, cloudflare_origin)
     elif frame_type == 'PRIORITY':
-        send_priority_frame(conn, sock, frame_data)
+        send_priority_frame(conn, sock, frame_data, cloudflare_origin)
     elif frame_type == 'SETTINGS':
         send_settings_frame(conn, sock, frame_data)
     elif frame_type == 'PUSH_PROMISE':
-        send_push_promise_frame(conn, sock, frame_data)
+        send_push_promise_frame(conn, sock, frame_data, cloudflare_origin)
     elif frame_type == 'PING':
         send_ping_frame(conn, sock, frame_data)
     elif frame_type == 'GOAWAY':
@@ -205,16 +182,16 @@ def send_frame(conn: h2.connection.H2Connection, sock: socket.socket,
     elif frame_type == 'WINDOW_UPDATE':
         send_window_update_frame(conn, sock, frame_data)
     elif frame_type == 'CONTINUATION':
-        send_continuation_frame(conn, sock, frame_data)
+        send_continuation_frame(conn, sock, frame_data, cloudflare_origin)
     elif frame_type == 'TRAILERS':
-        send_trailers_frame(conn, sock, frame_data)
+        send_trailers_frame(conn, sock, frame_data, cloudflare_origin)
     
     # Send any pending data
     outbound_data = conn.data_to_send()
     if outbound_data:
         sock.sendall(outbound_data)
 
-def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict) -> None:
+def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict, is_server: bool = False, cloudflare_origin: bool = False) -> None:
     """Send a HEADERS frame
     
     Args:
@@ -228,21 +205,25 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
                 - END_HEADERS (optional): Whether to end the headers
         - id: Test case ID
     """
-    stream_id = frame_data.get('stream_id', 1)
+    # next_legal_id = conn.get_next_available_stream_id()
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
     headers = frame_data.get('headers')
     duplicate_headers = frame_data.get('duplicate_headers')
 
     if headers:
         headers = format_headers(headers)
     else:
-        headers = [(':method', 'GET'), (':path', '/'), (':authority', 'localhost'), (':scheme', 'http')]
+        if is_server:
+            headers = [(':status', '200'), ('content-type', 'text/plain'), ('server', 'nopasaran-http2-server'), ('date', datetime.now(timezone.utc).strftime('%a, %d %b %Y %H:%M:%S GMT'))]
+        else:
+            headers = [(':method', 'GET'), (':path', '/test-frame'), (':authority', conn.host), (':scheme', conn.scheme), ('user-agent', 'nopasaran-http2-client'), ('accept', '*/*')]
     
     if duplicate_headers:
         duplicate_headers = format_headers(duplicate_headers)
         headers.extend(duplicate_headers)
         
     flags = frame_data.get('flags', {})
-    end_stream = flags.get('END_STREAM', True)
+    end_stream = flags.get('END_STREAM', False)
     end_headers = flags.get('END_HEADERS', True)
     
     if frame_data.get('reserved_bit') or frame_data.get('raw_frame'):
@@ -298,15 +279,15 @@ def send_headers_frame(conn: h2.connection.H2Connection, sock, frame_data: Dict)
                 end_stream=end_stream
             )
 
-def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
+def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict, cloudflare_origin: bool = False):
     """Send a TRAILERS frame"""
-    stream_id = frame_data.get('stream_id', 1)
-    headers = frame_data.get('headers')
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
+    headers = frame_data.get('headers', [])
     end_stream = frame_data.get('flags', {}).get('END_STREAM', True)
-    if headers:
+    if headers != []:
         headers = format_headers(headers)
     else:
-        headers = [('content-type', 'text/plain')]
+        headers = [('x-extra-info', 'some trailer info')]
     
     # trailer_frame = HeadersFrame(stream_id)
     # trailer_frame.data = conn.encoder.encode(headers)
@@ -322,11 +303,11 @@ def send_trailers_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
     # serialized = trailer_frame.serialize()
     # sock.sendall(serialized)
 
-def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict) -> None:
+def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict, is_server: bool = False, cloudflare_origin: bool = False) -> None:
     """Send a DATA frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
     flags = frame_data.get('flags', {})
-    payload = frame_data.get('payload', 'test')
+    payload = frame_data.get('payload', 'Hello from server!' if is_server else 'Hello from client!')
     payload_size = frame_data.get('payload_size', None)
     
     if payload_size:
@@ -337,16 +318,16 @@ def send_data_frame(conn: h2.connection.H2Connection, frame_data: Dict) -> None:
     conn.send_data(
         stream_id=stream_id,
         data=payload,
-        end_stream=flags.get('END_STREAM', True)
+        end_stream=flags.get('END_STREAM', False)
     )
 
-def send_unknown_frame(sock: socket.socket, frame_data: Dict):
+def send_unknown_frame(sock: socket.socket, frame_data: Dict, cloudflare_origin: bool = False):
     """Send an UNKNOWN frame"""
-    payload = frame_data.get('payload', '').encode('utf-8')
-    frame_type_id = frame_data.get('frame_type_id')
+    payload = frame_data.get('payload', 'test payload').encode('utf-8')
+    frame_type_id = frame_data.get('frame_type_id', '99')
     flags = frame_data.get('flags', [])
     flags_byte = sum(1 << i for i, flag in enumerate(flags))
-    stream_id = frame_data.get('stream_id')
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
     
     # Frame header format:
     # Length (24 bits) | Type (8 bits) | Flags (8 bits) | R (1 bit) | Stream ID (31 bits)
@@ -361,9 +342,9 @@ def send_unknown_frame(sock: socket.socket, frame_data: Dict):
     # Send raw frame
     sock.sendall(header + payload)
 
-def send_rst_stream_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
+def send_rst_stream_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict, cloudflare_origin: bool = False):
     """Send a RST_STREAM frame"""
-    stream_id = frame_data.get('stream_id', 1)
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
     if frame_data.get('payload_length'):
         payload_length = frame_data.get('payload_length', 4)  # Default to valid length of 4
         payload = b'\x00' * payload_length
@@ -381,8 +362,8 @@ def send_rst_stream_frame(conn: h2.connection.H2Connection, sock: socket.socket,
         
     sock.sendall(frame)
 
-def send_priority_frame(conn, sock, frame_data):
-    stream_id = frame_data.get('stream_id', 1)
+def send_priority_frame(conn, sock, frame_data, cloudflare_origin: bool = False):
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
     frame = PriorityFrame(stream_id)
 
     frame.stream_weight = frame_data.get('weight', 15)
@@ -401,20 +382,28 @@ def send_settings_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
     # Convert settings keys to appropriate type (int or SettingCodes)
     processed_settings = {}
     for name, value in settings.items():
+        # If it's already a number, use it directly
+        if isinstance(name, int):
+            processed_settings[name] = value
+            continue
+            
         # Try to convert string to int for numeric settings
         try:
             setting_id = int(name)
             processed_settings[setting_id] = value
         except ValueError:
             # If not numeric, treat as a valid setting name
-            setting_id = getattr(h2.settings.SettingCodes, name)
-            processed_settings[setting_id] = value
+            try:
+                setting_id = getattr(h2.settings.SettingCodes, name)
+                processed_settings[setting_id] = value
+            except AttributeError:
+                # If setting name doesn't exist, skip it
+                continue
     
-    # If we want to bypass h2 validation and send raw frame
+    # Always use raw frame sending if we have unknown settings or non-zero stream ID
     if (stream_id != 0 or 
         'extra_bytes' in frame_data or 
-        'raw_payload' in frame_data or 
-        any(isinstance(k, int) and k not in h2.settings.SettingCodes for k in processed_settings)):
+        'raw_payload' in frame_data):
         
         settings_payload = b''
         for setting_id, value in processed_settings.items():
@@ -453,19 +442,19 @@ def send_settings_frame(conn: h2.connection.H2Connection, sock: socket.socket, f
         serialized = frame.serialize()
         sock.sendall(serialized)
 
-def send_push_promise_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
+def send_push_promise_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict, cloudflare_origin: bool = False):
     """Send a PUSH_PROMISE frame"""
-    stream_id = frame_data.get('stream_id', 1)
-    promised_stream_id = frame_data.get('promised_stream_id', 2)
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
+    promised_stream_id = frame_data.get('promised_stream_id', 4 if cloudflare_origin else 2)
     headers = frame_data.get('headers')
     flags = frame_data.get('flags', {})
     end_headers = flags.get('END_HEADERS', True)
-    end_stream = flags.get('END_STREAM', True)
+    end_stream = flags.get('END_STREAM', False)
     
     if headers:
         headers = format_headers(headers)
     else:
-        headers = [(':status', '200')]
+        headers = [(':method', 'GET'), (':path', '/'), (':authority', 'localhost'), (':scheme', 'http')]
     
     # Get encoded headers from the connection's encoder
     encoded_headers = conn.encoder.encode(headers)
@@ -576,7 +565,7 @@ def send_window_update_frame(conn: h2.connection.H2Connection, sock: socket.sock
     serialized = frame.serialize()
     sock.sendall(serialized)
 
-def send_continuation_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict):
+def send_continuation_frame(conn: h2.connection.H2Connection, sock: socket.socket, frame_data: Dict, cloudflare_origin: bool = False):
     """Send a CONTINUATION frame
     
     Args:
@@ -588,7 +577,7 @@ def send_continuation_frame(conn: h2.connection.H2Connection, sock: socket.socke
             - flags (optional): Dictionary of flags to set
             - end_headers (optional): Whether this is the last CONTINUATION frame (default: True)
     """
-    stream_id = frame_data.get('stream_id')
+    stream_id = frame_data.get('stream_id', 3 if cloudflare_origin else 1)
     headers = frame_data.get('headers')
     flags = frame_data.get('flags', {})
     end_headers = flags.get('END_HEADERS', True)
@@ -611,3 +600,71 @@ def send_continuation_frame(conn: h2.connection.H2Connection, sock: socket.socke
     # Serialize and send
     serialized = frame.serialize()
     sock.sendall(serialized)
+
+def generate_temp_certificates():
+    """Generate temporary self-signed certificates for TLS testing"""
+    # Generate private key
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+
+    # Generate certificate
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, u"test.nopasaran.com"),  # Simple test domain
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Test Certificate"),
+    ])
+
+    cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        private_key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.utcnow()
+    ).not_valid_after(
+        datetime.utcnow() + timedelta(days=1)
+    ).sign(private_key, hashes.SHA256())
+
+    # Create temporary files
+    cert_file = tempfile.NamedTemporaryFile(delete=False)
+    key_file = tempfile.NamedTemporaryFile(delete=False)
+
+    # Write certificate and private key to temporary files
+    cert_file.write(cert.public_bytes(serialization.Encoding.PEM))
+    key_file.write(private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ))
+
+    cert_file.close()
+    key_file.close()
+
+    return cert_file.name, key_file.name
+
+def load_embedded_certificates(ssl_context):
+    """Load embedded certificates by writing to temporary files"""
+    # Create temporary files for the certificates
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.crt') as cert_temp:
+        cert_temp.write(EMBEDDED_CERT.encode('utf-8'))
+        cert_temp_path = cert_temp.name
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.key') as key_temp:
+        key_temp.write(EMBEDDED_KEY.encode('utf-8'))
+        key_temp_path = key_temp.name
+    
+    # Load the certificate and key from the temporary files
+    ssl_context.load_cert_chain(
+        certfile=cert_temp_path,
+        keyfile=key_temp_path
+    )
+    
+    # Clean up the temporary files
+    os.unlink(cert_temp_path)
+    os.unlink(key_temp_path)
+    
+    return ssl_context

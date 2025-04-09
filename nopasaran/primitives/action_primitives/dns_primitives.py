@@ -1,4 +1,6 @@
-from scapy.all import IP, UDP, DNS, DNSQR, DNSRR
+from scapy.all import IP, UDP, DNS, DNSQR, DNSRR, DNSRROPT
+import random
+import string
 from nopasaran.decorators import parsing_decorator
 
 
@@ -677,3 +679,106 @@ class DNSPrimitives:
         dns_additional_answer = dns_packet.ar
 
         state_machine.set_variable_value(outputs[0], dns_additional_answer)
+
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def append_random_label_to_qname(inputs, outputs, state_machine):
+        """
+        Append a random label to the existing qname in a DNS query packet.
+
+        Number of input arguments: 1
+        - The name of the variable containing the DNS packet (which must have a DNSQR layer).
+
+        Number of output arguments: 1
+        - The name of the variable to store the modified DNS packet.
+
+        Args:
+            inputs (List[str]): The list of input variable names, containing one mandatory argument:
+                - The DNS query packet variable name.
+            outputs (List[str]): The list of output variable names, containing one mandatory argument:
+                - The modified DNS packet variable name.
+            state_machine: The state machine object.
+        """
+     
+        
+        dns_packet = state_machine.get_variable_value(inputs[0])
+
+        # Copy the packet so we don't mutate the original in place:
+        dns_packet = dns_packet.copy()
+
+        if not dns_packet.haslayer(DNSQR):
+            state_machine.set_variable_value(outputs[0], dns_packet)
+            return
+
+        original_qname = dns_packet[DNSQR].qname.decode().rstrip('.')
+        rand_label = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
+        new_qname = f"{rand_label}.{original_qname}"
+
+        dns_packet[DNSQR].qname = new_qname.encode()
+        state_machine.set_variable_value(outputs[0], dns_packet)
+
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def get_dns_rcode_from_dns_packet(inputs, outputs, state_machine):
+        """
+        Extract the DNS RCODE (e.g., NXDOMAIN is 3) from a DNS packet.
+
+        Number of input arguments: 1 (the name of the variable containing the DNS packet)
+        Number of output arguments: 1 (the name of the variable to store the DNS rcode)
+
+        Args:
+            inputs (List[str]): The list of input variable names. 
+                                inputs[0] is the variable name storing the DNS packet.
+            outputs (List[str]): The list of output variable names.
+                                outputs[0] is the variable name to store the DNS rcode.
+            state_machine: Your state machine object for variable management.
+
+        Returns:
+            None
+        """
+        # Get the DNS packet from the state machine
+        dns_packet = state_machine.get_variable_value(inputs[0])
+        
+        # Extract the DNS response code (0 = NoError, 3 = NXDOMAIN, etc.)
+        dns_rcode = dns_packet.rcode
+        
+        # Store the rcode in the specified output variable
+        state_machine.set_variable_value(outputs[0], dns_rcode)
+
+    @staticmethod
+    @parsing_decorator(input_args=0, output_args=1)
+    def create_dns_query_packet_with_qdcount_mismatch (inputs, outputs, state_machine):
+            """
+            Create a malformed DNS packet (e.g., claims QDCOUNT=1 but provides no DNSQR).
+            
+            Number of input arguments: 0
+            Number of output arguments: 1
+            Optional input arguments: No
+            Optional output arguments: No
+
+            Args:
+                inputs (List[str]): The list of input variable names. Not used in this method.
+                outputs (List[str]): The list of output variable names. Contains one mandatory output argument:
+                    - The name of the variable to store the malformed DNS packet.
+                state_machine: The state machine object.
+
+            Returns:
+                None
+            """
+            # Create a baseline IP/UDP/DNS packet
+            dns_packet = IP()/UDP()/DNS()
+
+            dns_packet[DNS].qdcount = 1
+
+            # ...but DO NOT actually attach a DNSQR object, so it's inconsistent and malformed
+            dns_packet[DNS].qd = None
+
+            # Store the malformed DNS packet in the state machine
+            state_machine.set_variable_value(outputs[0], dns_packet)
+
+
+
+
+

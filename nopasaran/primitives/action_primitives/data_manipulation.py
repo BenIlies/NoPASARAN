@@ -1,5 +1,6 @@
 import nopasaran.utils as utils
 from nopasaran.decorators import parsing_decorator
+import json
 
 class DataManipulationPrimitives:
     """
@@ -195,9 +196,11 @@ class DataManipulationPrimitives:
             None
         """
         old_value = int(state_machine.get_variable_value(inputs[0]))
-        increment_amount = int(inputs[1])
+        increment_amount = int(state_machine.get_variable_value(inputs[1]))
         incremented_value = old_value + increment_amount
         state_machine.set_variable_value(outputs[0], incremented_value)
+
+    
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)
@@ -227,9 +230,47 @@ class DataManipulationPrimitives:
             None
         """
         old_value = int(state_machine.get_variable_value(inputs[0]))
-        decrement_amount = int(inputs[1])
+        decrement_amount = int(state_machine.get_variable_value(inputs[1]))
         decremented_value = old_value - decrement_amount
         state_machine.set_variable_value(outputs[0], decremented_value)
+
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def divide(inputs, outputs, state_machine):
+        """
+        Divide the value of a variable stored in the machine's state by a specified divisor.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of a variable representing the numerator.
+                - The divisor by which the numerator should be divided.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
+                The name of the variable to store the result of the division operation.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the divisor is zero.
+        """
+        numerator = int(state_machine.get_variable_value(inputs[0]))
+        divisor = int(state_machine.get_variable_value(inputs[1]))
+        if divisor == 0:
+            raise ValueError("Division by zero is not allowed.")
+        divided_value = numerator // divisor
+        state_machine.set_variable_value(outputs[0], divided_value)
+
 
 
     @staticmethod
@@ -324,3 +365,73 @@ class DataManipulationPrimitives:
             del dictionary[key]
         
         state_machine.set_variable_value(outputs[0], dictionary)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def string_to_integer(inputs, outputs, state_machine):
+        """
+        Convert a string value to an integer and store it in the machine's state.
+
+        Number of input arguments: 1
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument,
+                which is the name of a variable containing the string to be converted.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the converted integer.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If the input string cannot be converted to an integer.
+        """
+        try:
+            integer_value = int(state_machine.get_variable_value(inputs[0]))
+            state_machine.set_variable_value(outputs[0], integer_value)
+        except ValueError:
+            raise ValueError(f"Cannot convert value {state_machine.get_variable_value(inputs[0])} to an integer.")
+        
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=1)
+    def fetch_element_from_dict(inputs, outputs, state_machine):
+        """
+        Fetch an element from a dictionary stored in the machine's state.
+
+        Number of input arguments: 2
+        Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the dictionary variable.
+                - The name of the key whose value needs to be retrieved.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, 
+                which is the name of the variable to store the retrieved value.
+            
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        dictionary = state_machine.get_variable_value(inputs[0])
+        key = inputs[1]
+        
+        # Fetch the value from the dictionary
+        value = dictionary.get(key, None)  # Returns None if key does not exist
+        
+        # Store the retrieved value in the state machine
+        state_machine.set_variable_value(outputs[0], value)
+    
+    

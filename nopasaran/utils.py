@@ -3,8 +3,12 @@ import pickle
 import random
 import socket
 import select
+import ssl
 
-from scapy.all import IP, TCP, UDP, ICMP
+
+from scapy.all import IP, TCP, UDP, ICMP, Raw
+
+
 
 def serialize_log_data(log_data):
     def serialize_object(obj):
@@ -56,55 +60,97 @@ def deserialize_log_data(base64_data):
         return None
 
 def create_TCP_packet():
-	return IP()/TCP()
+    return IP()/TCP()
 
 def create_UDP_packet():
-	return IP()/UDP()
+    return IP()/UDP()
+
+def set_UDP_payload(packet, payload_bytes):
+    """
+    Replace the payload of a UDP packet with payload_bytes without recreating
+    the entire packet.
+
+    If a Raw layer already exists, update its load; otherwise, append a new Raw layer.
+    """
+    if packet.haslayer(Raw):
+        # Modify the existing Raw layer
+        packet[Raw].load = payload_bytes
+    else:
+        # Append a new Raw layer to the UDP layer
+        packet[UDP].add_payload(Raw(load=payload_bytes))
+    return packet
+
+def set_UDP_packet_bytes(packet, size):
+    """
+    Set the UDP packet's payload to a sequence of 'A' characters of length `size`.
+    """
+    payload_data = b"A" * int(size)
+    return set_UDP_payload(packet, payload_data)
+
+def set_ICMP_type(packet, icmp_type):
+    packet['ICMP'].type = int(icmp_type)
+
+
+def set_ICMP_code(packet, icmp_code):
+    packet['ICMP'].code = int(icmp_code)
+
+
+def get_ICMP_type(packet):
+    return packet['ICMP'].type
+
+
+def get_ICMP_code(packet):
+    return packet['ICMP'].code
+
+
+
+
+
 
 def set_IP_dst(packet, dst):
-	packet['IP'].dst = dst
+    packet['IP'].dst = dst
 
 def set_IP_src(packet, src):
-	packet['IP'].src = src
+    packet['IP'].src = src
 
 def get_IP_dst(packet):
-	return packet['IP'].dst
+    return packet['IP'].dst
 
 def get_IP_src(packet):
-	return packet['IP'].src
+    return packet['IP'].src
 
 def set_TCP_sport(packet, sport):
-	packet['TCP'].sport = int(sport)
+    packet['TCP'].sport = int(sport)
 
 def set_TCP_dport(packet, dport):
-	packet['TCP'].dport = int(dport)
+    packet['TCP'].dport = int(dport)
 
 def set_UDP_sport(packet, sport):
-	packet['UDP'].sport = int(sport)
+    packet['UDP'].sport = int(sport)
 
 def set_UDP_dport(packet, dport):
-	packet['UDP'].dport = int(dport)
+    packet['UDP'].dport = int(dport)
 
 def get_UDP_sport(packet):
-	return packet['UDP'].sport
+    return packet['UDP'].sport
 
 def get_UDP_dport(packet):
-	return packet['UDP'].dport
+    return packet['UDP'].dport
 
 def get_TCP_sport(packet):
-	return packet['TCP'].sport
+    return packet['TCP'].sport
 
 def get_TCP_dport(packet):
-	return packet['TCP'].sport
+    return packet['TCP'].sport
 
 def set_TCP_seq(packet, seq):
-	packet['TCP'].seq = int(seq)
+    packet['TCP'].seq = int(seq)
 
 def set_TCP_flags(packet, flags):
-	packet['TCP'].flags = flags
+    packet['TCP'].flags = flags
 
 def get_TCP_flags(packet):
-	return str(packet['TCP'].flags)
+    return str(packet['TCP'].flags)
 
 def set_TCP_ack(packet, ack):
     packet['TCP'].ack = int(ack)
@@ -116,54 +162,74 @@ def get_TCP_ack(packet):
     return packet['TCP'].ack
 
 def set_TCP_automatic_packet_seq(packet):
-	increase = 0
-	if packet['TCP'].flags in ['S','F','SA','FA']:
-		increase =  1
-	elif packet['TCP'].flags in ['P','PA']:
-		increase = len(packet['TCP'].payload)
-	else:
-		if packet['TCP'].payload != None:
-			if len(packet['TCP'].payload) > 0:
-				increase = len(packet['TCP'].payload)
-	packet['TCP'].seq = packet['TCP'].seq + increase
+    increase = 0
+    if packet['TCP'].flags in ['S','F','SA','FA']:
+        increase =  1
+    elif packet['TCP'].flags in ['P','PA']:
+        increase = len(packet['TCP'].payload)
+    else:
+        if packet['TCP'].payload is not None and len(packet['TCP'].payload) > 0:
+            increase = len(packet['TCP'].payload)
+    packet['TCP'].seq = packet['TCP'].seq + increase
 
 def set_TCP_automatic_packet_ack(ack_packet, original_packet):
-	increase = 0
-	if original_packet['TCP'].flags in ['S','F','SA','FA']:
-		increase =  1
-	elif original_packet['TCP'].flags in ['P','PA']:
-		increase = len(original_packet['TCP'].payload)
-	else:
-		if original_packet['TCP'].payload != None:
-			if len(original_packet['TCP'].payload) > 0:
-				increase = len(original_packet['TCP'].payload)
-	ack_packet['TCP'].ack = original_packet['TCP'].seq + increase
+    increase = 0
+    if original_packet['TCP'].flags in ['S','F','SA','FA']:
+        increase =  1
+    elif original_packet['TCP'].flags in ['P','PA']:
+        increase = len(original_packet['TCP'].payload)
+    else:
+        if original_packet['TCP'].payload is not None and len(original_packet['TCP'].payload) > 0:
+            increase = len(original_packet['TCP'].payload)
+    ack_packet['TCP'].ack = original_packet['TCP'].seq + increase
 
 def set_TCP_payload(packet, payload):
-	packet['TCP'].remove_payload()
-	packet['TCP'].add_payload(payload)
+    packet['TCP'].remove_payload()
+    packet['TCP'].add_payload(payload)
 
 def remove_TCP_payload(packet):
-	packet['TCP'].remove_payload()
+    packet['TCP'].remove_payload()
 
 def set_random_int(min, max):
-	return random.randint(int(min), int(max))
+    return random.randint(int(min), int(max))
 
 def set_random_float(min, max):
-	return random.uniform(int(min), int(max))
+    return random.uniform(int(min), int(max))
 
 def create_ICMP_packet():
-	return IP()/ICMP()
+    return IP()/ICMP()
 
 def get_ICMP_payload(packet):
-	return packet[ICMP].payload
+    raw_layer = packet[ICMP].payload
+    return raw_layer.load if raw_layer is not None else b""
+
+
+def set_IP_df(packet):
+    """
+    Set the Don't Fragment (DF) flag on an IP packet.
+
+    Scapy represents flags for the IP packet as an integer. 
+    The value 2 (binary 010) corresponds to the DF flag.
+    """
+    # Ensure we are dealing with an IP packet at the top layer or
+    # adjust to packet[IP] if the IP is nested.
+    if hasattr(packet, 'flags'):
+        packet.flags |= 2  # Set the DF bit
+    return packet
+
+def set_ICMP_payload(packet, payload_bytes):
+    packet[ICMP].remove_payload()          
+    packet[ICMP].add_payload(payload_bytes)  
+
+    return packet
+
+
 
 def handle_client_connection(client_socket):
     try:
         client_socket.recv(1024)
     except Exception as e:
         raise(e)
-
 
 def send_request(ip, port, request_packet):
     response = b""
@@ -182,7 +248,20 @@ def send_request(ip, port, request_packet):
                     response += chunk
                 else:
                     break
-    except (socket.error, socket.timeout) as e:
+    except (socket.error, socket.timeout):
         return None
     
     return response
+
+
+def get_UDP_payload_size(packet):
+    """
+    Return the size (in bytes) of the UDP payload.
+    """
+    if packet.haslayer(Raw):
+        payload = packet[Raw].load
+    else:
+        payload = b""
+    return len(payload)
+
+

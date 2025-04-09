@@ -749,7 +749,7 @@ class DNSPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=0, output_args=1)
-    def create_dns_packet_with_qdcount_mismatch (inputs, outputs, state_machine):
+    def create_dns_query_packet_with_qdcount_mismatch (inputs, outputs, state_machine):
             """
             Create a malformed DNS packet (e.g., claims QDCOUNT=1 but provides no DNSQR).
             

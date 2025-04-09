@@ -433,6 +433,47 @@ class DataManipulationPrimitives:
         
         # Store the retrieved value in the state machine
         state_machine.set_variable_value(outputs[0], value)
+    
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def load_queue_from_file(inputs, outputs, state_machine):
+        """
+        Load a queue from a file and store it in the machine's state.
+
+        Number of input arguments: 1
+        Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The file path from which to read the queue.
+            
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the loaded queue as a list.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            IOError: If an error occurs while reading the file.
+        """
+        file_path = state_machine.get_variable_value(inputs[0])
+
+        try:
+            with open(file_path, "r") as f:
+                queue_data = [line.strip() for line in f.readlines() if line.strip()]  # Read and clean lines
+            
+            state_machine.set_variable_value(outputs[0], queue_data)
+        
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File '{file_path}' not found.")
+        except IOError as e:
+            raise IOError(f"Error reading file '{file_path}': {str(e)}")
+
 
 
 

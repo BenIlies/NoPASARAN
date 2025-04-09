@@ -3,27 +3,12 @@ import pickle
 import random
 import socket
 import select
-import subprocess  # Needed for get_default_mtu()
+import ssl
+
 
 from scapy.all import IP, TCP, UDP, ICMP, Raw
 
-def get_default_mtu():
-    """
-    Get the system's default MTU by checking the primary network interface.
-    """
-    try:
-        result = subprocess.run(["ip", "route"], capture_output=True, text=True)
-        for line in result.stdout.split("\n"):
-            if "default" in line:
-                interface = line.split()[-1]
-                mtu_result = subprocess.run(["ip", "link", "show", interface], capture_output=True, text=True)
-                for mtu_line in mtu_result.stdout.split("\n"):
-                    if "mtu" in mtu_line:
-                        return int(mtu_line.split()[4])
-    except:
-        pass
-    # Default to standard Ethernet MTU if detection fails
-    return 1500
+
 
 def serialize_log_data(log_data):
     def serialize_object(obj):
@@ -238,14 +223,7 @@ def set_ICMP_payload(packet, payload_bytes):
 
     return packet
 
-def set_ICMP_packet_bytes(packet, size):
-    # Generate a large payload of repeated 'A' characters
-    payload_data = b"A" * size
-    
-    # Attach this payload to the existing ICMP packet
-    set_ICMP_payload(packet, payload_data)
-    
-    return packet
+
 
 def handle_client_connection(client_socket):
     try:
@@ -286,11 +264,4 @@ def get_UDP_payload_size(packet):
         payload = b""
     return len(payload)
 
-def get_next_hop_mtu(packet):
-    if packet.haslayer(ICMP):
-        icmp_layer = packet[ICMP]
-        # ICMP Destination Unreachable (type=3), code=4 => Frag needed (DF set)
-        if icmp_layer.type == 3 and icmp_layer.code == 4:
-            # The 'unused' field holds the next-hop MTU in this ICMP message
-          return icmp_layer.nexthopmtu
-    return None
+

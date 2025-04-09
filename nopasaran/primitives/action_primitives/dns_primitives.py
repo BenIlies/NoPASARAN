@@ -721,43 +721,6 @@ class DNSPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def get_dns_query_as_string(inputs, outputs, state_machine):
-        """
-        Extract the DNS query (DNSQR) layer from a DNS packet as a plain string.
-
-        Number of input arguments: 1
-            - The name of the variable containing the DNS packet.
-        Number of output arguments: 1
-            - The name of the variable in which to store the string version of the DNS query.
-
-        Args:
-            inputs (List[str]): Contains one mandatory argument:
-                1) The variable name of the DNS packet in the state machine.
-            outputs (List[str]): Contains one mandatory argument:
-                1) The output variable name to store the DNS query as a string.
-            state_machine: The state machine object.
-
-        Returns:
-            None
-        """
-        dns_packet_var_name = inputs[0]
-        output_var_name = outputs[0]
-
-        dns_packet = state_machine.get_variable_value(dns_packet_var_name)
-
-        # Default to an empty string if there's no DNS query layer.
-        query_str = ""
-
-        # Ensure this packet has a DNS layer and at least one query (qd).
-        if dns_packet.haslayer(DNS) and dns_packet[DNS].qdcount > 0:
-            # Convert the DNSQR object to a string. You could also extract just qname, etc.
-            query_str = str(dns_packet[DNS].qd)
-
-        # Store the plain string version in the output variable.
-        state_machine.set_variable_value(output_var_name, query_str)
-
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
     def get_dns_rcode_from_dns_packet(inputs, outputs, state_machine):
         """
         Extract the DNS RCODE (e.g., NXDOMAIN is 3) from a DNS packet.
@@ -807,11 +770,6 @@ class DNSPrimitives:
             # Create a baseline IP/UDP/DNS packet
             dns_packet = IP()/UDP()/DNS()
 
-            # Assign some arbitrary Transaction ID, flags, etc. (optional)
-            dns_packet[DNS].id = 0x1234
-            dns_packet[DNS].rd = 1       # "Recursion Desired" set just for demonstration
-
-            # Force QDCOUNT = 1 (meaning "we have 1 question")...
             dns_packet[DNS].qdcount = 1
 
             # ...but DO NOT actually attach a DNSQR object, so it's inconsistent and malformed

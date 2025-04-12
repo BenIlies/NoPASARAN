@@ -1,125 +1,78 @@
-import socket
-import select
-import threading
-import time
+from nopasaran.decorators import parsing_decorator
+from nopasaran.tools.tcp_echo_socket_server import EchoSocketServer
 from nopasaran.definitions.events import EventNames
 
-class EchoSocketServer:
+class TCPServerEchoPrimitives:
     """
-    A simple echo server using sockets that echoes back any data it receives.
+    Class containing TCP Echo server action primitives for the state machine.
     """
 
-    def __init__(self):
-        self.sock = None
-        self.client_socket = None
-        self.TIMEOUT = 5.0
-        self.request_received = None
-        self.received_data = None
-
-    def handle_client_connection(self, client_socket):
+    @staticmethod
+    @parsing_decorator(input_args=0, output_args=1)
+    def create_tcp_echo_server(inputs, outputs, state_machine):
         """
-        Handle a client connection by echoing back whatever data is received.
+        Create an instance of EchoSocketServer.
+
+        Number of input arguments: 0
+        Number of output arguments: 1 (EchoSocketServer instance)
         """
-        try:
-            data = client_socket.recv(4096)
-            if data:
-                client_socket.sendall(data)  # Echo back the same data
-                self.received_data = data
+        server = EchoSocketServer()
+        state_machine.set_variable_value(outputs[0], server)
 
-                if self.request_received:
-                    with self.request_received:
-                        self.request_received.notify_all()
-        finally:
-            client_socket.close()
-
-    def wait_for_data(self, port, timeout):
+    @staticmethod
+    @parsing_decorator(input_args=3, output_args=2)
+    def start_tcp_echo_server(inputs, outputs, state_machine):
         """
-        Wait for any TCP data (echoable content), or timeout.
+        Start the TCP Echo server.
 
-        Args:
-            port (int): Port to listen on.
-            timeout (int): Timeout in seconds.
+        Inputs:
+            - EchoSocketServer instance
+            - Host
+            - Port
 
-        Returns:
-            Tuple[bytes, str]: Echoed data or None, and the event name.
+        Outputs:
+            - Event name
+            - Message
         """
-        server_address = ('', port)
-        self.request_received = threading.Condition()
-        self.received_data = None
+        server = state_machine.get_variable_value(inputs[0])
+        host = state_machine.get_variable_value(inputs[1])
+        port = int(state_machine.get_variable_value(inputs[2]))
+        event, message = server.start(host, port)
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], message)
 
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
-            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            server_socket.bind(server_address)
-            server_socket.listen(1)
-            server_socket.setblocking(False)
-
-            start_time = time.time()
-
-            while True:
-                if time.time() - start_time > timeout:
-                    return None, EventNames.TIMEOUT.name
-
-                ready_to_read, _, _ = select.select([server_socket], [], [], timeout)
-                if ready_to_read:
-                    client_socket, _ = server_socket.accept()
-                    self.handle_client_connection(client_socket)
-                    return self.received_data, EventNames.REQUEST_RECEIVED.name
-
-    def start(self, host, port):
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=3)
+    def receive_tcp_echo_data(inputs, outputs, state_machine):
         """
-        Start the echo server.
+        Receive and echo TCP data.
+
+        Inputs:
+            - EchoSocketServer instance
+
+        Outputs:
+            - Event name
+            - Message
+            - Received data
         """
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind((host, port))
-        self.sock.listen(5)
-        return EventNames.SERVER_STARTED.name, f"Echo server started at {host}:{port}."
+        server = state_machine.get_variable_value(inputs[0])
+        event, message, received_data = server.receive_echo_data()
+        state_machine.set_variable_value(outputs[0], event)
+        state_machine.set_variable_value(outputs[1], message)
+        state_machine.set_variable_value(outputs[2], received_data)
 
-    def receive_echo_data(self):
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def close_tcp_echo_server(inputs, outputs, state_machine):
         """
-        Keep listening for incoming connections and echo back any received data.
+        Close the TCP Echo server.
+
+        Inputs:
+            - EchoSocketServer instance
+
+        Outputs:
+            - Event name
         """
-        if not self.sock:
-            return EventNames.ERROR.name, "Echo server not started.", None
-
-        responses = []
-        start_time = time.time()
-        self.sock.setblocking(False)
-
-        while True:
-            if time.time() - start_time > self.TIMEOUT:
-                return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s with no data.", None
-
-            try:
-                ready_to_read, _, _ = select.select([self.sock], [], [], 0.5)
-                if ready_to_read:
-                    client_socket, _ = self.sock.accept()
-                    client_socket.settimeout(1.0)
-                    try:
-                        data = client_socket.recv(4096)
-                        if data:
-                            client_socket.sendall(data)
-                            responses.append(data.decode(errors='ignore'))
-                    finally:
-                        client_socket.close()
-            except socket.timeout:
-                continue
-            except Exception as e:
-                return EventNames.ERROR.name, f"Echo error: {str(e)}", str(responses)
-
-        return EventNames.RECEIVED_REQUESTS.name, f"Received and echoed {len(responses)} messages.", str(responses)
-
-    def close(self):
-        """
-        Close the echo server socket and cleanup.
-        """
-        try:
-            if self.client_socket:
-                self.client_socket.close()
-            if self.sock:
-                self.sock.close()
-            self.client_socket = None
-            self.sock = None
-            return EventNames.CONNECTION_CLOSED.name
-        except Exception:
-            return EventNames.CONNECTION_CLOSED.name
+        server = state_machine.get_variable_value(inputs[0])
+        event = server.close()
+        state_machine.set_variable_value(outputs[0], event)

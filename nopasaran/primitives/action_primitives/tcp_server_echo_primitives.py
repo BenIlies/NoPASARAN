@@ -1,5 +1,6 @@
 from nopasaran.decorators import parsing_decorator
 from nopasaran.tools.tcp_echo_socket_server import EchoSocketServer
+from nopasaran.definitions.events import EventNames
 
 class TCPServerEchoPrimitives:
     """
@@ -75,3 +76,4 @@ class TCPServerEchoPrimitives:
         server = state_machine.get_variable_value(inputs[0])
         event = server.close()
         state_machine.set_variable_value(outputs[0], event)
+

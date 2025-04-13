@@ -265,3 +265,32 @@ def get_UDP_payload_size(packet):
     return len(payload)
 
 
+def send_echo_once(ip, port, message, timeout=0.5):
+    """
+    Open a TCP connection to the echo server, send the message,
+    receive any echoed data, then close the connection.
+    Returns the echoed string or None on error/timeout.
+    """
+    response = b""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((ip, port))
+            s.sendall(message.encode())
+
+            # Read all available data until no more arrives or timeout
+            while True:
+                ready_to_read, _, _ = select.select([s], [], [], timeout)
+                if ready_to_read:
+                    chunk = s.recv(4096)
+                    if not chunk:
+                        break  # Server closed connection
+                    response += chunk
+                else:
+                    break  # No more data within 'timeout' seconds
+    except (socket.error, socket.timeout):
+        return None
+
+    return response.decode('utf-8', errors='ignore')
+
+

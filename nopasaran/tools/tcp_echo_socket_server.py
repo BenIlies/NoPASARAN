@@ -1,78 +1,73 @@
-from nopasaran.decorators import parsing_decorator
-from nopasaran.tools.tcp_echo_socket_server import EchoSocketServer
+import socket
+import select
+import threading
+import time
 from nopasaran.definitions.events import EventNames
 
-class TCPServerEchoPrimitives:
+class EchoSocketServer:
     """
-    Class containing TCP Echo server action primitives for the state machine.
+    A simple echo server using sockets that echoes back any data it receives.
     """
 
-    @staticmethod
-    @parsing_decorator(input_args=0, output_args=1)
-    def create_tcp_echo_server(inputs, outputs, state_machine):
+    def __init__(self):
+        self.sock = None
+        self.client_socket = None
+        self.TIMEOUT = 5.0
+        self.request_received = None
+        self.received_data = None
+
+    def start_and_wait_for_data(self, host, port, timeout):
         """
-        Create an instance of EchoSocketServer.
+        Combine:
+          - Creating a socket
+          - Binding to (host, port)
+          - Listening
+          - Accepting exactly one client connection
+          - Echoing data once
+          - Returning the data and event
 
-        Number of input arguments: 0
-        Number of output arguments: 1 (EchoSocketServer instance)
+        Returns:
+            (bytes or None, str):
+                - The echoed data as bytes
+                - The event name (REQUEST_RECEIVED or TIMEOUT)
         """
-        server = EchoSocketServer()
-        state_machine.set_variable_value(outputs[0], server)
+        self.request_received = threading.Condition()
+        self.received_data = None
 
-    @staticmethod
-    @parsing_decorator(input_args=3, output_args=2)
-    def start_tcp_echo_server(inputs, outputs, state_machine):
-        """
-        Start the TCP Echo server.
+        # 1) Create and bind
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind((host, port))
+            server_socket.listen(1)
+            server_socket.setblocking(False)
 
-        Inputs:
-            - EchoSocketServer instance
-            - Host
-            - Port
+            start_time = time.time()
 
-        Outputs:
-            - Event name
-            - Message
-        """
-        server = state_machine.get_variable_value(inputs[0])
-        host = state_machine.get_variable_value(inputs[1])
-        port = int(state_machine.get_variable_value(inputs[2]))
-        event, message = server.start(host, port)
-        state_machine.set_variable_value(outputs[0], event)
-        state_machine.set_variable_value(outputs[1], message)
+            # 2) Loop until we get one connection or timeout
+            while True:
+                if time.time() - start_time > timeout:
+                    return None, EventNames.TIMEOUT.name
 
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=3)
-    def receive_tcp_echo_data(inputs, outputs, state_machine):
-        """
-        Receive and echo TCP data.
+                ready_to_read, _, _ = select.select([server_socket], [], [], timeout)
+                if ready_to_read:
+                    # 3) Accept exactly one connection
+                    client_socket, _ = server_socket.accept()
+                    try:
+                        data = client_socket.recv(4096)
+                        if data:
+                            # Echo it back
+                            client_socket.sendall(data)
+                            self.received_data = data
+                            return data, EventNames.REQUEST_RECEIVED.name
+                    finally:
+                        client_socket.close()
 
-        Inputs:
-            - EchoSocketServer instance
-
-        Outputs:
-            - Event name
-            - Message
-            - Received data
-        """
-        server = state_machine.get_variable_value(inputs[0])
-        event, message, received_data = server.receive_echo_data()
-        state_machine.set_variable_value(outputs[0], event)
-        state_machine.set_variable_value(outputs[1], message)
-        state_machine.set_variable_value(outputs[2], received_data)
-
-    @staticmethod
-    @parsing_decorator(input_args=1, output_args=1)
-    def close_tcp_echo_server(inputs, outputs, state_machine):
-        """
-        Close the TCP Echo server.
-
-        Inputs:
-            - EchoSocketServer instance
-
-        Outputs:
-            - Event name
-        """
-        server = state_machine.get_variable_value(inputs[0])
-        event = server.close()
-        state_machine.set_variable_value(outputs[0], event)
+    def close(self):
+        """Optional cleanup if needed."""
+        if self.client_socket:
+            self.client_socket.close()
+        if self.sock:
+            self.sock.close()
+        self.client_socket = None
+        self.sock = None
+        return EventNames.CONNECTION_CLOSED.name

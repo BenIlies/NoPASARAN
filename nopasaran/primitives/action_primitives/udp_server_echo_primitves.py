@@ -1,17 +1,17 @@
 from nopasaran.decorators import parsing_decorator
-from nopasaran.tools.echo_socket_server import EchoSocketServer
 from nopasaran.definitions.events import EventNames
+from nopasaran.tools.echo_socket_server import EchoSocketServer  
 
-class TCPServerEchoPrimitives:
+class UDPServerEchoPrimitives:
     """
-    Class containing TCP Echo server action primitives for the state machine.
+    Class containing UDP Echo server action primitives for the state machine.
     """
 
     @staticmethod
     @parsing_decorator(input_args=0, output_args=1)
-    def create_tcp_echo_server(inputs, outputs, state_machine):
+    def create_udp_echo_server(inputs, outputs, state_machine):
         """
-        Create a TCP Echo server instance.
+        Create a UDP Echo server instance.
 
         Number of input arguments: 0
         Number of output arguments: 1
@@ -32,9 +32,9 @@ class TCPServerEchoPrimitives:
 
     @staticmethod
     @parsing_decorator(input_args=3, output_args=2)
-    def start_echo_server(inputs, outputs, state_machine):
+    def start_udp_echo_server(inputs, outputs, state_machine):
         """
-        Start the TCP Echo server and wait for a connection.
+        Start the UDP Echo server and wait for a datagram.
 
         Number of input arguments: 3
         Number of output arguments: 2
@@ -58,7 +58,7 @@ class TCPServerEchoPrimitives:
         host = state_machine.get_variable_value(inputs[1])
         port = int(state_machine.get_variable_value(inputs[2]))
 
-        data_bytes, event = server.start_and_wait_for_tcp_dara(host, port, server.TIMEOUT)
+        data_bytes, event = server.start_and_wait_for_udp_data(host, port, server.TIMEOUT)
 
         response_str = data_bytes.decode("utf-8", errors="ignore") if data_bytes is not None else None
 
@@ -66,12 +66,11 @@ class TCPServerEchoPrimitives:
         state_machine.set_variable_value(outputs[1], response_str)
         state_machine.trigger_event(event)
 
-   
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
-    def close_tcp_echo_server(inputs, outputs, state_machine):
+    def close_udp_echo_server(inputs, outputs, state_machine):
         """
-        Close the TCP Echo server.
+        Close the UDP Echo server.
 
         Number of input arguments: 1
         Number of output arguments: 1

@@ -20,6 +20,8 @@ from nopasaran.primitives.action_primitives.http_2_server_primitives import HTTP
 from nopasaran.primitives.action_primitives.http_2_client_primitives import HTTP2ClientPrimitives
 from nopasaran.primitives.action_primitives.tcp_client_echo_primitives import TCPClientEchoPrimitives
 from nopasaran.primitives.action_primitives.tcp_server_echo_primitives import TCPServerEchoPrimitives
+from nopasaran.primitives.action_primitives.udp_client_echo_primitives import UDPClientEchoPrimitives
+from nopasaran.primitives.action_primitives.udp_server_echo_primitves import UDPServerEchoPrimitives
 
 
 
@@ -48,7 +50,9 @@ class ActionPrimitives(Primitives):
         HTTP2ServerPrimitives,
         HTTP2ClientPrimitives,
         TCPClientEchoPrimitives,
-        TCPServerEchoPrimitives
+        TCPServerEchoPrimitives,
+        UDPServerEchoPrimitives,
+        UDPClientEchoPrimitives
 
         
        

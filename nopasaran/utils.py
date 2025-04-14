@@ -265,7 +265,7 @@ def get_UDP_payload_size(packet):
     return len(payload)
 
 
-def send_echo_once(ip, port, message, timeout=0.5):
+def send_echo_once_tcp (ip, port, message, timeout=0.5):
     """
     Open a TCP connection to the echo server, send the message,
     receive any echoed data, then close the connection.
@@ -288,6 +288,30 @@ def send_echo_once(ip, port, message, timeout=0.5):
                     response += chunk
                 else:
                     break  # No more data within 'timeout' seconds
+    except (socket.error, socket.timeout):
+        return None
+
+    return response.decode('utf-8', errors='ignore')
+
+def send_echo_once_udp(ip, port, message, timeout=0.5):
+    """
+    Send a single UDP datagram to (ip, port), then wait for up to 'timeout'
+    seconds for the echo response. Return the echoed string or None on timeout/error.
+    """
+    response = b""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(timeout)
+            # Send to the server
+            s.sendto(message.encode(), (ip, port))
+            # Wait to see if there's data to read
+            ready_to_read, _, _ = select.select([s], [], [], timeout)
+            if ready_to_read:
+                data, _ = s.recvfrom(4096)
+                response = data
+            else:
+                # No data returned within timeout
+                return None
     except (socket.error, socket.timeout):
         return None
 

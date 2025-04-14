@@ -16,7 +16,7 @@ class EchoSocketServer:
         self.request_received = None
         self.received_data = None
 
-    def start_and_wait_for_data(self, host, port, timeout):
+    def start_and_wait_for_tcp_data(self, host, port, timeout):
         """
         Combine:
           - Creating a socket
@@ -62,8 +62,39 @@ class EchoSocketServer:
                     finally:
                         client_socket.close()
 
+    def start_and_wait_for_udp_data (self, host, port, timeout):
+        """
+        UDP version:
+          - Create a socket (SOCK_DGRAM)
+          - Bind
+          - Wait for exactly one datagram
+          - Echo that datagram to the sender
+          - Return (data, event)
+        """
+        self.request_received = threading.Condition()
+        self.received_data = None
+
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as server_socket:
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind((host, port))
+            server_socket.setblocking(False)
+
+            start_time = time.time()
+            while True:
+                if time.time() - start_time > timeout:
+                    return None, EventNames.TIMEOUT.name
+
+                ready_to_read, _, _ = select.select([server_socket], [], [], timeout)
+                if ready_to_read:
+                    # 3) Accept exactly one connection
+                    data, client_addr = server_socket.recvfrom(4096)
+                    if data:
+                        # Echo back
+                        server_socket.sendto(data, client_addr)
+                        self.received_data = data
+                        return data, EventNames.REQUEST_RECEIVED.name                    
+
     def close(self):
-        """Optional cleanup if needed."""
         if self.client_socket:
             self.client_socket.close()
         if self.sock:

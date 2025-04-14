@@ -36,7 +36,7 @@ class TCPServerEchoPrimitives:
         """
         Start the TCP Echo server and wait for a connection.
 
-        Number of input arguments: 3
+        Number of input arguments: 4
         Number of output arguments: 2
         Optional input arguments: No
         Optional output arguments: No
@@ -46,6 +46,8 @@ class TCPServerEchoPrimitives:
                 - The name of the variable containing the EchoSocketServer instance.
                 - The name of the variable containing the host address.
                 - The name of the variable containing the port number.
+                - The name of the variable containing the timeout in seconds.
+
             outputs (List[str]): The list of output variable names. It contains two mandatory output arguments:
                 - The name of the variable to store the triggered event (REQUEST_RECEIVED or TIMEOUT).
                 - The name of the variable to store the response data (string or None).
@@ -57,8 +59,9 @@ class TCPServerEchoPrimitives:
         server = state_machine.get_variable_value(inputs[0])
         host = state_machine.get_variable_value(inputs[1])
         port = int(state_machine.get_variable_value(inputs[2]))
+        timeout= int(state_machine.get_variable_value(inputs[3]))
 
-        data_bytes, event = server.start_and_wait_for_tcp_dara(host, port, server.TIMEOUT)
+        data_bytes, event = server.start_and_wait_for_tcp_data(host, port, timeout)
 
         response_str = data_bytes.decode("utf-8", errors="ignore") if data_bytes is not None else None
 

@@ -8,29 +8,6 @@ class UDPServerEchoPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=0, output_args=1)
-    def create_udp_echo_server(inputs, outputs, state_machine):
-        """
-        Create a UDP Echo server instance.
-
-        Number of input arguments: 0
-        Number of output arguments: 1
-        Optional input arguments: No
-        Optional output arguments: No
-
-        Args:
-            inputs (List[str]): No input arguments.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
-                - The name of the variable to store the EchoSocketServer instance.
-            state_machine: The state machine object.
-
-        Returns:
-            None
-        """
-        server = EchoSocketServer()
-        state_machine.set_variable_value(outputs[0], server)
-
-    @staticmethod
     @parsing_decorator(input_args=3, output_args=2)
     def start_udp_echo_server(inputs, outputs, state_machine):
         """
@@ -47,7 +24,7 @@ class UDPServerEchoPrimitives:
                 - The name of the variable containing the host address.
                 - The name of the variable containing the port number.
                 - The name of the variable containing the timeout in seconds.
-                
+
             outputs (List[str]): The list of output variable names. It contains two mandatory output arguments:
                 - The name of the variable to store the triggered event (REQUEST_RECEIVED or TIMEOUT).
                 - The name of the variable to store the response data (string or None).

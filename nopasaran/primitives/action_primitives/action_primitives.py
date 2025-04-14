@@ -22,6 +22,7 @@ from nopasaran.primitives.action_primitives.tcp_client_echo_primitives import TC
 from nopasaran.primitives.action_primitives.tcp_server_echo_primitives import TCPServerEchoPrimitives
 from nopasaran.primitives.action_primitives.udp_client_echo_primitives import UDPClientEchoPrimitives
 from nopasaran.primitives.action_primitives.udp_server_echo_primitves import UDPServerEchoPrimitives
+from nopasaran.primitives.action_primitives.server_echo_primitives import ServerEchoPrimitives
 
 
 
@@ -52,7 +53,9 @@ class ActionPrimitives(Primitives):
         TCPClientEchoPrimitives,
         TCPServerEchoPrimitives,
         UDPServerEchoPrimitives,
-        UDPClientEchoPrimitives
+        UDPClientEchoPrimitives,
+        ServerEchoPrimitives
+        
 
         
        

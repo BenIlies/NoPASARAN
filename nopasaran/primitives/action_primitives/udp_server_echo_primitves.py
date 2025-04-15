@@ -8,7 +8,7 @@ class UDPServerEchoPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=3, output_args=2)
+    @parsing_decorator(input_args=4, output_args=2)
     def start_udp_echo_server(inputs, outputs, state_machine):
         """
         Start the UDP Echo server and wait for a datagram.

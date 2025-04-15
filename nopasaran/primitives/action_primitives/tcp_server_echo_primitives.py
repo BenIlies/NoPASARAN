@@ -9,8 +9,8 @@ class TCPServerEchoPrimitives:
 
 
     @staticmethod
-    @parsing_decorator(input_args=3, output_args=2)
-    def start_echo_server(inputs, outputs, state_machine):
+    @parsing_decorator(input_args=4, output_args=2)
+    def start_tcp_echo_server(inputs, outputs, state_machine):
         """
         Start the TCP Echo server and wait for a connection.
 

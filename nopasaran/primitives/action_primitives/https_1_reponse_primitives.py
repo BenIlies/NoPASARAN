@@ -77,24 +77,31 @@ class HTTPS1ResponsePrimitives:
             })
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=3)
-    def receive_https_1_requests(inputs, outputs, state_machine):
+    @parsing_decorator(input_args=3, output_args=1)
+    def wait_for_https_1_request(inputs, outputs, state_machine):
         """
-        Receive HTTPS/1.1 requests.
+        Wait for an HTTPS request with a user-defined timeout.
 
-        Input Args:
-            - HTTPS1SocketServer instance
+        Number of input arguments: 3
+            - The HTTPS1SocketServer instance
+            - The port to run the server on
+            - The timeout duration in seconds
 
-        Output Args:
-            - event name
-            - message
-            - received data
+        Number of output arguments: 1
+            - The received request data or None if a timeout occurs
+
+        Args:
+            inputs (List[str]): Input variable names (server, port, timeout)
+            outputs (List[str]): Output variable name (request_data)
+            state_machine: The state machine object
         """
         server = state_machine.get_variable_value(inputs[0])
-        event, message, received = server.receive_test_frames()
-        state_machine.set_variable_value(outputs[0], event)
-        state_machine.set_variable_value(outputs[1], message)
-        state_machine.set_variable_value(outputs[2], received)
+        port = int(state_machine.get_variable_value(inputs[1]))
+        timeout = int(state_machine.get_variable_value(inputs[2]))
+
+        received_request_data, event = server.wait_for_request(port, timeout)
+        state_machine.set_variable_value(outputs[0], received_request_data)
+        state_machine.trigger_event(event)
 
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)

@@ -62,6 +62,9 @@ class HTTPS1SocketServer:
         self.sock.bind((host, port))
         self.sock.listen(5)
         return EventNames.SERVER_STARTED.name, f"HTTPS server started at {host}:{port}"
+    
+
+
 
     def handle_client_connection(self, tls_socket):
         request = tls_socket.recv(4096)
@@ -134,6 +137,48 @@ class HTTPS1SocketServer:
                 return EventNames.ERROR.name, str(e), None
 
         return EventNames.RECEIVED_REQUESTS.name, f"Received {len(requests_received)} HTTPS requests.", str(requests_received)
+        
+    def wait_for_request(self, port, timeout):
+        """
+        Wait for a single HTTPS request with TLS handshake and user-defined timeout.
+
+        Args:
+            port (int): The port to bind and listen on.
+            timeout (int): Timeout duration in seconds.
+
+        Returns:
+            Tuple[bytes or None, str]: The raw request data (or None if timed out) and an event name.
+        """
+        self.received_request_data = None
+        self.request_received = None  # not using threading.Condition here
+
+        context = self.context
+        start_time = time.time()
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind(('', port))
+            server_socket.listen(1)
+            server_socket.setblocking(False)
+
+            while True:
+                elapsed = time.time() - start_time
+                if elapsed >= timeout:
+                    return None, EventNames.TIMEOUT.name
+
+                try:
+                    ready, _, _ = select.select([server_socket], [], [], timeout - elapsed)
+                    if ready:
+                        client_sock, _ = server_socket.accept()
+                        with context.wrap_socket(client_sock, server_side=True) as tls_sock:
+                            tls_sock.settimeout(1.0)
+                            try:
+                                self.handle_client_connection(tls_sock)
+                                return self.received_request_data, EventNames.REQUEST_RECEIVED.name
+                            except Exception as e:
+                                return None, EventNames.ERROR.name
+                except Exception as e:
+                    return None, EventNames.ERROR.name    
 
     def close(self):
         if self.client_socket:

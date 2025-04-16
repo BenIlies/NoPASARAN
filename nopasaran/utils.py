@@ -331,7 +331,8 @@ def send_https_sni_request(ip, port, request_packet, sni=None):
         bytes or None: The raw HTTP response, or None if an error occurs.
     """
     response = b""
-    context = ssl.create_default_context()
+    context = ssl._create_unverified_context()
+    
     try:
         with socket.create_connection((ip, port), timeout=2.0) as sock:
             with context.wrap_socket(sock, server_hostname=sni or ip) as tls_sock:

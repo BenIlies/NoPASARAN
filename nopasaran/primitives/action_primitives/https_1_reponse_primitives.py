@@ -12,8 +12,21 @@ class HTTPS1ResponsePrimitives:
         """
         Create an instance of HTTPS1SocketServer.
 
-        Input Args: 0
-        Output Args: 1 - The HTTPS1SocketServer instance.
+        Number of input arguments: 0
+
+        Number of output arguments: 1
+            - The created HTTPS1SocketServer instance
+
+        Args:
+            inputs (List[str]): The list of input variable names. No input arguments for this method.
+
+            outputs (List[str]): The list of output variable names. It contains one output argument:
+                - The name of the variable to store the HTTPS1SocketServer instance.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = HTTPS1SocketServer()
         state_machine.set_variable_value(outputs[0], server)
@@ -24,19 +37,30 @@ class HTTPS1ResponsePrimitives:
         """
         Start the HTTPS server.
 
-        Input Args:
-            - HTTPS1SocketServer instance
-            - host (str)
-            - port (int)
+        Number of input arguments: 3
+            - The HTTPS1SocketServer instance
+            - The host to run the server on.
+            - The port to run the server on.
 
-        Output Args:
-            - event name
-            - message
+        Number of output arguments: 2
+            - The event name
+            - The message
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
+                - The name of the variable containing the HTTPS1SocketServer instance.
+                - The name of the variable containing the host.
+                - The name of the variable containing the port.
+
+            outputs (List[str]): The list of output variable names. It contains two output arguments:
+                - The name of the variable to store the event name.
+                - The name of the variable to store the message.
+
+            state_machine: The state machine object.
         """
         server = state_machine.get_variable_value(inputs[0])
         host = state_machine.get_variable_value(inputs[1])
         port = int(state_machine.get_variable_value(inputs[2]))
-
         event, message = server.start(host, port)
         state_machine.set_variable_value(outputs[0], event)
         state_machine.set_variable_value(outputs[1], message)
@@ -47,11 +71,23 @@ class HTTPS1ResponsePrimitives:
         """
         Add a route to the HTTPS server.
 
-        Input Args:
-            - HTTPS1SocketServer instance
-            - route parameters (dict or list)
+        Number of input arguments: 2
+            - The HTTPS1SocketServer instance
+            - The dictionary or list with route parameters
 
-        Output Args: 0
+        Number of output arguments: 0
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the HTTPS1SocketServer instance.
+                - The name of the variable containing the dictionary or list with route parameters.
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         route_params = state_machine.get_variable_value(inputs[1])
@@ -80,20 +116,29 @@ class HTTPS1ResponsePrimitives:
     @parsing_decorator(input_args=3, output_args=1)
     def wait_for_https_1_request(inputs, outputs, state_machine):
         """
-        Wait for an HTTPS request with a user-defined timeout.
+        Wait for an HTTPS request.
 
         Number of input arguments: 3
             - The HTTPS1SocketServer instance
-            - The port to run the server on
-            - The timeout duration in seconds
+            - The port to run the server on.
+            - The timeout duration in seconds.
 
         Number of output arguments: 1
-            - The received request data or None if a timeout occurs
+            - The received request data or None if a timeout occurs.
 
         Args:
-            inputs (List[str]): Input variable names (server, port, timeout)
-            outputs (List[str]): Output variable name (request_data)
-            state_machine: The state machine object
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
+                - The name of the variable containing the HTTPS1SocketServer instance.
+                - The name of the variable containing the port.
+                - The name of the variable containing the timeout duration.
+
+            outputs (List[str]): The list of output variable names. It contains one output argument:
+                - The name of the variable to store the received request data.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         port = int(state_machine.get_variable_value(inputs[1]))
@@ -109,11 +154,23 @@ class HTTPS1ResponsePrimitives:
         """
         Close the HTTPS server.
 
-        Input Args:
-            - HTTPS1SocketServer instance
+        Number of input arguments: 1
+            - The HTTPS1SocketServer instance
 
-        Output Args:
-            - event name
+        Number of output arguments: 1
+            - The event name
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
+                - The name of the variable containing the HTTPS1SocketServer instance.
+
+            outputs (List[str]): The list of output variable names. It contains one output argument:
+                - The name of the variable to store the event name.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         event = server.close()

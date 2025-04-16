@@ -317,4 +317,38 @@ def send_echo_once_udp(ip, port, message, timeout=0.5):
 
     return response.decode('utf-8', errors='ignore')
 
+def send_https_sni_request(ip, port, request_packet, sni=None):
+    """
+    Send an HTTPS request with optional SNI and return the full response.
+
+    Args:
+        ip (str): The IP address to connect to.
+        port (int): The port (usually 443).
+        request_packet (bytes): The raw HTTP/1.1 request packet.
+        sni (str): The server name to use in SNI. Defaults to ip if not provided.
+
+    Returns:
+        bytes or None: The raw HTTP response, or None if an error occurs.
+    """
+    response = b""
+    context = ssl.create_default_context()
+    try:
+        with socket.create_connection((ip, port), timeout=2.0) as sock:
+            with context.wrap_socket(sock, server_hostname=sni or ip) as tls_sock:
+                tls_sock.settimeout(1.0)
+                tls_sock.sendall(request_packet)
+
+                while True:
+                    ready, _, _ = select.select([tls_sock], [], [], 0.5)
+                    if ready:
+                        chunk = tls_sock.recv(4096)
+                        if not chunk:
+                            break
+                        response += chunk
+                    else:
+                        break
+    except (socket.error, ssl.SSLError, TimeoutError):
+        return None
+    return response
+
 

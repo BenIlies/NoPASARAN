@@ -1,4 +1,6 @@
 from nopasaran.decorators import parsing_decorator
+import dns.resolver
+
 
 class IPPrimitives:
     """
@@ -235,3 +237,34 @@ class IPPrimitives:
         ip_fields = dict(ip_packet['IP'].fields)
 
         state_machine.set_variable_value(outputs[0], ip_fields)
+
+    @staticmethod
+    @parsing_decorator(input_args=0, output_args=1)
+    def get_default_dns_resolver_ip (inputs, outputs, state_machine):
+        """
+        Get the system's default DNS resolver IP address.
+
+        Number of input arguments: 0
+
+        Number of output arguments: 1
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): No inputs required.
+
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the resolver IP address.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        resolver = dns.resolver.get_default_resolver()
+        nameservers = resolver.nameservers
+
+        resolver_ip = nameservers[0] if nameservers else None
+        state_machine.set_variable_value(outputs[0], resolver_ip)

@@ -18,6 +18,11 @@ from nopasaran.primitives.action_primitives.http_1_request_primitives import HTT
 from nopasaran.primitives.action_primitives.http_1_response_primitives import HTTP1ResponsePrimitives
 from nopasaran.primitives.action_primitives.http_2_server_primitives import HTTP2ServerPrimitives
 from nopasaran.primitives.action_primitives.http_2_client_primitives import HTTP2ClientPrimitives
+from nopasaran.primitives.action_primitives.server_echo_primitives import ServerEchoPrimitives
+from nopasaran.primitives.action_primitives.https_1_reponse_primitives import HTTPS1ResponsePrimitives
+from nopasaran.primitives.action_primitives.https_1_request_primitives import HTTPS1RequestPrimitives
+from nopasaran.primitives.action_primitives.client_echo_primitives import ClientEchoPrimitives
+
 
 
 
@@ -44,7 +49,13 @@ class ActionPrimitives(Primitives):
         HTTP1RequestPrimitives,
         HTTP1ResponsePrimitives,
         HTTP2ServerPrimitives,
-        HTTP2ClientPrimitives
+        HTTP2ClientPrimitives,
+        ServerEchoPrimitives,
+        HTTPS1ResponsePrimitives,
+        HTTPS1RequestPrimitives,
+        ClientEchoPrimitives
+        
+
         
        
         ]

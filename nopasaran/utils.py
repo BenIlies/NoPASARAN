@@ -265,3 +265,91 @@ def get_UDP_payload_size(packet):
     return len(payload)
 
 
+def send_echo_once_tcp (ip, port, message, timeout=0.5):
+    """
+    Open a TCP connection to the echo server, send the message,
+    receive any echoed data, then close the connection.
+    Returns the echoed string or None on error/timeout.
+    """
+    response = b""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((ip, port))
+            s.sendall(message.encode())
+
+            # Read all available data until no more arrives or timeout
+            while True:
+                ready_to_read, _, _ = select.select([s], [], [], timeout)
+                if ready_to_read:
+                    chunk = s.recv(4096)
+                    if not chunk:
+                        break  # Server closed connection
+                    response += chunk
+                else:
+                    break  # No more data within 'timeout' seconds
+    except (socket.error, socket.timeout):
+        return None
+
+    return response.decode('utf-8', errors='ignore')
+
+def send_echo_once_udp(ip, port, message, timeout=0.5):
+    """
+    Send a single UDP datagram to (ip, port), then wait for up to 'timeout'
+    seconds for the echo response. Return the echoed string or None on timeout/error.
+    """
+    response = b""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(timeout)
+            # Send to the server
+            s.sendto(message.encode(), (ip, port))
+            # Wait to see if there's data to read
+            ready_to_read, _, _ = select.select([s], [], [], timeout)
+            if ready_to_read:
+                data, _ = s.recvfrom(4096)
+                response = data
+            else:
+                # No data returned within timeout
+                return None
+    except (socket.error, socket.timeout):
+        return None
+
+    return response.decode('utf-8', errors='ignore')
+
+def send_https_sni_request(ip, port, request_packet, sni=None):
+    """
+    Send an HTTPS request with optional SNI and return the full response.
+
+    Args:
+        ip (str): The IP address to connect to.
+        port (int): The port (usually 443).
+        request_packet (bytes): The raw HTTP/1.1 request packet.
+        sni (str): The server name to use in SNI. Defaults to ip if not provided.
+
+    Returns:
+        bytes or None: The raw HTTP response, or None if an error occurs.
+    """
+    response = b""
+    context = ssl._create_unverified_context()
+    
+    try:
+        with socket.create_connection((ip, port), timeout=2.0) as sock:
+            with context.wrap_socket(sock, server_hostname=sni or ip) as tls_sock:
+                tls_sock.settimeout(1.0)
+                tls_sock.sendall(request_packet)
+
+                while True:
+                    ready, _, _ = select.select([tls_sock], [], [], 0.5)
+                    if ready:
+                        chunk = tls_sock.recv(4096)
+                        if not chunk:
+                            break
+                        response += chunk
+                    else:
+                        break
+    except (socket.error, ssl.SSLError, TimeoutError):
+        return None
+    return response
+
+

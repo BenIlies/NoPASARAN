@@ -9,6 +9,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from nopasaran.definitions.events import EventNames
+import os
 
 class HTTPS1SocketServer:
     """
@@ -22,36 +23,57 @@ class HTTPS1SocketServer:
         self.sock = None
         self.client_socket = None
         self.TIMEOUT = 5.0
-
         self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        cert_path, key_path = self._generate_self_signed_cert()
-        self.context.load_cert_chain(cert_path, key_path)
+        self._cert_path = None
+        self._key_path = None
 
-    def _generate_self_signed_cert(self):
+    def generate_and_load_cert(self, identifier):
+        cert_path, key_path = self._generate_self_signed_cert(identifier)
+        self.context.load_cert_chain(cert_path, key_path)
+        self._cert_path = cert_path
+        self._key_path = key_path
+
+    def _generate_self_signed_cert(self, identifier):
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
         subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, u"SA"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"NoPASARAN"),
-            x509.NameAttribute(NameOID.COMMON_NAME, u"localhost"),
+            x509.NameAttribute(NameOID.COMMON_NAME, identifier),
         ])
-        cert = x509.CertificateBuilder().subject_name(subject)\
-            .issuer_name(issuer)\
-            .public_key(key.public_key())\
-            .serial_number(x509.random_serial_number())\
-            .not_valid_before(datetime.utcnow())\
-            .not_valid_after(datetime.utcnow() + timedelta(days=1))\
-            .add_extension(x509.SubjectAlternativeName([x509.DNSName(u"localhost")]), critical=False)\
+
+        alt_names = [x509.DNSName(identifier)]
+        try:
+            # Try to interpret as IP address
+            import ipaddress
+            alt_names.append(x509.IPAddress(ipaddress.ip_address(identifier)))
+        except ValueError:
+            pass  # it's not an IP, skip adding IPAddress
+
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.utcnow())
+            .not_valid_after(datetime.utcnow() + timedelta(days=1))
+            .add_extension(
+                x509.SubjectAlternativeName(alt_names),
+                critical=False,
+            )
             .sign(key, hashes.SHA256())
+        )
 
         cert_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pem")
         key_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pem")
 
         cert_file.write(cert.public_bytes(serialization.Encoding.PEM))
-        key_file.write(key.private_bytes(
-            serialization.Encoding.PEM,
-            serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption()
-        ))
+        key_file.write(
+            key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.TraditionalOpenSSL,
+                serialization.NoEncryption()
+            )
+        )
         cert_file.close()
         key_file.close()
         return cert_file.name, key_file.name
@@ -150,7 +172,7 @@ class HTTPS1SocketServer:
             Tuple[bytes or None, str]: The raw request data (or None if timed out) and an event name.
         """
         self.received_request_data = None
-        self.request_received = None  # not using threading.Condition here
+        self.request_received = None  
 
         context = self.context
         start_time = time.time()
@@ -187,4 +209,16 @@ class HTTPS1SocketServer:
             self.sock.close()
         self.client_socket = None
         self.sock = None
+
+        try:
+            if self._cert_path and os.path.exists(self._cert_path):
+                os.remove(self._cert_path)
+            if self._key_path and os.path.exists(self._key_path):
+                os.remove(self._key_path)
+        except Exception as e:
+            return EventNames.ERROR.name, f"Certificate cleanup error: {str(e)}"
+
         return EventNames.CONNECTION_CLOSED.name
+
+    
+

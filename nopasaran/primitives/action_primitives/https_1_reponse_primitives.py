@@ -1,5 +1,7 @@
 from nopasaran.decorators import parsing_decorator
 from nopasaran.tools.https_1_socket_server import HTTPS1SocketServer
+from nopasaran.definitions.events import EventNames
+
 
 class HTTPS1ResponsePrimitives:
     """
@@ -7,29 +9,67 @@ class HTTPS1ResponsePrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=0, output_args=1)
+    @parsing_decorator(input_args=(0), output_args=1)
     def create_https_1_server(inputs, outputs, state_machine):
         """
-        Create an instance of HTTPS1SocketServer.
+        Create an instance of HTTPS1SocketServer and store it in an output variable in the machine’s state.
 
-        Number of input arguments: 0
+        Number of input arguments: 0 
 
         Number of output arguments: 1
-            - The created HTTPS1SocketServer instance
+
+        Optional input arguments: Yes (common name)
+
+        Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. No input arguments for this method.
-
-            outputs (List[str]): The list of output variable names. It contains one output argument:
-                - The name of the variable to store the HTTPS1SocketServer instance.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument,
+                which is the name of the variable to store the created HTTPS1SocketServer instance.
 
             state_machine: The state machine object.
 
         Returns:
             None
         """
-        server = HTTPS1SocketServer()
+        
+
+        server = HTTPS1SocketServer
         state_machine.set_variable_value(outputs[0], server)
+    
+    @staticmethod
+    @parsing_decorator(input_args=2, output_args=0)
+    def generate_https_1_certificate(inputs, outputs, state_machine):
+        """
+        Generate a self-signed certificate for the HTTPS server using the provided identifier.
+
+        Number of input arguments: 2
+
+        Number of output arguments: 0
+
+        Optional input arguments: No
+
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the HTTPS1SocketServer instance.
+                - The name of the variable containing the identifier (e.g., common name or IP address) to use in the certificate.
+
+            outputs (List[str]): The list of output variable names. No output arguments for this method.
+
+            state_machine: The state machine object.
+
+        Returns:
+            None
+        """
+        try:
+            server = state_machine.get_variable_value(inputs[0])
+            identifier = state_machine.get_variable_value(inputs[1])
+            server.generate_and_load_cert(identifier)
+        except Exception as e:
+            state_machine.trigger_event(EventNames.ERROR.name)
+            raise RuntimeError(f"Certificate generation failed: {str(e)}")
+
 
     @staticmethod
     @parsing_decorator(input_args=3, output_args=2)
@@ -38,13 +78,12 @@ class HTTPS1ResponsePrimitives:
         Start the HTTPS server.
 
         Number of input arguments: 3
-            - The HTTPS1SocketServer instance
-            - The host to run the server on.
-            - The port to run the server on.
 
         Number of output arguments: 2
-            - The event name
-            - The message
+
+        Optional input arguments: No
+
+        Optional output arguments: No
 
         Args:
             inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
@@ -57,6 +96,9 @@ class HTTPS1ResponsePrimitives:
                 - The name of the variable to store the message.
 
             state_machine: The state machine object.
+
+        Returns:
+            None
         """
         server = state_machine.get_variable_value(inputs[0])
         host = state_machine.get_variable_value(inputs[1])
@@ -72,10 +114,12 @@ class HTTPS1ResponsePrimitives:
         Add a route to the HTTPS server.
 
         Number of input arguments: 2
-            - The HTTPS1SocketServer instance
-            - The dictionary or list with route parameters
 
         Number of output arguments: 0
+
+        Optional input arguments: No
+
+        Optional output arguments: No
 
         Args:
             inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
@@ -119,12 +163,12 @@ class HTTPS1ResponsePrimitives:
         Wait for an HTTPS request.
 
         Number of input arguments: 3
-            - The HTTPS1SocketServer instance
-            - The port to run the server on.
-            - The timeout duration in seconds.
 
         Number of output arguments: 1
-            - The received request data or None if a timeout occurs.
+
+        Optional input arguments: No
+
+        Optional output arguments: No
 
         Args:
             inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
@@ -155,10 +199,12 @@ class HTTPS1ResponsePrimitives:
         Close the HTTPS server.
 
         Number of input arguments: 1
-            - The HTTPS1SocketServer instance
 
         Number of output arguments: 1
-            - The event name
+
+        Optional input arguments: No
+
+        Optional output arguments: No
 
         Args:
             inputs (List[str]): The list of input variable names. It contains one mandatory input argument:

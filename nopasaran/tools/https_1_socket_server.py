@@ -28,12 +28,30 @@ class HTTPS1SocketServer:
         self._key_path = None
 
     def generate_and_load_cert(self, identifier):
-        cert_path, key_path = self._generate_self_signed_cert(identifier)
-        self.context.load_cert_chain(cert_path, key_path)
+        cert_path, key_path = self.generate_self_signed_cert(identifier)
+
+        # Check if paths are valid
+        if not cert_path or not os.path.exists(cert_path):
+            raise FileNotFoundError(f"[HTTPS1SocketServer] Certificate file not found at {cert_path}")
+        if not key_path or not os.path.exists(key_path):
+            raise FileNotFoundError(f"[HTTPS1SocketServer] Key file not found at {key_path}")
+
+        # Optional: Ensure they're not empty (some systems fail silently on write)
+        if os.path.getsize(cert_path) == 0:
+            raise ValueError(f"[HTTPS1SocketServer] Certificate file is empty at {cert_path}")
+        if os.path.getsize(key_path) == 0:
+            raise ValueError(f"[HTTPS1SocketServer] Key file is empty at {key_path}")
+
+        try:
+            self.context.load_cert_chain(cert_path, key_path)
+        except Exception as e:
+            raise RuntimeError(f"[HTTPS1SocketServer] Failed to load cert chain: {e}")
+
         self._cert_path = cert_path
         self._key_path = key_path
 
-    def _generate_self_signed_cert(self, identifier):
+
+    def generate_self_signed_cert(self, identifier):
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
         subject = issuer = x509.Name([

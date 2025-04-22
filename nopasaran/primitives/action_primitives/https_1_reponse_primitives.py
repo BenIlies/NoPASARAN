@@ -33,7 +33,7 @@ class HTTPS1ResponsePrimitives:
         """
         
 
-        server = HTTPS1SocketServer
+        server = HTTPS1SocketServer()
         state_machine.set_variable_value(outputs[0], server)
     
     @staticmethod

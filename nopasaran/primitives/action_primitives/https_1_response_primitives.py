@@ -18,7 +18,7 @@ class HTTPS1ResponsePrimitives:
 
         Number of output arguments: 1
 
-        Optional input arguments: Yes (common name)
+        Optional input arguments: No
 
         Optional output arguments: No
 

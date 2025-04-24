@@ -352,4 +352,42 @@ def send_https_sni_request(ip, port, request_packet, sni=None):
         return None
     return response
 
+def group_ports(ports):
+    """
+    Group consecutive ports into ranges.
+    
+    Args:
+        ports (list): List of port numbers
+        
+    Returns:
+        list: List of port numbers and ranges
+    """
+    if not ports:
+        return []
+        
+    # Sort and remove duplicates
+    ports = sorted(set(ports))
+    result = []
+    start = ports[0]
+    prev = ports[0]
+    
+    for port in ports[1:]:
+        if port == prev + 1:
+            prev = port
+        else:
+            if start == prev:
+                result.append(str(start))
+            else:
+                result.append(f"{start}-{prev}")
+            start = port
+            prev = port
+    
+    # Add the last range or single port
+    if start == prev:
+        result.append(str(start))
+    else:
+        result.append(f"{start}-{prev}")
+        
+    return result 
+
 

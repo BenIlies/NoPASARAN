@@ -3,6 +3,7 @@ import socket
 import threading
 import time
 from scapy.all import IP, TCP, UDP, sniff, conf
+from nopasaran.utils import group_ports
 
 class PortProbingPrimitives:
     """
@@ -136,8 +137,8 @@ class PortProbingPrimitives:
         if not received_packets:
             results["received"] = None
         else:
-            # Convert set to list for JSON serialization
-            results["received"] = list(results["received"])
+            # Convert set to list and group consecutive ports
+            results["received"] = group_ports(list(results["received"]))
 
         state_machine.set_variable_value(outputs[0], results)
 
@@ -192,7 +193,7 @@ class PortProbingPrimitives:
         if not received_packets:
             results["received"] = None
         else:
-            # Convert set to list for JSON serialization
-            results["received"] = list(results["received"])
+            # Convert set to list and group consecutive ports
+            results["received"] = group_ports(list(results["received"]))
 
         state_machine.set_variable_value(outputs[0], results)

@@ -1,16 +1,14 @@
 from scapy.all import AsyncSniffer, UDP, IP, conf
-from nopasaran.decorators import parsing_decorator
-from nopasaran.utils import group_ports
 import logging
 import time
 class UDPProbeListener:
     """
     Helper class to listen for UDP probes using AsyncSniffer.
     """
-
-    def __init__(self, source_ip, timeout):
+    def __init__(self, source_ip, timeout, dports=None):
         self.source_ip = source_ip
         self.timeout = timeout
+        self.dports = dports if dports is not None else []
         self.ports_received = set()
         self.sniffer = None
 
@@ -20,18 +18,33 @@ class UDPProbeListener:
         """
         if packet.haslayer(UDP) and packet.haslayer(IP):
             if packet[IP].src == self.source_ip:
-                self.ports_received.add(packet[UDP].dport)
+                if not self.dports or packet[UDP].dport in self.dports:
+                    self.ports_received.add(packet[UDP].dport)
+
+    def _build_filter(self):
+        """
+        Build the BPF filter string combining source IP and destination ports.
+        """
+        base_filter = f"udp and src host {self.source_ip}"
+        if self.dports:
+            port_filter = " or ".join([f"dst port {p}" for p in self.dports])
+            return f"{base_filter} and ({port_filter})"
+        return base_filter
 
     def run(self):
         """
-        Start the sniffer and collect packets.
+        Start the sniffer and collect packets during the timeout.
         """
         conf.verb = 0  # Silence Scapy
-        self.sniffer = AsyncSniffer(
-            filter=f"udp and src host {self.source_ip}",
-            prn=self._packet_handler,
-            store=False
-        )
-        self.sniffer.start()
-        time.sleep(self.timeout)
-        self.sniffer.stop()
+        try:
+            self.sniffer = AsyncSniffer(
+                iface="any",  # Listen on all interfaces
+                filter=self._build_filter(),
+                prn=self._packet_handler,
+                store=False
+            )
+            self.sniffer.start()
+            time.sleep(self.timeout)
+            self.sniffer.stop()
+        except Exception as e:
+            logging.exception(f"[UDPProbeListener] Error during sniffing: {e}")

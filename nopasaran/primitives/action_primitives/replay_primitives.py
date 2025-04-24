@@ -171,18 +171,19 @@ class ReplayPrimitives:
         destination_port = int(state_machine.get_variable_value(inputs[2]))
 
         results = {"received": 0}
-        packet_count = 0  # local variable instead of setting dict attribute
-
-        def handle_packet(pkt):
-            nonlocal packet_count
-            packet_count += 1
+        packet_count = 0
 
         try:
             sniff(
                 filter=f"tcp and src host {source_ip} and dst port {destination_port}",
                 timeout=timeout,
                 store=False,
-                prn=handle_packet
+                prn=lambda pkt: (
+                    packet_count := packet_count + 1
+                    if pkt.haslayer(IP) and pkt.haslayer(TCP) and 
+                       pkt[IP].src == source_ip and pkt[TCP].dport == destination_port
+                    else None
+                )
             )
 
             if packet_count == 0:

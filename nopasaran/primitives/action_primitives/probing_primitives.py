@@ -2,9 +2,7 @@ from nopasaran.decorators import parsing_decorator
 import socket
 import threading
 import time
-from scapy.all import IP, TCP, UDP
-import pcap
-import dpkt
+from scapy.all import IP, TCP, UDP, sniff, conf
 
 class PortProbingPrimitives:
     """
@@ -117,35 +115,22 @@ class PortProbingPrimitives:
         received_packets = False
 
         try:
-            # Create pcap object
-            pc = pcap.pcap()
-            pc.setfilter(f'tcp and src host {source_ip}')
-            pc.setnonblock(True)
-
-            start_time = time.time()
-            while time.time() - start_time < timeout:
-                try:
-                    # Get next packet
-                    ts, pkt = pc.next()
-                    if pkt is None:
-                        time.sleep(0.1)  # Small sleep to prevent CPU spinning
-                        continue
-
-                    # Parse packet
-                    eth = dpkt.ethernet.Ethernet(pkt)
-                    if isinstance(eth.data, dpkt.ip.IP):
-                        ip = eth.data
-                        if isinstance(ip.data, dpkt.tcp.TCP):
-                            tcp = ip.data
-                            results["received"].add(tcp.dport)
-                            received_packets = True
-                except Exception:
-                    continue
+            # Configure scapy for better performance
+            conf.verb = 0
+            
+            # Create a packet list to store results
+            packets = sniff(filter=f"tcp and src host {source_ip}", 
+                          timeout=timeout,
+                          store=True)  # Store packets for batch processing
+            
+            # Process all packets at once
+            for pkt in packets:
+                if pkt.haslayer(TCP) and pkt[IP].src == source_ip:
+                    results["received"].add(pkt[TCP].dport)
+                    received_packets = True
 
         except Exception:
             pass
-        finally:
-            pc.close()
 
         # If no packets were received, set to None
         if not received_packets:
@@ -186,35 +171,22 @@ class PortProbingPrimitives:
         received_packets = False
 
         try:
-            # Create pcap object
-            pc = pcap.pcap()
-            pc.setfilter(f'udp and src host {source_ip}')
-            pc.setnonblock(True)
-
-            start_time = time.time()
-            while time.time() - start_time < timeout:
-                try:
-                    # Get next packet
-                    ts, pkt = pc.next()
-                    if pkt is None:
-                        time.sleep(0.1)  # Small sleep to prevent CPU spinning
-                        continue
-
-                    # Parse packet
-                    eth = dpkt.ethernet.Ethernet(pkt)
-                    if isinstance(eth.data, dpkt.ip.IP):
-                        ip = eth.data
-                        if isinstance(ip.data, dpkt.udp.UDP):
-                            udp = ip.data
-                            results["received"].add(udp.dport)
-                            received_packets = True
-                except Exception:
-                    continue
+            # Configure scapy for better performance
+            conf.verb = 0
+            
+            # Create a packet list to store results
+            packets = sniff(filter=f"udp and src host {source_ip}", 
+                          timeout=timeout,
+                          store=True)  # Store packets for batch processing
+            
+            # Process all packets at once
+            for pkt in packets:
+                if pkt.haslayer(UDP) and pkt[IP].src == source_ip:
+                    results["received"].add(pkt[UDP].dport)
+                    received_packets = True
 
         except Exception:
             pass
-        finally:
-            pc.close()
 
         # If no packets were received, set to None
         if not received_packets:

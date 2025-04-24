@@ -144,20 +144,21 @@ class ReplayPrimitives:
         sock.close()
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=1)
+    @parsing_decorator(input_args=3, output_args=1)
     def listen_tcp_replays(inputs, outputs, state_machine):
         """
         Listen for TCP packets and return the count of packets received per port.
 
-        Number of input arguments: 2
+        Number of input arguments: 3
         Number of output arguments: 1
         Optional input arguments: No
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
                 - The name of the variable containing the timeout in seconds.
                 - The name of the variable containing the source IP to filter by.
+                - The name of the variable containing the destination port to filter by.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
                 - The name of the variable to store the dictionary of {"received": [{"port": port, "count": count}]} or {"received": None} if timeout.
             state_machine: The state machine object.
@@ -167,6 +168,7 @@ class ReplayPrimitives:
         """
         timeout = float(state_machine.get_variable_value(inputs[0]))
         source_ip = state_machine.get_variable_value(inputs[1])
+        destination_port = int(state_machine.get_variable_value(inputs[2]))
 
         # Dictionary to store results
         results = {"received": []}
@@ -177,7 +179,7 @@ class ReplayPrimitives:
             conf.verb = 0
             
             # Create a packet list to store results
-            packets = sniff(filter=f"tcp and src host {source_ip}", 
+            packets = sniff(filter=f"tcp and src host {source_ip} and dst port {destination_port}", 
                           timeout=timeout,
                           store=True)
             
@@ -197,20 +199,21 @@ class ReplayPrimitives:
         state_machine.set_variable_value(outputs[0], results)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=1)
+    @parsing_decorator(input_args=3, output_args=1)
     def listen_udp_replays(inputs, outputs, state_machine):
         """
         Listen for UDP packets and return the count of packets received per port.
 
-        Number of input arguments: 2
+        Number of input arguments: 3
         Number of output arguments: 1
         Optional input arguments: No
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
                 - The name of the variable containing the timeout in seconds.
                 - The name of the variable containing the source IP to filter by.
+                - The name of the variable containing the destination port to filter by.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
                 - The name of the variable to store the dictionary of {"received": [{"port": port, "count": count}]} or {"received": None} if timeout.
             state_machine: The state machine object.
@@ -220,6 +223,7 @@ class ReplayPrimitives:
         """
         timeout = float(state_machine.get_variable_value(inputs[0]))
         source_ip = state_machine.get_variable_value(inputs[1])
+        destination_port = int(state_machine.get_variable_value(inputs[2]))
 
         # Dictionary to store results
         results = {"received": []}
@@ -230,7 +234,7 @@ class ReplayPrimitives:
             conf.verb = 0
             
             # Create a packet list to store results
-            packets = sniff(filter=f"udp and src host {source_ip}", 
+            packets = sniff(filter=f"udp and src host {source_ip} and dst port {destination_port}", 
                           timeout=timeout,
                           store=True)
             

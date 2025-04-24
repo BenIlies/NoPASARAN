@@ -3,6 +3,8 @@ import socket
 import threading
 import time
 from scapy.all import IP, TCP, UDP
+import pcap
+import dpkt
 
 class PortProbingPrimitives:
     """
@@ -113,40 +115,37 @@ class PortProbingPrimitives:
         # Dictionary to store results: {"received": set()}
         results = {"received": set()}
         received_packets = False
-        packet_queue = []
 
         try:
-            # Create TCP socket
-            tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-            tcp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-            
-            # Bind to all interfaces
-            tcp_sock.bind(('0.0.0.0', 0))
-            tcp_sock.settimeout(timeout)
+            # Create pcap object
+            pc = pcap.pcap()
+            pc.setfilter(f'tcp and src host {source_ip}')
+            pc.setnonblock(True)
 
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    # Try to receive TCP packet
-                    tcp_data, addr = tcp_sock.recvfrom(65535)
-                    packet_queue.append((tcp_data, addr))
-                except socket.timeout:
-                    break
+                    # Get next packet
+                    ts, pkt = pc.next()
+                    if pkt is None:
+                        time.sleep(0.1)  # Small sleep to prevent CPU spinning
+                        continue
+
+                    # Parse packet
+                    eth = dpkt.ethernet.Ethernet(pkt)
+                    if isinstance(eth.data, dpkt.ip.IP):
+                        ip = eth.data
+                        if isinstance(ip.data, dpkt.tcp.TCP):
+                            tcp = ip.data
+                            results["received"].add(tcp.dport)
+                            received_packets = True
                 except Exception:
                     continue
 
         except Exception:
             pass
         finally:
-            tcp_sock.close()
-
-        # Process all collected packets
-        for tcp_data, addr in packet_queue:
-            if addr[0] == source_ip:
-                # Extract destination port from TCP header (bytes 2-3)
-                dest_port = int.from_bytes(tcp_data[2:4], byteorder='big')
-                results["received"].add(dest_port)
-                received_packets = True
+            pc.close()
 
         # If no packets were received, set to None
         if not received_packets:
@@ -185,40 +184,37 @@ class PortProbingPrimitives:
         # Dictionary to store results: {"received": set()}
         results = {"received": set()}
         received_packets = False
-        packet_queue = []
 
         try:
-            # Create UDP socket
-            udp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_UDP)
-            udp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-            
-            # Bind to all interfaces
-            udp_sock.bind(('0.0.0.0', 0))
-            udp_sock.settimeout(timeout)
+            # Create pcap object
+            pc = pcap.pcap()
+            pc.setfilter(f'udp and src host {source_ip}')
+            pc.setnonblock(True)
 
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    # Try to receive UDP packet
-                    udp_data, addr = udp_sock.recvfrom(65535)
-                    packet_queue.append((udp_data, addr))
-                except socket.timeout:
-                    break
+                    # Get next packet
+                    ts, pkt = pc.next()
+                    if pkt is None:
+                        time.sleep(0.1)  # Small sleep to prevent CPU spinning
+                        continue
+
+                    # Parse packet
+                    eth = dpkt.ethernet.Ethernet(pkt)
+                    if isinstance(eth.data, dpkt.ip.IP):
+                        ip = eth.data
+                        if isinstance(ip.data, dpkt.udp.UDP):
+                            udp = ip.data
+                            results["received"].add(udp.dport)
+                            received_packets = True
                 except Exception:
                     continue
 
         except Exception:
             pass
         finally:
-            udp_sock.close()
-
-        # Process all collected packets
-        for udp_data, addr in packet_queue:
-            if addr[0] == source_ip:
-                # Extract destination port from UDP header (bytes 2-3)
-                dest_port = int.from_bytes(udp_data[2:4], byteorder='big')
-                results["received"].add(dest_port)
-                received_packets = True
+            pc.close()
 
         # If no packets were received, set to None
         if not received_packets:

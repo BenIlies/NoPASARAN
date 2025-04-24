@@ -102,7 +102,7 @@ class PortProbingPrimitives:
                 - The name of the variable containing the timeout in seconds.
                 - The name of the variable containing the source IP to track.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
-                - The name of the variable to store the dictionary of {source_ip: [ports]}.
+                - The name of the variable to store the dictionary of {"received": [ports]} or {"received": None} if timeout.
             state_machine: The state machine object.
 
         Returns:
@@ -112,8 +112,9 @@ class PortProbingPrimitives:
         timeout = float(state_machine.get_variable_value(inputs[1]))
         source_ip = state_machine.get_variable_value(inputs[2])
 
-        # Dictionary to store results: {source_ip: set()}
-        results = {source_ip: set()}
+        # Dictionary to store results: {"received": set()}
+        results = {"received": set()}
+        received_packets = False
 
         # Create TCP socket
         tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
@@ -129,7 +130,8 @@ class PortProbingPrimitives:
                 if addr[0] == source_ip:
                     # Extract destination port from TCP header
                     dest_port = (tcp_data[2] << 8) + tcp_data[3]
-                    results[source_ip].add(dest_port)
+                    results["received"].add(dest_port)
+                    received_packets = True
             except socket.timeout:
                 break
             except Exception:
@@ -138,8 +140,13 @@ class PortProbingPrimitives:
         # Close socket
         tcp_sock.close()
 
-        # Convert set to list for JSON serialization
-        results[source_ip] = list(results[source_ip])
+        # If no packets were received, set to None
+        if not received_packets:
+            results["received"] = None
+        else:
+            # Convert set to list for JSON serialization
+            results["received"] = list(results["received"])
+
         state_machine.set_variable_value(outputs[0], results)
 
     @staticmethod
@@ -159,7 +166,7 @@ class PortProbingPrimitives:
                 - The name of the variable containing the timeout in seconds.
                 - The name of the variable containing the source IP to track.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
-                - The name of the variable to store the dictionary of {source_ip: [ports]}.
+                - The name of the variable to store the dictionary of {"received": [ports]} or {"received": None} if timeout.
             state_machine: The state machine object.
 
         Returns:
@@ -169,8 +176,9 @@ class PortProbingPrimitives:
         timeout = float(state_machine.get_variable_value(inputs[1]))
         source_ip = state_machine.get_variable_value(inputs[2])
 
-        # Dictionary to store results: {source_ip: set()}
-        results = {source_ip: set()}
+        # Dictionary to store results: {"received": set()}
+        results = {"received": set()}
+        received_packets = False
 
         # Create UDP socket
         udp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_UDP)
@@ -186,7 +194,8 @@ class PortProbingPrimitives:
                 if addr[0] == source_ip:
                     # Extract destination port from UDP header
                     dest_port = (udp_data[2] << 8) + udp_data[3]
-                    results[source_ip].add(dest_port)
+                    results["received"].add(dest_port)
+                    received_packets = True
             except socket.timeout:
                 break
             except Exception:
@@ -195,6 +204,11 @@ class PortProbingPrimitives:
         # Close socket
         udp_sock.close()
 
-        # Convert set to list for JSON serialization
-        results[source_ip] = list(results[source_ip])
+        # If no packets were received, set to None
+        if not received_packets:
+            results["received"] = None
+        else:
+            # Convert set to list for JSON serialization
+            results["received"] = list(results["received"])
+
         state_machine.set_variable_value(outputs[0], results)

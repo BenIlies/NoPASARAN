@@ -4,6 +4,9 @@ import threading
 import time
 from scapy.all import IP, TCP, UDP, sniff, conf
 from nopasaran.utils import group_ports
+from nopasaran.utils import group_ports
+import logging
+from nopasaran.sniffers.UDPprobeListener import UDPProbeListener
 
 class PortProbingPrimitives:
     """
@@ -164,36 +167,21 @@ class PortProbingPrimitives:
         Returns:
             None
         """
+            # Parse input variables
         timeout = float(state_machine.get_variable_value(inputs[0]))
         source_ip = state_machine.get_variable_value(inputs[1])
+        logging.debug(f"[UDPProbe] Listening for {timeout}s from source IP: {source_ip}")
 
-        # Dictionary to store results: {"received": set()}
-        results = {"received": set()}
-        received_packets = False
-
+        listener = UDPProbeListener(source_ip, timeout)
+        
         try:
-            # Configure scapy for better performance
-            conf.verb = 0
-            
-            # Create a packet list to store results
-            packets = sniff(filter=f"udp and src host {source_ip}", 
-                          timeout=timeout,
-                          store=True)  # Store packets for batch processing
-            
-            # Process all packets at once
-            for pkt in packets:
-                if pkt.haslayer(UDP) and pkt[IP].src == source_ip:
-                    results["received"].add(pkt[UDP].dport)
-                    received_packets = True
-
-        except Exception:
-            pass
-
-        # If no packets were received, set to None
-        if not received_packets:
-            results["received"] = None
-        else:
-            # Convert set to list and group consecutive ports
-            results["received"] = group_ports(list(results["received"]))
-
-        state_machine.set_variable_value(outputs[0], results)
+            listener.run()
+            received_ports = listener.ports_received
+            if received_ports:
+                grouped = group_ports(list(received_ports))
+                state_machine.set_variable_value(outputs[0], {"received": grouped})
+            else:
+                state_machine.set_variable_value(outputs[0], {"received": None})
+        except Exception as e:
+            logging.exception(f"[UDPProbe] Error occurred: {e}")
+            state_machine.set_variable_value(outputs[0], {"received": None})

@@ -1,9 +1,7 @@
 from nopasaran.decorators import parsing_decorator
 import socket
 import struct
-from scapy.all import IP, TCP, UDP, sniff, conf, get_if_list, get_if_hwaddr
-from scapy.arch import get_if_raw_hwaddr
-import time
+from scapy.all import IP, TCP, UDP, sniff, conf, get_if_list
 
 class ReplayPrimitives:
     """
@@ -183,10 +181,6 @@ class ReplayPrimitives:
             # Get the default interface
             iface = get_if_list()[0]
             
-            # Configure socket buffer size
-            conf.L2listen = conf.L2listen(iface=iface, promisc=True)
-            conf.L2listen.set_promisc(True)
-            
             # Create a packet list to store results
             packets = sniff(
                 filter=f"tcp and src host {source_ip} and dst port {destination_port}",
@@ -195,8 +189,7 @@ class ReplayPrimitives:
                 iface=iface,
                 promisc=True,
                 count=0,  # Unlimited packet count
-                prn=None,  # No callback to reduce overhead
-                L2socket=conf.L2listen
+                prn=None  # No callback to reduce overhead
             )
             
             # Count packets
@@ -252,10 +245,6 @@ class ReplayPrimitives:
             # Get the default interface
             iface = get_if_list()[0]
             
-            # Configure socket buffer size
-            conf.L2listen = conf.L2listen(iface=iface, promisc=True)
-            conf.L2listen.set_promisc(True)
-            
             # Create a packet list to store results
             packets = sniff(
                 filter=f"udp and src host {source_ip} and dst port {destination_port}",
@@ -264,8 +253,7 @@ class ReplayPrimitives:
                 iface=iface,
                 promisc=True,
                 count=0,  # Unlimited packet count
-                prn=None,  # No callback to reduce overhead
-                L2socket=conf.L2listen
+                prn=None  # No callback to reduce overhead
             )
             
             # Count packets

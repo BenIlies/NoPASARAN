@@ -1,7 +1,7 @@
 from nopasaran.decorators import parsing_decorator
 import socket
 import struct
-from scapy.all import IP, TCP, UDP, sniff, conf
+from scapy.all import IP, TCP, UDP, sniff
 
 class ReplayPrimitives:
     """
@@ -172,20 +172,20 @@ class ReplayPrimitives:
 
         # Dictionary to store results
         results = {"received": 0}
+        received_packets = False
 
         try:
-            # Configure scapy for better performance
-            conf.verb = 0
-            
-            # Create a packet list to store results
-            packets = sniff(filter=f"tcp and src host {source_ip} and dst port {destination_port}", 
-                          timeout=timeout,
-                          store=True)
-            
-            # Count packets
-            for pkt in packets:
-                if pkt.haslayer(TCP) and pkt[IP].src == source_ip:
-                    results["received"] += 1
+            # Use regular sniffer with filter
+            packets = sniff(
+                filter=f"tcp and src host {source_ip} and dst port {destination_port}",
+                timeout=timeout,
+                store=False,
+                prn=lambda _: (results.update({"received": results["received"] + 1}), setattr(results, "received_packets", True))
+            )
+
+            # If no packets were received, set to None
+            if not received_packets:
+                results["received"] = None
 
         except Exception:
             results["received"] = None
@@ -221,20 +221,20 @@ class ReplayPrimitives:
 
         # Dictionary to store results
         results = {"received": 0}
+        received_packets = False
 
         try:
-            # Configure scapy for better performance
-            conf.verb = 0
-            
-            # Create a packet list to store results
-            packets = sniff(filter=f"udp and src host {source_ip} and dst port {destination_port}", 
-                          timeout=timeout,
-                          store=True)
-            
-            # Count packets
-            for pkt in packets:
-                if pkt.haslayer(UDP) and pkt[IP].src == source_ip:
-                    results["received"] += 1
+            # Use regular sniffer with filter
+            packets = sniff(
+                filter=f"udp and src host {source_ip} and dst port {destination_port}",
+                timeout=timeout,
+                store=False,
+                prn=lambda _: (results.update({"received": results["received"] + 1}), setattr(results, "received_packets", True))
+            )
+
+            # If no packets were received, set to None
+            if not received_packets:
+                results["received"] = None
 
         except Exception:
             results["received"] = None

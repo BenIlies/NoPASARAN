@@ -86,19 +86,18 @@ class PortProbingPrimitives:
         sock.close()
 
     @staticmethod
-    @parsing_decorator(input_args=3, output_args=1)
+    @parsing_decorator(input_args=2, output_args=1)
     def listen_tcp_probes(inputs, outputs, state_machine):
         """
         Listen for TCP probes and track which ports received traffic from a specific source IP.
 
-        Number of input arguments: 3
+        Number of input arguments: 2
         Number of output arguments: 1
         Optional input arguments: No
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
-                - The name of the variable containing the interface IP to listen on.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
                 - The name of the variable containing the timeout in seconds.
                 - The name of the variable containing the source IP to track.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
@@ -108,37 +107,46 @@ class PortProbingPrimitives:
         Returns:
             None
         """
-        interface_ip = state_machine.get_variable_value(inputs[0])
-        timeout = float(state_machine.get_variable_value(inputs[1]))
-        source_ip = state_machine.get_variable_value(inputs[2])
+        timeout = float(state_machine.get_variable_value(inputs[0]))
+        source_ip = state_machine.get_variable_value(inputs[1])
 
         # Dictionary to store results: {"received": set()}
         results = {"received": set()}
         received_packets = False
+        packet_queue = []
 
-        # Create TCP socket
-        tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-        tcp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-        tcp_sock.bind((interface_ip, 0))
-        tcp_sock.settimeout(timeout)
+        try:
+            # Create TCP socket
+            tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+            tcp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+            
+            # Bind to all interfaces
+            tcp_sock.bind(('0.0.0.0', 0))
+            tcp_sock.settimeout(timeout)
 
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                # Try to receive TCP packet
-                tcp_data, addr = tcp_sock.recvfrom(65535)
-                if addr[0] == source_ip:
-                    # Extract destination port from TCP header
-                    dest_port = (tcp_data[2] << 8) + tcp_data[3]
-                    results["received"].add(dest_port)
-                    received_packets = True
-            except socket.timeout:
-                break
-            except Exception:
-                continue
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                try:
+                    # Try to receive TCP packet
+                    tcp_data, addr = tcp_sock.recvfrom(65535)
+                    packet_queue.append((tcp_data, addr))
+                except socket.timeout:
+                    break
+                except Exception:
+                    continue
 
-        # Close socket
-        tcp_sock.close()
+        except Exception:
+            pass
+        finally:
+            tcp_sock.close()
+
+        # Process all collected packets
+        for tcp_data, addr in packet_queue:
+            if addr[0] == source_ip:
+                # Extract destination port from TCP header (bytes 2-3)
+                dest_port = int.from_bytes(tcp_data[2:4], byteorder='big')
+                results["received"].add(dest_port)
+                received_packets = True
 
         # If no packets were received, set to None
         if not received_packets:
@@ -150,19 +158,18 @@ class PortProbingPrimitives:
         state_machine.set_variable_value(outputs[0], results)
 
     @staticmethod
-    @parsing_decorator(input_args=3, output_args=1)
+    @parsing_decorator(input_args=2, output_args=1)
     def listen_udp_probes(inputs, outputs, state_machine):
         """
         Listen for UDP probes and track which ports received traffic from a specific source IP.
 
-        Number of input arguments: 3
+        Number of input arguments: 2
         Number of output arguments: 1
         Optional input arguments: No
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
-                - The name of the variable containing the interface IP to listen on.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
                 - The name of the variable containing the timeout in seconds.
                 - The name of the variable containing the source IP to track.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
@@ -172,37 +179,46 @@ class PortProbingPrimitives:
         Returns:
             None
         """
-        interface_ip = state_machine.get_variable_value(inputs[0])
-        timeout = float(state_machine.get_variable_value(inputs[1]))
-        source_ip = state_machine.get_variable_value(inputs[2])
+        timeout = float(state_machine.get_variable_value(inputs[0]))
+        source_ip = state_machine.get_variable_value(inputs[1])
 
         # Dictionary to store results: {"received": set()}
         results = {"received": set()}
         received_packets = False
+        packet_queue = []
 
-        # Create UDP socket
-        udp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_UDP)
-        udp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-        udp_sock.bind((interface_ip, 0))
-        udp_sock.settimeout(timeout)
+        try:
+            # Create UDP socket
+            udp_sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_UDP)
+            udp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+            
+            # Bind to all interfaces
+            udp_sock.bind(('0.0.0.0', 0))
+            udp_sock.settimeout(timeout)
 
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                # Try to receive UDP packet
-                udp_data, addr = udp_sock.recvfrom(65535)
-                if addr[0] == source_ip:
-                    # Extract destination port from UDP header
-                    dest_port = (udp_data[2] << 8) + udp_data[3]
-                    results["received"].add(dest_port)
-                    received_packets = True
-            except socket.timeout:
-                break
-            except Exception:
-                continue
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                try:
+                    # Try to receive UDP packet
+                    udp_data, addr = udp_sock.recvfrom(65535)
+                    packet_queue.append((udp_data, addr))
+                except socket.timeout:
+                    break
+                except Exception:
+                    continue
 
-        # Close socket
-        udp_sock.close()
+        except Exception:
+            pass
+        finally:
+            udp_sock.close()
+
+        # Process all collected packets
+        for udp_data, addr in packet_queue:
+            if addr[0] == source_ip:
+                # Extract destination port from UDP header (bytes 2-3)
+                dest_port = int.from_bytes(udp_data[2:4], byteorder='big')
+                results["received"].add(dest_port)
+                received_packets = True
 
         # If no packets were received, set to None
         if not received_packets:

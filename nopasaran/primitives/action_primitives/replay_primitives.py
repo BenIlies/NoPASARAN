@@ -1,7 +1,9 @@
 from nopasaran.decorators import parsing_decorator
 import socket
 import struct
-from scapy.all import IP, TCP, UDP, sniff
+from scapy.all import IP, TCP, UDP, sniff, conf, get_if_list, get_if_hwaddr
+from scapy.arch import get_if_raw_hwaddr
+import time
 
 class ReplayPrimitives:
     """
@@ -143,6 +145,7 @@ class ReplayPrimitives:
                 
         sock.close()
 
+    
     @staticmethod
     @parsing_decorator(input_args=3, output_args=1)
     def listen_tcp_replays(inputs, outputs, state_machine):
@@ -171,27 +174,43 @@ class ReplayPrimitives:
         destination_port = int(state_machine.get_variable_value(inputs[2]))
 
         results = {"received": 0}
-        packet_count = 0
 
         try:
-            sniff(
+            # Configure scapy for better performance
+            conf.verb = 0
+            conf.use_pcap = True  # Use libpcap for better performance
+            
+            # Get the default interface
+            iface = get_if_list()[0]
+            
+            # Configure socket buffer size
+            conf.L2listen = conf.L2listen(iface=iface, promisc=True)
+            conf.L2listen.set_promisc(True)
+            
+            # Create a packet list to store results
+            packets = sniff(
                 filter=f"tcp and src host {source_ip} and dst port {destination_port}",
                 timeout=timeout,
-                store=False,
-                prn=lambda pkt: (
-                    packet_count := packet_count + 1
-                    if pkt.haslayer(IP) and pkt.haslayer(TCP) and 
-                       pkt[IP].src == source_ip and pkt[TCP].dport == destination_port
-                    else None
-                )
+                store=True,
+                iface=iface,
+                promisc=True,
+                count=0,  # Unlimited packet count
+                prn=None,  # No callback to reduce overhead
+                L2socket=conf.L2listen
             )
+            
+            # Count packets
+            for pkt in packets:
+                if pkt.haslayer(IP) and pkt.haslayer(TCP) and \
+                   pkt[IP].src == source_ip and pkt[TCP].dport == destination_port:
+                    results["received"] += 1
 
-            if packet_count == 0:
+            # If no packets were received, set to None
+            if results["received"] == 0:
                 results["received"] = None
-            else:
-                results["received"] = packet_count
 
-        except Exception:
+        except Exception as e:
+            print(f"Error in TCP packet capture: {str(e)}")
             results["received"] = None
 
         state_machine.set_variable_value(outputs[0], results)
@@ -223,24 +242,45 @@ class ReplayPrimitives:
         source_ip = state_machine.get_variable_value(inputs[1])
         destination_port = int(state_machine.get_variable_value(inputs[2]))
 
-        # Dictionary to store results
         results = {"received": 0}
-        received_packets = False
 
         try:
-            # Use regular sniffer with filter
+            # Configure scapy for better performance
+            conf.verb = 0
+            conf.use_pcap = True  # Use libpcap for better performance
+            
+            # Get the default interface
+            iface = get_if_list()[0]
+            
+            # Configure socket buffer size
+            conf.L2listen = conf.L2listen(iface=iface, promisc=True)
+            conf.L2listen.set_promisc(True)
+            
+            # Create a packet list to store results
             packets = sniff(
                 filter=f"udp and src host {source_ip} and dst port {destination_port}",
                 timeout=timeout,
-                store=False,
-                prn=lambda _: (results.update({"received": results["received"] + 1}), setattr(results, "received_packets", True))
+                store=True,
+                iface=iface,
+                promisc=True,
+                count=0,  # Unlimited packet count
+                prn=None,  # No callback to reduce overhead
+                L2socket=conf.L2listen
             )
+            
+            # Count packets
+            for pkt in packets:
+                if pkt.haslayer(IP) and pkt.haslayer(UDP) and \
+                   pkt[IP].src == source_ip and pkt[UDP].dport == destination_port:
+                    results["received"] += 1
 
             # If no packets were received, set to None
-            if not received_packets:
+            if results["received"] == 0:
                 results["received"] = None
 
-        except Exception:
+        except Exception as e:
+            print(f"Error in UDP packet capture: {str(e)}")
             results["received"] = None
 
         state_machine.set_variable_value(outputs[0], results)
+

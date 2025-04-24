@@ -147,7 +147,7 @@ class ReplayPrimitives:
     @parsing_decorator(input_args=3, output_args=1)
     def listen_tcp_replays(inputs, outputs, state_machine):
         """
-        Listen for TCP packets and return the count of packets received per port.
+        Listen for TCP packets and return the count of packets received.
 
         Number of input arguments: 3
         Number of output arguments: 1
@@ -160,7 +160,7 @@ class ReplayPrimitives:
                 - The name of the variable containing the source IP to filter by.
                 - The name of the variable containing the destination port to filter by.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
-                - The name of the variable to store the dictionary of {"received": [{"port": port, "count": count}]} or {"received": None} if timeout.
+                - The name of the variable to store the dictionary of {"received": count} or {"received": None} if timeout.
             state_machine: The state machine object.
 
         Returns:
@@ -171,8 +171,7 @@ class ReplayPrimitives:
         destination_port = int(state_machine.get_variable_value(inputs[2]))
 
         # Dictionary to store results
-        results = {"received": []}
-        port_counts = {}
+        results = {"received": 0}
 
         try:
             # Configure scapy for better performance
@@ -183,15 +182,10 @@ class ReplayPrimitives:
                           timeout=timeout,
                           store=True)
             
-            # Count packets per port
+            # Count packets
             for pkt in packets:
                 if pkt.haslayer(TCP) and pkt[IP].src == source_ip:
-                    port = pkt[TCP].dport
-                    port_counts[port] = port_counts.get(port, 0) + 1
-
-            # Convert counts to list of dictionaries
-            results["received"] = [{"port": port, "count": count} 
-                                 for port, count in port_counts.items()]
+                    results["received"] += 1
 
         except Exception:
             results["received"] = None
@@ -202,7 +196,7 @@ class ReplayPrimitives:
     @parsing_decorator(input_args=3, output_args=1)
     def listen_udp_replays(inputs, outputs, state_machine):
         """
-        Listen for UDP packets and return the count of packets received per port.
+        Listen for UDP packets and return the count of packets received.
 
         Number of input arguments: 3
         Number of output arguments: 1
@@ -215,7 +209,7 @@ class ReplayPrimitives:
                 - The name of the variable containing the source IP to filter by.
                 - The name of the variable containing the destination port to filter by.
             outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
-                - The name of the variable to store the dictionary of {"received": [{"port": port, "count": count}]} or {"received": None} if timeout.
+                - The name of the variable to store the dictionary of {"received": count} or {"received": None} if timeout.
             state_machine: The state machine object.
 
         Returns:
@@ -226,8 +220,7 @@ class ReplayPrimitives:
         destination_port = int(state_machine.get_variable_value(inputs[2]))
 
         # Dictionary to store results
-        results = {"received": []}
-        port_counts = {}
+        results = {"received": 0}
 
         try:
             # Configure scapy for better performance
@@ -238,15 +231,10 @@ class ReplayPrimitives:
                           timeout=timeout,
                           store=True)
             
-            # Count packets per port
+            # Count packets
             for pkt in packets:
                 if pkt.haslayer(UDP) and pkt[IP].src == source_ip:
-                    port = pkt[UDP].dport
-                    port_counts[port] = port_counts.get(port, 0) + 1
-
-            # Convert counts to list of dictionaries
-            results["received"] = [{"port": port, "count": count} 
-                                 for port, count in port_counts.items()]
+                    results["received"] += 1
 
         except Exception:
             results["received"] = None

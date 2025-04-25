@@ -1,15 +1,17 @@
 from scapy.all import AsyncSniffer, UDP, IP, conf
 import logging
 import time
+from collections import defaultdict
+
 class UDPProbeListener:
     """
-    Helper class to listen for UDP probes using AsyncSniffer.
+    Helper class to listen for UDP probes and count packets per destination port.
     """
     def __init__(self, source_ip, timeout, dports=None):
         self.source_ip = source_ip
         self.timeout = timeout
         self.dports = dports if dports is not None else []
-        self.ports_received = set()
+        self.port_counts = defaultdict(int)
         self.sniffer = None
 
     def _packet_handler(self, packet):
@@ -19,7 +21,7 @@ class UDPProbeListener:
         if packet.haslayer(UDP) and packet.haslayer(IP):
             if packet[IP].src == self.source_ip:
                 if not self.dports or packet[UDP].dport in self.dports:
-                    self.ports_received.add(packet[UDP].dport)
+                    self.port_counts[packet[UDP].dport] += 1
 
     def _build_filter(self):
         """

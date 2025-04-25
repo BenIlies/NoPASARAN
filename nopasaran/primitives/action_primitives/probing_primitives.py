@@ -146,37 +146,57 @@ class PortProbingPrimitives:
         state_machine.set_variable_value(outputs[0], results)
 
     @staticmethod
-    @parsing_decorator(input_args=3, output_args=1)
+    @parsing_decorator(input_args=2, output_args=1)
     def listen_udp_probes(inputs, outputs, state_machine):
         """
-        Listen for UDP probes and track if a specific destination port received traffic from a specific source IP.
+        Listen for UDP probes and track which ports received traffic from a specific source IP.
 
-        Number of input arguments: 3
+        Number of input arguments: 2
         Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
 
         Args:
-            inputs (List[str]):
-                - [0]: Timeout in seconds (float or str)
-                - [1]: Source IP address (str)
-                - [2]: Destination port to track (int or str)
-            outputs (List[str]):
-                - [0]: Dictionary of {"received": [port]} or {"received": None} if no packet was received
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the timeout in seconds.
+                - The name of the variable containing the source IP to track.
+            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
+                - The name of the variable to store the dictionary of {"received": [ports]} or {"received": None} if timeout.
             state_machine: The state machine object.
+
+        Returns:
+            None
         """
-        # Parse input variables
         timeout = float(state_machine.get_variable_value(inputs[0]))
         source_ip = state_machine.get_variable_value(inputs[1])
-        destination_port = int(state_machine.get_variable_value(inputs[2]))
 
-        listener = UDPProbeListener(source_ip, timeout, [destination_port])
+        # Dictionary to store results: {"received": set()}
+        results = {"received": set()}
+        received_packets = False
 
         try:
-            listener.run()
-            if listener.ports_received:
-                grouped = group_ports(list(listener.ports_received))
-                state_machine.set_variable_value(outputs[0], {"received": grouped})
-            else:
-                state_machine.set_variable_value(outputs[0], {"received": None})
-        except Exception as e:
-            logging.exception(f"[UDPProbe] Error occurred: {e}")
-            state_machine.set_variable_value(outputs[0], {"received": None})
+            # Configure scapy for better performance
+            conf.verb = 0
+            
+            # Create a packet list to store results
+            packets = sniff(filter=f"udp and src host {source_ip}", 
+                          timeout=timeout,
+                          store=True)  # Store packets for batch processing
+            
+            # Process all packets at once
+            for pkt in packets:
+                if pkt.haslayer(UDP) and pkt[IP].src == source_ip:
+                    results["received"].add(pkt[UDP].dport)
+                    received_packets = True
+
+        except Exception:
+            pass
+
+        # If no packets were received, set to None
+        if not received_packets:
+            results["received"] = None
+        else:
+            # Convert set to list and group consecutive ports
+            results["received"] = group_ports(list(results["received"]))
+
+        state_machine.set_variable_value(outputs[0], results)

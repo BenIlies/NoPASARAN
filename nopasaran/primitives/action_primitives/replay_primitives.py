@@ -2,6 +2,7 @@ from nopasaran.decorators import parsing_decorator
 import socket
 import struct
 from scapy.all import IP, TCP, UDP, sniff, conf, get_if_list
+from nopasaran.sniffers.UDPprobeListener import UDPProbeListener
 
 class ReplayPrimitives:
     """
@@ -238,37 +239,14 @@ class ReplayPrimitives:
         results = {"received": 0}
 
         try:
-            # Configure scapy for better performance
-            conf.verb = 0
-            conf.use_pcap = True  # Use libpcap for better performance
-            
-            # Get the default interface
-            iface = get_if_list()[0]
-            
-            # Create a packet list to store results
-            packets = sniff(
-                filter=f"udp and src host {source_ip} and dst port {destination_port}",
-                timeout=timeout,
-                store=True,
-                iface=iface,
-                promisc=True,
-                count=0,  # Unlimited packet count
-                prn=None  # No callback to reduce overhead
-            )
-            
-            # Count packets
-            for pkt in packets:
-                if pkt.haslayer(IP) and pkt.haslayer(UDP) and \
-                   pkt[IP].src == source_ip and pkt[UDP].dport == destination_port:
-                    results["received"] += 1
+            listener = UDPProbeListener(source_ip=source_ip, timeout=timeout, dports=[destination_port])
+            listener.run()
 
-            # If no packets were received, set to None
-            if results["received"] == 0:
-                results["received"] = None
+            port_count = listener.port_counts.get(destination_port, 0)
+            results["received"] = port_count if port_count > 0 else None
 
         except Exception as e:
             print(f"Error in UDP packet capture: {str(e)}")
             results["received"] = None
 
         state_machine.set_variable_value(outputs[0], results)
-

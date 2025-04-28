@@ -103,7 +103,7 @@ class ReplayPrimitives:
         results = {"received": 0}
 
         try:
-            listener = UdpProbeListener(source_ip=source_ip, timeout=timeout, dports=[destination_port])
+            listener = UDPProbeListener(source_ip=source_ip, timeout=timeout, dports=[destination_port])
             listener.run()
 
             port_count = listener.port_counts.get(destination_port, 0)

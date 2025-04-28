@@ -4,9 +4,7 @@ import threading
 import time
 from scapy.all import IP, TCP, UDP, sniff, conf
 from nopasaran.utils import group_ports
-from nopasaran.utils import group_ports
-import logging
-from nopasaran.sniffers.UDPprobeListener import UDPProbeListener
+
 
 class PortProbingPrimitives:
     """

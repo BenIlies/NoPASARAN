@@ -12,80 +12,85 @@ class PortProbingPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=0)
+    @parsing_decorator(input_args=2, output_args=0)
     def probe_udp_ports(inputs, outputs, state_machine):
         """
         Send UDP packets to all possible ports (0-65535) using L3 sockets.
 
-        Number of input arguments: 1
+        Number of input arguments: 2
         Number of output arguments: 0
         Optional input arguments: No
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
-                - The name of the variable containing the target IP address.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the source port (int).
+                - The name of the variable containing the target IP address (str).
             outputs (List[str]): No output arguments needed.
             state_machine: The state machine object.
 
         Returns:
             None
         """
-        destination_ip = state_machine.get_variable_value(inputs[0])
-        
+        source_port = int(state_machine.get_variable_value(inputs[0]))
+        destination_ip = state_machine.get_variable_value(inputs[1])
+
         # Create raw socket at IP level
         sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-        
+
         # Scan all possible UDP ports (0-65535)
         for port in range(65536):
             try:
                 # Create UDP packet
-                udp_packet = IP(dst=destination_ip)/UDP(dport=port)
+                udp_packet = IP(dst=destination_ip)/UDP(sport=source_port, dport=port)
                 # Send raw packet
                 sock.sendto(bytes(udp_packet), (destination_ip, 0))
             except Exception:
                 continue
-                
+
         sock.close()
 
     @staticmethod
-    @parsing_decorator(input_args=1, output_args=0)
+    @parsing_decorator(input_args=2, output_args=0)
     def probe_tcp_syn_ports(inputs, outputs, state_machine):
         """
         Send TCP SYN packets to all possible ports.
 
-        Number of input arguments: 1
+        Number of input arguments: 2
         Number of output arguments: 0
         Optional input arguments: No
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument:
-                - The name of the variable containing the target IP address.
+            inputs (List[str]): The list of input variable names. It contains two mandatory input arguments:
+                - The name of the variable containing the source port (int).
+                - The name of the variable containing the target IP address (str).
             outputs (List[str]): No output arguments needed.
             state_machine: The state machine object.
 
         Returns:
             None
         """
-        destination_ip = state_machine.get_variable_value(inputs[0])
-        
+        source_port = int(state_machine.get_variable_value(inputs[0]))
+        destination_ip = state_machine.get_variable_value(inputs[1])
+
         # Create raw socket at IP level
         sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-        
+
         # Scan all possible TCP ports (0-65535)
         for port in range(65536):
             try:
                 # Create SYN packet
-                syn_packet = IP(dst=destination_ip)/TCP(dport=port, flags='S')
+                syn_packet = IP(dst=destination_ip)/TCP(sport=source_port, dport=port, flags='S')
                 # Send raw packet
                 sock.sendto(bytes(syn_packet), (destination_ip, 0))
             except Exception:
                 continue
-                
+
         sock.close()
+
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)

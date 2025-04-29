@@ -1,7 +1,5 @@
 from nopasaran.decorators import parsing_decorator
 import socket
-import threading
-import time
 from scapy.all import IP, TCP, UDP, sniff, conf
 from nopasaran.utils import group_ports
 

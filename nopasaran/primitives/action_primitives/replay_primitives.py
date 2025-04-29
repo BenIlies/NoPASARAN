@@ -1,7 +1,7 @@
 from nopasaran.decorators import parsing_decorator
 import socket
 import struct
-from nopasaran.sniffers.udp_probe_listener import UDPProbeListener
+from scapy.all import sniff, UDP, IP, conf
 
 class ReplayPrimitives:
     """
@@ -80,7 +80,7 @@ class ReplayPrimitives:
     @parsing_decorator(input_args=3, output_args=1)
     def listen_udp_replays(inputs, outputs, state_machine):
         """
-        Listen for UDP packets and return the count of packets received.
+        Listen for UDP packets and return the count of packets received for a specific source IP and destination port.
 
         Number of input arguments: 3
         Number of output arguments: 1
@@ -88,11 +88,11 @@ class ReplayPrimitives:
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains three mandatory input arguments:
+            inputs (List[str]): The list of input variable names:
                 - The name of the variable containing the timeout in seconds.
                 - The name of the variable containing the source IP to filter by.
                 - The name of the variable containing the destination port to filter by.
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument:
+            outputs (List[str]): The list of output variable names:
                 - The name of the variable to store the dictionary of {"received": count} or {"received": None} if timeout.
             state_machine: The state machine object.
 
@@ -104,16 +104,36 @@ class ReplayPrimitives:
         destination_port = int(state_machine.get_variable_value(inputs[2]))
 
         results = {"received": 0}
+        received_packets = False
 
         try:
-            listener = UDPProbeListener(source_ip=source_ip, timeout=timeout, dports=[destination_port])
-            listener.run()
+            # Configure scapy for quiet operation
+            conf.verb = 0
 
-            port_count = listener.port_counts.get(destination_port, 0)
-            results["received"] = port_count if port_count > 0 else None
+            # Sniff UDP packets matching source IP and destination port
+            packets = sniff(
+                filter=f"udp and src host {source_ip} and dst port {destination_port}",
+                timeout=timeout,
+                store=True
+            )
+
+            # Count matching packets
+            count = 0
+            for pkt in packets:
+                if pkt.haslayer(UDP) and pkt.haslayer(IP):
+                    if pkt[IP].src == source_ip and pkt[UDP].dport == destination_port:
+                        count += 1
+
+            if count > 0:
+                results["received"] = count
+                received_packets = True
 
         except Exception as e:
             print(f"Error in UDP packet capture: {str(e)}")
+            results["received"] = None
+
+        # If no packets were received, set to None
+        if not received_packets:
             results["received"] = None
 
         state_machine.set_variable_value(outputs[0], results)

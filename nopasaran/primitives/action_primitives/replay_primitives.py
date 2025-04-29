@@ -1,7 +1,5 @@
 from nopasaran.decorators import parsing_decorator
-import socket
-import struct
-from scapy.all import sniff, UDP, IP, conf
+from scapy.all import sniff, UDP, IP, conf, Raw, send
 
 class ReplayPrimitives:
     """
@@ -12,7 +10,7 @@ class ReplayPrimitives:
     @parsing_decorator(input_args=5, output_args=0)
     def replay_udp_packets(inputs, outputs, state_machine):
         """
-        Replay UDP packets to a specific port multiple times using L3 sockets.
+        Replay UDP packets to a specific port multiple times using Scapy.
 
         Number of input arguments: 5
         Number of output arguments: 0
@@ -38,51 +36,16 @@ class ReplayPrimitives:
         replay_count = int(state_machine.get_variable_value(inputs[3]))
         payload = state_machine.get_variable_value(inputs[4])
 
-        # Ensure payload is bytes
         if isinstance(payload, str):
             payload = payload.encode()
 
-        payload_length = len(payload)
+        packet = IP(dst=destination_ip) / UDP(sport=source_port, dport=destination_port) / Raw(load=payload)
 
-        # Create raw socket at IP level
-        sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-
-        # IP header
-        ip_total_length = 20 + 8 + payload_length  # IP header (20 bytes) + UDP header (8 bytes) + payload
-        ip_header = struct.pack('!BBHHHBBH4s4s',
-            69,  # Version (4) + IHL (5)
-            0,   # Type of Service
-            ip_total_length,  # Total Length
-            0,   # Identification
-            0,   # Flags and Fragment Offset
-            64,  # TTL
-            17,  # Protocol (UDP)
-            0,   # Header Checksum (kernel will fill)
-            socket.inet_aton('0.0.0.0'),  # Source IP (still 0.0.0.0)
-            socket.inet_aton(destination_ip)  # Destination IP
-        )
-
-        # UDP header
-        udp_length = 8 + payload_length
-        udp_header = struct.pack('!HHHH',
-            source_port,       # Source Port
-            destination_port,  # Destination Port
-            udp_length,        # Length (UDP header + payload)
-            0                  # Checksum (optional)
-        )
-
-        # Combine headers and payload
-        packet = ip_header + udp_header + payload
-
-        # Replay the packet specified number of times
         for _ in range(replay_count):
             try:
-                sock.sendto(packet, (destination_ip, 0))
+                send(packet, verbose=False)
             except Exception:
                 continue
-
-        sock.close()
 
 
     @staticmethod

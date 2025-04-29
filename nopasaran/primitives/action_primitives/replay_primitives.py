@@ -9,22 +9,23 @@ class ReplayPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=4, output_args=0)
+    @parsing_decorator(input_args=5, output_args=0)
     def replay_udp_packets(inputs, outputs, state_machine):
         """
         Replay UDP packets to a specific port multiple times using L3 sockets.
 
-        Number of input arguments: 4
+        Number of input arguments: 5
         Number of output arguments: 0
         Optional input arguments: No
         Optional output arguments: No
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains four mandatory input arguments:
+            inputs (List[str]): The list of input variable names. It contains five mandatory input arguments:
                 - The name of the variable containing the target IP address.
                 - The name of the variable containing the source port.
                 - The name of the variable containing the destination port.
                 - The name of the variable containing the number of times to replay.
+                - The name of the variable containing the payload to send.
             outputs (List[str]): No output arguments needed.
             state_machine: The state machine object.
 
@@ -35,36 +36,44 @@ class ReplayPrimitives:
         source_port = int(state_machine.get_variable_value(inputs[1]))
         destination_port = int(state_machine.get_variable_value(inputs[2]))
         replay_count = int(state_machine.get_variable_value(inputs[3]))
+        payload = state_machine.get_variable_value(inputs[4])
+
+        # Ensure payload is bytes
+        if isinstance(payload, str):
+            payload = payload.encode()
+
+        payload_length = len(payload)
 
         # Create raw socket at IP level
         sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
-        # Create UDP packet
         # IP header
+        ip_total_length = 20 + 8 + payload_length  # IP header (20 bytes) + UDP header (8 bytes) + payload
         ip_header = struct.pack('!BBHHHBBH4s4s',
-            69,  # Version and IHL
-            0,   # Type of service
-            20 + 8,  # Total length (IP header + UDP header)
+            69,  # Version (4) + IHL (5)
+            0,   # Type of Service
+            ip_total_length,  # Total Length
             0,   # Identification
-            0,   # Flags and fragment offset
+            0,   # Flags and Fragment Offset
             64,  # TTL
             17,  # Protocol (UDP)
-            0,   # Header checksum
+            0,   # Header Checksum (kernel will fill)
             socket.inet_aton('0.0.0.0'),  # Source IP (still 0.0.0.0)
             socket.inet_aton(destination_ip)  # Destination IP
         )
 
         # UDP header
+        udp_length = 8 + payload_length
         udp_header = struct.pack('!HHHH',
-            source_port,  # Source port
-            destination_port,  # Destination port
-            8,  # Length (UDP header)
-            0   # Checksum
+            source_port,       # Source Port
+            destination_port,  # Destination Port
+            udp_length,        # Length (UDP header + payload)
+            0                  # Checksum (optional)
         )
 
-        # Combine headers
-        packet = ip_header + udp_header
+        # Combine headers and payload
+        packet = ip_header + udp_header + payload
 
         # Replay the packet specified number of times
         for _ in range(replay_count):

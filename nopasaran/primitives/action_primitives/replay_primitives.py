@@ -1,5 +1,7 @@
 from nopasaran.decorators import parsing_decorator
 from scapy.all import sniff, UDP, IP, conf, Raw, send
+import time
+import logging
 
 class ReplayPrimitives:
     """
@@ -7,45 +9,57 @@ class ReplayPrimitives:
     """
 
     @staticmethod
-    @parsing_decorator(input_args=5, output_args=0)
+    @parsing_decorator(input_args=7, output_args=0)
     def replay_udp_packets(inputs, outputs, state_machine):
         """
-        Replay UDP packets to a specific port multiple times using Scapy.
-
-        Number of input arguments: 5
-        Number of output arguments: 0
-        Optional input arguments: No
-        Optional output arguments: No
+        Replay UDP packets to a specific port multiple times using Scapy in batches.
 
         Args:
-            inputs (List[str]): The list of input variable names. It contains five mandatory input arguments:
-                - The name of the variable containing the target IP address.
-                - The name of the variable containing the source port.
-                - The name of the variable containing the destination port.
-                - The name of the variable containing the number of times to replay.
-                - The name of the variable containing the payload to send.
+            inputs (List[str]): The list of input variable names. It contains:
+                - Target IP address.
+                - Source port.
+                - Destination port.
+                - Number of packets per batch (batch_size).
+                - Number of batches (num_batches).
+                - Payload to send.
+                - Time delay between batches in seconds.
             outputs (List[str]): No output arguments needed.
             state_machine: The state machine object.
 
         Returns:
             None
         """
+        # Extracting the input values
         destination_ip = state_machine.get_variable_value(inputs[0])
         source_port = int(state_machine.get_variable_value(inputs[1]))
         destination_port = int(state_machine.get_variable_value(inputs[2]))
-        replay_count = int(state_machine.get_variable_value(inputs[3]))
-        payload = state_machine.get_variable_value(inputs[4])
+        batch_size = int(state_machine.get_variable_value(inputs[3]))
+        num_batches = int(state_machine.get_variable_value(inputs[4]))
+        payload = state_machine.get_variable_value(inputs[5])
+        delay = float(state_machine.get_variable_value(inputs[6]))
 
+        # Ensure the payload is in bytes if it's a string
         if isinstance(payload, str):
             payload = payload.encode()
 
+        # Create the packet template
         packet = IP(dst=destination_ip) / UDP(sport=source_port, dport=destination_port) / Raw(load=payload)
 
-        for _ in range(replay_count):
-            try:
-                send(packet, verbose=False)
-            except Exception:
-                continue
+        # Replay the packets in batches
+        for batch_num in range(num_batches):
+            logging.debug(f"Sending batch {batch_num + 1} of {num_batches}...")
+            
+            for _ in range(batch_size):
+                try:
+                    send(packet, verbose=False)  # Send each packet
+                except Exception as e:
+                    logging.debug(f"Error sending packet: {e}")
+                    continue
+            
+            # Wait for the specified delay before sending the next batch
+            if batch_num < num_batches - 1:  # Don't wait after the last batch
+                logging.debug(f"Waiting for {delay} seconds before next batch...")
+                time.sleep(delay)
 
 
     @staticmethod
@@ -101,7 +115,7 @@ class ReplayPrimitives:
                 received_packets = True
 
         except Exception as e:
-            print(f"Error in UDP packet capture: {str(e)}")
+            logging.debug(f"Error in UDP packet capture: {str(e)}")
             results["received"] = None
 
         # If no packets were received, set to None

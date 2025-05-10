@@ -36,8 +36,6 @@ class HTTPSimpleClientPrimitives:
         errors = []
 
         scheme = "UNKNOWN"
-        last_sent = None
-        last_received = None
 
         try:
             if use_https == "1":
@@ -56,13 +54,10 @@ class HTTPSimpleClientPrimitives:
             if conn:
                 headers = {"Host": hostname}
                 path = "/"
-                last_sent = f"GET {path} HTTP/1.1\r\nHost: {hostname}\r\n\r\n"
 
                 conn.request("GET", path, headers=headers)
                 response = conn.getresponse()
                 body = response.read(300).decode(errors='replace')  # Truncate body to 300 bytes
-
-                last_received = f"HTTP/{response.version / 10:.1f} {response.status} {response.reason}\n{body}"
 
                 results[scheme] = {
                     'status': response.status,
@@ -78,9 +73,7 @@ class HTTPSimpleClientPrimitives:
 
         output_value = {
             "results": results,
-            "errors": errors,
-            "last_sent": last_sent,
-            "last_received": last_received
+            "errors": errors
         }
 
         state_machine.set_variable_value(outputs[0], output_value)

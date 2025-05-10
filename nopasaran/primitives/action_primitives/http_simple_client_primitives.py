@@ -36,15 +36,17 @@ class HTTPSimpleClientPrimitives:
         errors = []
 
         scheme = "UNKNOWN"
+        last_sent = None
+        last_received = None
 
         try:
             if use_https == "1":
                 scheme = "HTTPS"
                 context = ssl.create_default_context()
-                conn = http.client.HTTPSConnection(ip_address, 443, context=context)
+                conn = http.client.HTTPSConnection(ip_address, 443, context=context, timeout=5)
             elif use_https == "0":
                 scheme = "HTTP"
-                conn = http.client.HTTPConnection(ip_address, 80)
+                conn = http.client.HTTPConnection(ip_address, 80, timeout=5)
             else:
                 error_msg = "use_https must be '1' for HTTPS or '0' for HTTP"
                 logging.debug(error_msg)
@@ -52,14 +54,22 @@ class HTTPSimpleClientPrimitives:
                 conn = None
 
             if conn:
-                conn.request("GET", "/", headers={"Host": hostname})
+                headers = {"Host": hostname}
+                path = "/"
+                last_sent = f"GET {path} HTTP/1.1\r\nHost: {hostname}\r\n\r\n"
+
+                conn.request("GET", path, headers=headers)
                 response = conn.getresponse()
                 body = response.read(300).decode(errors='replace')  # Truncate body to 300 bytes
+
+                last_received = f"HTTP/{response.version / 10:.1f} {response.status} {response.reason}\n{body}"
+
                 results[scheme] = {
                     'status': response.status,
                     'reason': response.reason,
                     'body': body
                 }
+
                 conn.close()
         except Exception as e:
             error_msg = f"{scheme} request failed: {e}"
@@ -68,7 +78,9 @@ class HTTPSimpleClientPrimitives:
 
         output_value = {
             "results": results,
-            "errors": errors
+            "errors": errors,
+            "last_sent": last_sent,
+            "last_received": last_received
         }
 
         state_machine.set_variable_value(outputs[0], output_value)

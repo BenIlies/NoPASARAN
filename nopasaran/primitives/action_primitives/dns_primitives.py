@@ -777,6 +777,125 @@ class DNSPrimitives:
 
             # Store the malformed DNS packet in the state machine
             state_machine.set_variable_value(outputs[0], dns_packet)
+    
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def format_dns_query_packet(inputs, outputs, state_machine):
+        """
+        Extracts metadata from a DNS Query packet and stores the formatted dictionary.
+
+        Number of input arguments: 1
+        Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): Contains one mandatory input argument:
+                - The variable name of the DNS packet to format.
+            outputs (List[str]): Contains one mandatory output argument:
+                - The variable name to store the formatted dictionary.
+            state_machine: The state machine object providing context and storage.
+
+        Returns:
+            None
+        """
+        # Retrieve packet from state machine
+        packet = state_machine.get_variable_value(inputs[0])
+
+        # Check if packet has a DNS layer
+        if not packet.haslayer(DNS):
+            formatted_query = {"error": "No DNS layer found in packet"}
+        else:
+            dns_layer = packet.getlayer(DNS)
+            formatted_query = {
+                "transaction_id": dns_layer.id,
+                "rd": dns_layer.rd,
+                "opcode": dns_layer.opcode,
+                "questions": []
+            }
+
+            if dns_layer.qdcount > 0 and dns_layer.qd:
+                formatted_query["questions"].append({
+                    "qname": dns_layer.qd.qname.decode() if isinstance(dns_layer.qd.qname, bytes) else dns_layer.qd.qname,
+                    "qtype": dns_layer.qd.qtype,
+                    "qclass": dns_layer.qd.qclass
+                })
+
+        formatted_query = {k: v for k, v in formatted_query.items() if v and v != 0 and v != []}
+        
+        # Store the formatted query in the state machine
+        state_machine.set_variable_value(outputs[0], formatted_query)
+
+    @staticmethod
+    @parsing_decorator(input_args=1, output_args=1)
+    def format_dns_response_packet(inputs, outputs, state_machine):
+        """
+        Extracts metadata from a DNS Response packet and stores the formatted dictionary.
+
+        Number of input arguments: 1
+        Number of output arguments: 1
+        Optional input arguments: No
+        Optional output arguments: No
+
+        Args:
+            inputs (List[str]): Contains one mandatory input argument:
+                - The variable name of the DNS response packet to format.
+            outputs (List[str]): Contains one mandatory output argument:
+                - The variable name to store the formatted dictionary.
+            state_machine: The state machine object providing context and storage.
+
+        Returns:
+            None
+        """
+        # Retrieve packet from state machine
+        packet = state_machine.get_variable_value(inputs[0])
+
+        # Check if packet has a DNS layer
+        if not packet.haslayer(DNS):
+            formatted_response = {"error": "No DNS layer found in packet"}
+        else:
+            dns_layer = packet.getlayer(DNS)
+            formatted_response = {
+                "transaction_id": dns_layer.id,
+                "qr": dns_layer.qr,
+                "opcode": dns_layer.opcode,
+                "aa": dns_layer.aa,
+                "tc": dns_layer.tc,
+                "rd": dns_layer.rd,
+                "ra": dns_layer.ra,
+                "z": dns_layer.z,
+                "rcode": dns_layer.rcode,
+                "questions": [],
+                "answers": []
+            }
+
+            if dns_layer.qdcount > 0 and dns_layer.qd:
+                formatted_response["questions"].append({
+                    "qname": dns_layer.qd.qname.decode() if isinstance(dns_layer.qd.qname, bytes) else dns_layer.qd.qname,
+                    "qtype": dns_layer.qd.qtype,
+                    "qclass": dns_layer.qd.qclass
+                })
+
+            if dns_layer.ancount > 0:
+                for i in range(dns_layer.ancount):
+                    ans = dns_layer.an[i]
+                    formatted_response["answers"].append({
+                        "rrname": ans.rrname.decode() if isinstance(ans.rrname, bytes) else ans.rrname,
+                        "type": ans.type,
+                        "rclass": ans.rclass,
+                        "ttl": ans.ttl,
+                        "rdata": str(ans.rdata)
+                    })
+
+            # Clean empty fields
+            formatted_response = {k: v for k, v in formatted_response.items() if v and v != 0 and v != []}
+
+        # Store the formatted response in the state machine
+        state_machine.set_variable_value(outputs[0], formatted_response)
+
+
+
+
 
 
 

@@ -2,6 +2,7 @@ from scapy.all import IP, UDP, DNS, DNSQR, DNSRR, DNSRROPT
 import random
 import string
 from nopasaran.decorators import parsing_decorator
+from scapy.layers.dns import dnsqtypes
 
 
 class DNSPrimitives:
@@ -847,7 +848,6 @@ class DNSPrimitives:
         Returns:
             None
         """
-        from scapy.layers.dns import dnsqtypes, dnsatypes
 
         packet = state_machine.get_variable_value(inputs[0])
 

@@ -822,7 +822,7 @@ class DNSPrimitives:
                 })
 
         formatted_query = {k: v for k, v in formatted_query.items() if v and v != 0 and v != []}
-        
+
         # Store the formatted query in the state machine
         state_machine.set_variable_value(outputs[0], formatted_query)
 
@@ -847,10 +847,10 @@ class DNSPrimitives:
         Returns:
             None
         """
-        # Retrieve packet from state machine
+        from scapy.layers.dns import dnsqtypes, dnsatypes
+
         packet = state_machine.get_variable_value(inputs[0])
 
-        # Check if packet has a DNS layer
         if not packet.haslayer(DNS):
             formatted_response = {"error": "No DNS layer found in packet"}
         else:
@@ -869,28 +869,31 @@ class DNSPrimitives:
                 "answers": []
             }
 
+            # Extract question section
             if dns_layer.qdcount > 0 and dns_layer.qd:
+                question = dns_layer.qd
                 formatted_response["questions"].append({
-                    "qname": dns_layer.qd.qname.decode() if isinstance(dns_layer.qd.qname, bytes) else dns_layer.qd.qname,
-                    "qtype": dns_layer.qd.qtype,
-                    "qclass": dns_layer.qd.qclass
+                    "qname": question.qname.decode() if isinstance(question.qname, bytes) else question.qname,
+                    "qtype": question.qtype,
+                    "qtype_name": dnsqtypes.get(question.qtype, f"Unknown({question.qtype})"),
+                    "qclass": question.qclass
                 })
 
-            if dns_layer.ancount > 0:
-                for i in range(dns_layer.ancount):
-                    ans = dns_layer.an[i]
-                    formatted_response["answers"].append({
-                        "rrname": ans.rrname.decode() if isinstance(ans.rrname, bytes) else ans.rrname,
-                        "type": ans.type,
-                        "rclass": ans.rclass,
-                        "ttl": ans.ttl,
-                        "rdata": str(ans.rdata)
-                    })
+            # Extract all answer records
+            ans = dns_layer.an if dns_layer.ancount > 0 else None
+            while ans:
+                answer_info = {
+                    "rrname": ans.rrname.decode() if isinstance(ans.rrname, bytes) else ans.rrname,
+                    "type": ans.type,
+                    "type_name": dnsatypes.get(ans.type, f"Unknown({ans.type})"),
+                    "rclass": ans.rclass,
+                    "ttl": ans.ttl,
+                    "rdata": str(ans.rdata),
+                    "raw_fields": {field: getattr(ans, field, None) for field in dir(ans) if not field.startswith("_")}
+                }
+                formatted_response["answers"].append(answer_info)
+                ans = ans.payload if ans.payload and isinstance(ans.payload, DNSRR) else None
 
-            # Clean empty fields
-            formatted_response = {k: v for k, v in formatted_response.items() if v and v != 0 and v != []}
-
-        # Store the formatted response in the state machine
         state_machine.set_variable_value(outputs[0], formatted_response)
 
 

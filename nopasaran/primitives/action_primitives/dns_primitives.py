@@ -851,6 +851,25 @@ class DNSPrimitives:
 
         packet = state_machine.get_variable_value(inputs[0])
 
+        dnsatypes = {
+        1: "A",
+        2: "NS",
+        5: "CNAME",
+        6: "SOA",
+        12: "PTR",
+        15: "MX",
+        16: "TXT",
+        28: "AAAA",
+        33: "SRV",
+        38: "A6",
+        43: "DS",
+        46: "RRSIG",
+        47: "NSEC",
+        48: "DNSKEY",
+        255: "ANY"
+        }
+
+
         if not packet.haslayer(DNS):
             formatted_response = {"error": "No DNS layer found in packet"}
         else:
@@ -869,7 +888,6 @@ class DNSPrimitives:
                 "answers": []
             }
 
-            # Extract question section
             if dns_layer.qdcount > 0 and dns_layer.qd:
                 question = dns_layer.qd
                 formatted_response["questions"].append({
@@ -879,7 +897,6 @@ class DNSPrimitives:
                     "qclass": question.qclass
                 })
 
-            # Extract all answer records
             ans = dns_layer.an if dns_layer.ancount > 0 else None
             while ans:
                 answer_info = {
@@ -889,7 +906,6 @@ class DNSPrimitives:
                     "rclass": ans.rclass,
                     "ttl": ans.ttl,
                     "rdata": str(ans.rdata),
-                    "raw_fields": {field: getattr(ans, field, None) for field in dir(ans) if not field.startswith("_")}
                 }
                 formatted_response["answers"].append(answer_info)
                 ans = ans.payload if ans.payload and isinstance(ans.payload, DNSRR) else None

@@ -308,9 +308,17 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        dns_query = dns_packet.qd
-
-        state_machine.set_variable_value(outputs[0], dns_query)
+        if 'Raw' in dns_packet:
+            try:
+                dns_layer = DNS(dns_packet['Raw'].load)
+                dns_query = dns_layer.qd
+                state_machine.set_variable_value(outputs[0], dns_query)
+            except Exception as e:
+                logging.error(f"Failed to decode Raw payload as DNS: {e}")
+                state_machine.set_variable_value(outputs[0], None)
+        else:
+            logging.error("DNS layer not found and no Raw layer to decode")
+            state_machine.set_variable_value(outputs[0], None)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)

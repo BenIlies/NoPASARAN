@@ -1,6 +1,7 @@
 from scapy.all import IP, UDP, DNS, DNSQR, DNSRR, DNSRROPT
 import random
 import string
+import logging
 from nopasaran.decorators import parsing_decorator
 from scapy.layers.dns import dnsqtypes
 
@@ -180,8 +181,17 @@ class DNSPrimitives:
             None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        transaction_id = dns_packet['DNS'].id
-        state_machine.set_variable_value(outputs[0], transaction_id)
+        if 'Raw' in dns_packet:
+            try:
+                dns_layer = DNS(dns_packet['Raw'].load)
+                transaction_id = dns_layer.id
+                state_machine.set_variable_value(outputs[0], transaction_id)
+            except Exception as e:
+                logging.error(f"Failed to decode Raw payload as DNS: {e}")
+                state_machine.set_variable_value(outputs[0], None)
+        else:
+            logging.error("DNS layer not found and no Raw layer to decode")
+            state_machine.set_variable_value(outputs[0], None)
 
     @staticmethod
     @parsing_decorator(input_args=2, output_args=1)

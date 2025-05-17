@@ -802,30 +802,25 @@ class DNSPrimitives:
     def format_dns_query_packet(inputs, outputs, state_machine):
         """
         Extracts metadata from a DNS Query packet and stores the formatted dictionary.
-
-        Number of input arguments: 1
-        Number of output arguments: 1
-        Optional input arguments: No
-        Optional output arguments: No
-
-        Args:
-            inputs (List[str]): Contains one mandatory input argument:
-                - The variable name of the DNS packet to format.
-            outputs (List[str]): Contains one mandatory output argument:
-                - The variable name to store the formatted dictionary.
-            state_machine: The state machine object providing context and storage.
-
-        Returns:
-            None
         """
-        # Retrieve packet from state machine
         packet = state_machine.get_variable_value(inputs[0])
+        dns_layer = None
 
-        # Check if packet has a DNS layer
-        if not packet.haslayer(DNS):
+        # Try to get DNS layer directly
+        if hasattr(packet, 'haslayer') and packet.haslayer(DNS):
+            dns_layer = packet.getlayer(DNS)
+
+        # Try to parse Raw layer if DNS is not present
+        elif hasattr(packet, 'haslayer') and packet.haslayer('Raw'):
+            try:
+                dns_layer = DNS(packet['Raw'].load)
+            except Exception as e:
+                state_machine.logger.error(f"[Parsing] Failed to decode Raw payload as DNS: {e}")
+        
+        # If DNS still not found, return error
+        if not dns_layer:
             formatted_query = {"error": "No DNS layer found in packet"}
         else:
-            dns_layer = packet.getlayer(DNS)
             formatted_query = {
                 "transaction_id": dns_layer.id,
                 "rd": dns_layer.rd,
@@ -833,16 +828,19 @@ class DNSPrimitives:
                 "questions": []
             }
 
-            if dns_layer.qdcount > 0 and dns_layer.qd:
-                formatted_query["questions"].append({
-                    "qname": dns_layer.qd.qname.decode() if isinstance(dns_layer.qd.qname, bytes) else dns_layer.qd.qname,
-                    "qtype": dns_layer.qd.qtype,
-                    "qclass": dns_layer.qd.qclass
-                })
+            if getattr(dns_layer, "qdcount", 0) > 0 and getattr(dns_layer, "qd", None):
+                try:
+                    formatted_query["questions"].append({
+                        "qname": dns_layer.qd.qname.decode() if isinstance(dns_layer.qd.qname, bytes) else dns_layer.qd.qname,
+                        "qtype": dns_layer.qd.qtype,
+                        "qclass": dns_layer.qd.qclass
+                    })
+                except Exception as e:
+                    state_machine.logger.error(f"[Parsing] Error extracting DNS question: {e}")
 
-        formatted_query = {k: v for k, v in formatted_query.items() if v and v != 0 and v != []}
+            # Clean up empty or default values
+            formatted_query = {k: v for k, v in formatted_query.items() if v not in [None, 0, "", [], {}]}
 
-        # Store the formatted query in the state machine
         state_machine.set_variable_value(outputs[0], formatted_query)
 
     @staticmethod

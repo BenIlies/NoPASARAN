@@ -97,7 +97,6 @@ class TCPDNSSocketServer:
 
 
     def build_response(self, query_record, response_spec=None):
-        # Use provided values or fallback to client query details
         qname = str(query_record.q.qname)
         qtype = query_record.q.qtype
         response_qname = response_spec.get("qname") if response_spec and response_spec.get("qname") else qname
@@ -124,20 +123,27 @@ class TCPDNSSocketServer:
         }
 
         handler = handlers.get(response_type)
-        if handler:
-            reverse_qtype = {v: k for k, v in QTYPE.items()}
-            rtype = reverse_qtype.get(response_type)
+        if not handler:
+            print(f"[Server Error] No handler found for response_type: {response_type}")
+            return query_record.reply()
 
-            if rtype is None:
-                print(f"[Server Error] Unsupported response_type: {response_type}")
-                return query_record.reply()  # Return an empty response if type is not supported
+        reverse_qtype = {QTYPE[k]: k for k in QTYPE if isinstance(k, int)}
+        rtype = reverse_qtype.get(response_type)
+        if rtype is None:
+            print(f"[Server Error] Unsupported response_type: {response_type}")
+            return query_record.reply()
 
-            response.add_answer(RR(rname=response_qname, rtype=rtype, rclass=1, ttl=60, rdata=handler()))
-        else:
-            print(f"[Server Error] No handler for response_type: {response_type}")
-            return query_record.reply()  # Return an empty response if handler is missing
+        try:
+            print(f"[Server] Calling handler for type {response_type}")
+            rdata = handler()
+            print(f"[Server] Handler produced rdata: {rdata}")
+        except Exception as e:
+            print(f"[Server Error] Handler for {response_type} failed: {e}")
+            return query_record.reply()
 
+        response.add_answer(RR(rname=response_qname, rtype=rtype, rclass=1, ttl=60, rdata=rdata))
         return response
+
 
 
     def _parse_srv(self, value):

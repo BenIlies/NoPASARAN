@@ -155,42 +155,32 @@ class DNSPrimitives:
         dns_packet['DNS'].qr = 1
         state_machine.set_variable_value(outputs[0], dns_packet)
 
-
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def get_DNS_transaction_id(inputs, outputs, state_machine):
         """
         Get the transaction ID from the DNS packet.
-
-        Number of input arguments: 1
-
-        Number of output arguments: 1
-
-        Optional input arguments: No
-
-        Optional output arguments: No
-
-        Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable containing the DNS packet.
-
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the transaction ID.
-
-            state_machine: The state machine object.
-
-        Returns:
-            None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        if 'Raw' in dns_packet:
+        dns_layer = None
+
+        # Try to get the DNS layer directly
+        if hasattr(dns_packet, 'haslayer') and dns_packet.haslayer(DNS):
+            dns_layer = dns_packet.getlayer(DNS)
+
+        # If no DNS layer, try to decode from Raw
+        elif hasattr(dns_packet, 'haslayer') and dns_packet.haslayer('Raw'):
             try:
                 dns_layer = DNS(dns_packet['Raw'].load)
-                transaction_id = dns_layer.id
-                state_machine.set_variable_value(outputs[0], transaction_id)
             except Exception as e:
-                logging.error(f"Failed to decode Raw payload as DNS: {e}")
-                state_machine.set_variable_value(outputs[0], None)
+                logging.error(f"[Parsing] Failed to decode Raw payload as DNS: {e}")
+
+        # Extract transaction ID if DNS layer is found
+        if dns_layer:
+            transaction_id = dns_layer.id
+            state_machine.set_variable_value(outputs[0], transaction_id)
         else:
-            logging.error("DNS layer not found and no Raw layer to decode")
+            logging.error("[Parsing] DNS layer not found in packet")
             state_machine.set_variable_value(outputs[0], None)
 
     @staticmethod
@@ -282,42 +272,31 @@ class DNSPrimitives:
 
         state_machine.set_variable_value(outputs[0], dns_packet)
 
-
     @staticmethod
     @parsing_decorator(input_args=1, output_args=1)
     def get_DNS_query_from_DNS_packet(inputs, outputs, state_machine):
         """
         Get the DNS query field (DNSQR) from a DNS packet.
-
-        Number of input arguments: 1
-
-        Number of output arguments: 1
-
-        Optional input arguments: No
-
-        Optional output arguments: No
-
-        Args:
-            inputs (List[str]): The list of input variable names. It contains one mandatory input argument, which is the name of the variable containing the DNS packet.
-
-            outputs (List[str]): The list of output variable names. It contains one mandatory output argument, which is the name of the variable to store the DNS query.
-
-            state_machine: The state machine object.
-
-        Returns:
-            None
         """
         dns_packet = state_machine.get_variable_value(inputs[0])
-        if 'Raw' in dns_packet:
+        dns_layer = None
+
+        # Try to get DNS layer directly if present
+        if hasattr(dns_packet, 'haslayer') and dns_packet.haslayer(DNS):
+            dns_layer = dns_packet.getlayer(DNS)
+
+        # Attempt to decode Raw payload as DNS if DNS layer isn't directly present
+        elif hasattr(dns_packet, 'haslayer') and dns_packet.haslayer('Raw'):
             try:
                 dns_layer = DNS(dns_packet['Raw'].load)
-                dns_query = dns_layer.qd
-                state_machine.set_variable_value(outputs[0], dns_query)
             except Exception as e:
-                logging.error(f"Failed to decode Raw payload as DNS: {e}")
-                state_machine.set_variable_value(outputs[0], None)
+                logging.error(f"[Parsing] Failed to decode Raw payload as DNS: {e}")
+
+        if dns_layer and getattr(dns_layer, "qd", None):
+            dns_query = dns_layer.qd
+            state_machine.set_variable_value(outputs[0], dns_query)
         else:
-            logging.error("DNS layer not found and no Raw layer to decode")
+            logging.error("[Parsing] DNS query not found in packet")
             state_machine.set_variable_value(outputs[0], None)
 
     @staticmethod

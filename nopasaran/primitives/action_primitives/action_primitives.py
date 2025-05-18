@@ -25,6 +25,9 @@ from nopasaran.primitives.action_primitives.client_echo_primitives import Client
 from nopasaran.primitives.action_primitives.probing_primitives import PortProbingPrimitives
 from nopasaran.primitives.action_primitives.replay_primitives import ReplayPrimitives
 from nopasaran.primitives.action_primitives.http_simple_client_primitives import HTTPSimpleClientPrimitives
+from nopasaran.primitives.action_primitives.tcp_dns_request_primitives import TCPDNSRequestPrimitives
+from nopasaran.primitives.action_primitives.tcp_dns_response_primitives import TCPDNSResponsePrimitives
+
 
 class ActionPrimitives(Primitives):
     """
@@ -56,5 +59,7 @@ class ActionPrimitives(Primitives):
         ClientEchoPrimitives,
         PortProbingPrimitives,
         ReplayPrimitives,
-        HTTPSimpleClientPrimitives
+        HTTPSimpleClientPrimitives,
+        TCPDNSResponsePrimitives,
+        TCPDNSRequestPrimitives
         ]

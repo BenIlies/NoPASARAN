@@ -4,6 +4,9 @@ import random
 import socket
 import select
 import ssl
+import struct
+from dnslib import DNSRecord, QTYPE
+
 
 
 from scapy.all import IP, TCP, UDP, ICMP, Raw
@@ -391,3 +394,100 @@ def group_ports(ports):
     return result 
 
 
+def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
+    """
+    Build and send a DNS query over TCP, accepting ONLY predefined types.
+    """
+    # Define allowed DNS types inside the function
+    dnsatypes = {
+        1: "A",
+        2: "NS",
+        5: "CNAME",
+        6: "SOA",
+        12: "PTR",
+        15: "MX",
+        16: "TXT",
+        28: "AAAA",
+        33: "SRV",
+        38: "A6",
+        43: "DS",
+        46: "RRSIG",
+        47: "NSEC",
+        48: "DNSKEY",
+        255: "ANY"
+    }
+
+    result = {
+        "query": None,
+        "response": None,
+        "error": None
+    }
+
+    # Prepare user-friendly type listing
+    supported_types = ', '.join([f"{v}({k})" for k, v in dnsatypes.items()])
+
+    # Build lookup for names
+    lookup_by_name = {v: k for k, v in dnsatypes.items()}
+
+    # Normalize input
+    query_type_str = str(query_type).upper()
+
+    # Validate numeric input
+    if query_type_str.isdigit():
+        qtype = int(query_type_str)
+        if qtype not in dnsatypes:
+            result["error"] = (
+                f"Unsupported numeric query type: {query_type}.\n"
+                f"Supported types are: {supported_types}"
+            )
+            return result
+    else:
+        qtype = lookup_by_name.get(query_type_str)
+        if qtype is None:
+            result["error"] = (
+                f"Unsupported string query type: {query_type}.\n"
+                f"Supported types are: {supported_types}"
+            )
+            return result
+
+    # Proceed with sending the DNS query...
+    try:
+        # Build DNS query with random transaction ID
+        transaction_id = random.randint(0, 65535)
+        dns_query = DNSRecord.question(domain, qtype=qtype)
+        dns_query.header.id = transaction_id
+        query_packet = dns_query.pack()
+        result["query"] = dns_query.to_dict()
+
+        # Open TCP connection with random source port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(('', 0))
+            sock.settimeout(2)
+            sock.connect((server_ip, server_port))
+
+            # Send query with length prefix
+            length_prefix = struct.pack("!H", len(query_packet))
+            sock.sendall(length_prefix + query_packet)
+
+            # Read length prefix
+            length_data = sock.recv(2)
+            if len(length_data) < 2:
+                result["error"] = "Incomplete length prefix"
+                return result
+
+            expected_length = struct.unpack("!H", length_data)[0]
+            response_data = b""
+            while len(response_data) < expected_length:
+                chunk = sock.recv(expected_length - len(response_data))
+                if not chunk:
+                    break
+                response_data += chunk
+
+            # Parse response
+            parsed_response = DNSRecord.parse(response_data)
+            result["response"] = parsed_response.to_dict()
+            return result
+
+    except Exception as e:
+        result["error"] = str(e)
+        return result

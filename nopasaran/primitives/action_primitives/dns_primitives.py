@@ -837,15 +837,10 @@ class DNSPrimitives:
             48: "DNSKEY", 255: "ANY"
         }
 
-        dnsqtypes = dnsatypes  # if you meant dnsatypes to cover both
-
         dns_layer = None
 
-        # Try to get DNS layer from packet
         if hasattr(packet, 'haslayer') and packet.haslayer(DNS):
             dns_layer = packet.getlayer(DNS)
-
-        # Try to parse DNS from Raw if not directly available
         elif hasattr(packet, 'haslayer') and packet.haslayer('Raw'):
             try:
                 dns_layer = DNS(packet['Raw'].load)
@@ -869,33 +864,36 @@ class DNSPrimitives:
                 "answers": []
             }
 
-            # Handle DNS question
+            # Handle DNS questions
             if getattr(dns_layer, "qdcount", 0) > 0 and getattr(dns_layer, "qd", None):
                 try:
                     question = dns_layer.qd
                     formatted_response["questions"].append({
                         "qname": question.qname.decode() if isinstance(question.qname, bytes) else question.qname,
                         "qtype": question.qtype,
-                        "qtype_name": dnsqtypes.get(question.qtype, f"Unknown({question.qtype})"),
+                        "qtype_name": dnsatypes.get(question.qtype, f"Unknown({question.qtype})"),
                         "qclass": question.qclass
                     })
                 except Exception as e:
                     logging.error(f"[Parsing] Failed to parse DNS question: {e}")
 
-            # Handle DNS answers
+            # Handle DNS answers (support for lists and chained payloads)
             try:
-                ans = dns_layer.an if getattr(dns_layer, "ancount", 0) > 0 else None
-                while ans and isinstance(ans, DNSRR):
+                ans = dns_layer.an
+                for _ in range(getattr(dns_layer, "ancount", 0)):
+                    if not isinstance(ans, DNSRR):
+                        break
                     answer_info = {
                         "rrname": ans.rrname.decode() if isinstance(ans.rrname, bytes) else ans.rrname,
                         "type": ans.type,
                         "type_name": dnsatypes.get(ans.type, f"Unknown({ans.type})"),
                         "rclass": ans.rclass,
                         "ttl": ans.ttl,
-                        "rdata": str(ans.rdata),
+                        "rdata": ans.rdata.decode() if isinstance(ans.rdata, bytes) else str(ans.rdata),
+                        "rdlen": getattr(ans, "rdlen", None)
                     }
                     formatted_response["answers"].append(answer_info)
-                    ans = ans.payload if isinstance(ans.payload, DNSRR) else None
+                    ans = ans.payload
             except Exception as e:
                 logging.error(f"[Parsing] Failed to parse DNS answers: {e}")
 

@@ -3,7 +3,6 @@ import random
 import string
 import logging
 from nopasaran.decorators import parsing_decorator
-from scapy.layers.dns import dnsqtypes
 
 
 class DNSPrimitives:

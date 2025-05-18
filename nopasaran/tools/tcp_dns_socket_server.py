@@ -17,44 +17,84 @@ class TCPDNSSocketServer:
         return EventNames.SERVER_STARTED.name, f"TCP DNS server started on port {port}"
 
     def wait_for_query(self, timeout, response_spec=None):
+        timeout = float(timeout)
         start_time = time.time()
         self.sock.setblocking(False)
 
+        print(f"[Server] Waiting for connections on port {self.sock.getsockname()[1]} with timeout {timeout} seconds")
+
         while True:
             remaining_time = timeout - (time.time() - start_time)
+            print(f"[Server] Remaining time: {remaining_time:.2f} seconds")
             if remaining_time <= 0:
+                print("[Server] Timeout reached with no connection.")
                 return {"received": None}, EventNames.TIMEOUT.name
 
             ready, _, _ = select.select([self.sock], [], [], remaining_time)
             if ready:
+                print("[Server] Socket is ready, accepting...")
                 client_sock, client_addr = self.sock.accept()
+                print(f"[Server] Accepted connection from {client_addr}")
+
                 try:
+                    # Set client socket read timeout
+                    client_sock.settimeout(5)
                     length_data = client_sock.recv(2)
+                    print(f"[Server] Received length_data: {length_data}")
+
                     if len(length_data) < 2:
+                        print("[Server] Incomplete length_data")
                         return {"received": None}, EventNames.ERROR.name
 
                     expected_length = struct.unpack("!H", length_data)[0]
+                    print(f"[Server] Expecting {expected_length} bytes of query data")
+
                     request_data = b""
+                    receive_start_time = time.time()
+                    receive_timeout = 5  # seconds
+
                     while len(request_data) < expected_length:
-                        chunk = client_sock.recv(expected_length - len(request_data))
-                        if not chunk:
-                            break
-                        request_data += chunk
+                        # Check elapsed time to prevent infinite waiting
+                        if time.time() - receive_start_time > receive_timeout:
+                            print("[Server] Timeout while receiving DNS query data")
+                            return {"received": None}, EventNames.TIMEOUT.name
+
+                        try:
+                            chunk = client_sock.recv(expected_length - len(request_data))
+                            if not chunk:
+                                print("[Server] Connection closed before full query received")
+                                return {"received": None}, EventNames.ERROR.name
+                            request_data += chunk
+                            print(f"[Server] Received {len(request_data)}/{expected_length} bytes")
+                        except socket.timeout:
+                            print("[Server] Socket recv() timed out")
+                            return {"received": None}, EventNames.TIMEOUT.name
 
                     if not request_data:
+                        print("[Server] No request data received")
                         return {"received": None}, EventNames.ERROR.name
 
+                    print("[Server] Parsing DNS query...")
                     parsed_query = DNSRecord.parse(request_data)
+                    print(f"[Server] Parsed query: {parsed_query.toZone()}")
+
+                    print("[Server] Building DNS response...")
                     response = self.build_response(parsed_query, response_spec)
+
+                    print("[Server] Sending DNS response...")
                     self.send_dns_response(client_sock, response)
+                    print("[Server] DNS response sent successfully.")
 
                     return {
-                        "received": parsed_query.to_dict(),
+                        "received": parsed_query.toZone(),
                         "client_address": client_addr
                     }, EventNames.REQUEST_RECEIVED.name
 
                 finally:
+                    print("[Server] Closing client socket")
                     client_sock.close()
+
+
 
     def build_response(self, query_record, response_spec=None):
         # Use provided values or fallback to client query details

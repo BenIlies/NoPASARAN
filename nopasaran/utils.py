@@ -399,7 +399,7 @@ def group_ports(ports):
 def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
     dnsatypes = {
         1: "A", 2: "NS", 5: "CNAME", 6: "SOA", 12: "PTR", 15: "MX",
-        16: "TXT", 28: "AAAA", 33: "SRV", 38: "A6", 43: "DS",
+        16: "TXT", 28: "AAAA", 33: "SRV",  43: "DS",
         46: "RRSIG", 47: "NSEC", 48: "DNSKEY", 255: "ANY"
     }
 
@@ -426,10 +426,10 @@ def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
 
     try:
         print(f"[Debug] Building DNS query for domain {domain} with type {query_type_str} ({qtype})")
-        dns_query = DNSRecord.question(domain, qtype=qtype)
+        dns_query = DNSRecord.question(domain, qtype=query_type_str)
         dns_query.header.id = random.randint(0, 65535)
         query_packet = dns_query.pack()
-        result["query"] = dns_query.to_dict()
+        result["query"] = dns_query.toZone()
 
         print("[Debug] Opening socket")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

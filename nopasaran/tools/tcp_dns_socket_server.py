@@ -2,7 +2,7 @@ import socket
 import struct
 import select
 import time
-from dnslib import DNSRecord, RR, QTYPE, A, CNAME, MX, TXT, NS, SOA, PTR, AAAA, SRV, A6, DS, RRSIG, NSEC, DNSKEY
+from dnslib import DNSRecord, RR, QTYPE, A, CNAME, MX, TXT, NS, SOA, PTR, AAAA, SRV, DS, RRSIG, NSEC, DNSKEY
 from nopasaran.definitions.events import EventNames
 
 class TCPDNSSocketServer:
@@ -76,7 +76,6 @@ class TCPDNSSocketServer:
             "PTR": lambda: PTR(response_value or f"ptr.{response_qname}"),
             "AAAA": lambda: AAAA(response_value or "::1"),
             "SRV": lambda: self._parse_srv(response_value or f"service.{response_qname},80,0,0"),
-            "A6": lambda: A6(0, response_value or "::1"),
             "DS": lambda: DS(12345, 1, 1, bytes(response_value or f"abcdef{response_qname}", 'utf-8')),
             "RRSIG": lambda: RRSIG(1, 1, 0, 3600, 0, 0, 0, response_value or f"signer.{response_qname}", b"signature"),
             "NSEC": lambda: NSEC(response_value or f"next.{response_qname}", []),
@@ -86,9 +85,20 @@ class TCPDNSSocketServer:
 
         handler = handlers.get(response_type)
         if handler:
-            rtype = QTYPE.get(response_type)
+            reverse_qtype = {v: k for k, v in QTYPE.items()}
+            rtype = reverse_qtype.get(response_type)
+
+            if rtype is None:
+                print(f"[Server Error] Unsupported response_type: {response_type}")
+                return query_record.reply()  # Return an empty response if type is not supported
+
             response.add_answer(RR(rname=response_qname, rtype=rtype, rclass=1, ttl=60, rdata=handler()))
+        else:
+            print(f"[Server Error] No handler for response_type: {response_type}")
+            return query_record.reply()  # Return an empty response if handler is missing
+
         return response
+
 
     def _parse_srv(self, value):
         try:

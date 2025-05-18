@@ -815,7 +815,7 @@ class DNSPrimitives:
             try:
                 dns_layer = DNS(packet['Raw'].load)
             except Exception as e:
-                state_machine.logger.error(f"[Parsing] Failed to decode Raw payload as DNS: {e}")
+                logging.error(f"[Parsing] Failed to decode Raw payload as DNS: {e}")
         
         # If DNS still not found, return error
         if not dns_layer:
@@ -836,7 +836,7 @@ class DNSPrimitives:
                         "qclass": dns_layer.qd.qclass
                     })
                 except Exception as e:
-                    state_machine.logger.error(f"[Parsing] Error extracting DNS question: {e}")
+                    logging.error(f"[Parsing] Error extracting DNS question: {e}")
 
             # Clean up empty or default values
             formatted_query = {k: v for k, v in formatted_query.items() if v not in [None, 0, "", [], {}]}
@@ -871,7 +871,7 @@ class DNSPrimitives:
             try:
                 dns_layer = DNS(packet['Raw'].load)
             except Exception as e:
-                state_machine.logger.error(f"[Parsing] Failed to decode Raw payload as DNS: {e}")
+                logging.error(f"[Parsing] Failed to decode Raw payload as DNS: {e}")
 
         if not dns_layer:
             formatted_response = {"error": "No DNS layer found in packet"}
@@ -901,7 +901,7 @@ class DNSPrimitives:
                         "qclass": question.qclass
                     })
                 except Exception as e:
-                    state_machine.logger.error(f"[Parsing] Failed to parse DNS question: {e}")
+                    logging.error(f"[Parsing] Failed to parse DNS question: {e}")
 
             # Handle DNS answers
             try:
@@ -918,7 +918,7 @@ class DNSPrimitives:
                     formatted_response["answers"].append(answer_info)
                     ans = ans.payload if isinstance(ans.payload, DNSRR) else None
             except Exception as e:
-                state_machine.logger.error(f"[Parsing] Failed to parse DNS answers: {e}")
+                logging.error(f"[Parsing] Failed to parse DNS answers: {e}")
 
         state_machine.set_variable_value(outputs[0], formatted_response)
 

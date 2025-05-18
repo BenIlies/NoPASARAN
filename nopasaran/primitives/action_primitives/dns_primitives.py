@@ -386,7 +386,7 @@ class DNSPrimitives:
         """
         dns_query = state_machine.get_variable_value(inputs[0])
         new_query_type = state_machine.get_variable_value(inputs[1])
-        dns_query.qtype = new_query_type
+        dns_query.qtype = int(new_query_type)
         state_machine.set_variable_value(outputs[0], dns_query)
 
     @staticmethod

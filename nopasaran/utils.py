@@ -4,6 +4,9 @@ import random
 import socket
 import select
 import ssl
+import struct
+from dnslib import DNSRecord, QTYPE
+
 
 
 from scapy.all import IP, TCP, UDP, ICMP, Raw
@@ -391,3 +394,76 @@ def group_ports(ports):
     return result 
 
 
+
+
+def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
+    dnsatypes = {
+        1: "A", 2: "NS", 5: "CNAME", 6: "SOA", 12: "PTR", 15: "MX",
+        16: "TXT", 28: "AAAA", 33: "SRV",  43: "DS",
+        46: "RRSIG", 47: "NSEC", 48: "DNSKEY", 255: "ANY"
+    }
+
+    result = {"query": None, "response": None, "error": None}
+    supported_types = ', '.join([f"{v}({k})" for k, v in dnsatypes.items()])
+    lookup_by_name = {v.upper(): k for k, v in dnsatypes.items()}
+    query_type_str = str(query_type).strip().upper()
+
+    print(f"[Debug] Received query_type: {query_type_str}")
+
+    # Validate query type
+    if query_type_str.isdigit():
+        qtype = int(query_type_str)
+        if qtype not in dnsatypes:
+            result["error"] = f"Unsupported numeric query type: {query_type}.\nSupported types are: {supported_types}"
+            print("[Error]", result["error"])
+            return result
+    else:
+        qtype = lookup_by_name.get(query_type_str)
+        if qtype is None:
+            result["error"] = f"Unsupported string query type: {query_type}.\nSupported types are: {supported_types}"
+            print("[Error]", result["error"])
+            return result
+
+    try:
+        print(f"[Debug] Building DNS query for domain {domain} with type {query_type_str} ({qtype})")
+        dns_query = DNSRecord.question(domain, qtype=query_type_str)
+        dns_query.header.id = random.randint(0, 65535)
+        query_packet = dns_query.pack()
+        result["query"] = dns_query.toZone()
+
+        print("[Debug] Opening socket")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(('', 0))
+            sock.settimeout(2)
+
+            print(f"[Debug] Connecting to {server_ip}:{server_port}")
+            sock.connect((server_ip, server_port))
+
+            length_prefix = struct.pack("!H", len(query_packet))
+            print("[Debug] Sending DNS query")
+            sock.sendall(length_prefix + query_packet)
+
+            print("[Debug] Waiting for response")
+            length_data = sock.recv(2)
+            if len(length_data) < 2:
+                result["error"] = "Incomplete length prefix"
+                print("[Error]", result["error"])
+                return result
+
+            expected_length = struct.unpack("!H", length_data)[0]
+            response_data = b""
+            while len(response_data) < expected_length:
+                chunk = sock.recv(expected_length - len(response_data))
+                if not chunk:
+                    break
+                response_data += chunk
+
+            print("[Debug] Received response data")
+            parsed_response = DNSRecord.parse(response_data)
+            result["response"] = parsed_response.to_dict()
+            return result
+
+    except Exception as e:
+        result["error"] = f"Exception occurred: {str(e)}"
+        print("[Error]", result["error"])
+        return result

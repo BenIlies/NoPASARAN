@@ -8,3 +8,4 @@ scapy
 h2 # For http2 primitives
 overload
 dnspython
+dnslib

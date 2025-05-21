@@ -124,79 +124,6 @@ class HTTP1SocketServer:
         
         return EventNames.SERVER_STARTED.name, f"Server successfully started at {host}:{port}."
 
-    def receive_test_frames(self):
-        """
-        Listen for HTTP/1.1 requests until a timeout occurs, then process all received requests.
-        
-        Returns:
-            Tuple[str, str, str]: (event_name, message, received_data)
-                - event_name: The type of event that occurred (from EventNames)
-                    - TIMEOUT: Timeout occurred before all requests were received
-                    - REJECTED: Received a 4xx or 5xx status code
-                    - RECEIVED_REQUESTS: All requests have been received
-                    - ERROR: Error occurred while receiving requests
-                - message: A descriptive message about what happened
-                - received_data: String representation of the received requests or None
-        """
-        if not self.sock:
-            return EventNames.ERROR.name, "Server not started", None
-        
-        requests_received = []
-        start_time = time.time()
-        
-        # Make the server socket non-blocking for accepting connections
-        self.sock.setblocking(False)
-        
-        # Keep accepting connections until we hit a timeout
-        while True:
-            # Check for overall timeout
-            elapsed_time = time.time() - start_time
-            if elapsed_time > self.TIMEOUT:
-                if len(requests_received) == 0:
-                    return EventNames.TIMEOUT.name, f"Timeout after {self.TIMEOUT}s and received no requests.", None
-                else:
-                    break  # We've received some requests, so consider it done
-            
-            try:
-                # Try to accept a new connection
-                ready_to_read, _, _ = select.select([self.sock], [], [], 0.5)
-                
-                if ready_to_read:
-                    client_socket, _ = self.sock.accept()
-                    client_socket.settimeout(0.5)
-                    
-                    try:
-                        data = client_socket.recv(4096)
-                        
-                        if data:
-                            # Parse the HTTP/1.1 request
-                            request_str = data.decode('utf-8', errors='ignore')
-                            requests_received.append(request_str)
-                            
-                            # Check for error status codes
-                            if "HTTP/1.1 5" in request_str or "HTTP/1.1 4" in request_str:
-                                try:
-                                    status_line = request_str.split("\r\n")[0]
-                                    status_code = status_line.split(" ")[1]
-                                    client_socket.close()
-                                    return EventNames.REJECTED.name, f"Received {status_code} status code.", request_str
-                                except (IndexError, ValueError):
-                                    client_socket.close()
-                                    return EventNames.REJECTED.name, "Received 4xx or 5xx status code.", request_str
-                    finally:
-                        client_socket.close()
-            except socket.timeout:
-                continue
-            except Exception as e:
-                return EventNames.ERROR.name, f"Error while receiving requests: {str(e)}", \
-                       str(requests_received) if requests_received else None
-        
-        # If we get here, we've either collected all requests or hit the timeout
-        if len(requests_received) == 0:
-            return EventNames.TIMEOUT.name, "No requests received before timeout.", None
-        
-        return EventNames.RECEIVED_REQUESTS.name, f"Received {len(requests_received)} HTTP/1.1 requests.", str(requests_received)
-
     def close(self):
         """Close the HTTP/1.1 connection and clean up resources"""
         try:
@@ -209,6 +136,6 @@ class HTTP1SocketServer:
             self.client_socket = None
             self.sock = None
             
-            return EventNames.CONNECTION_CLOSED.name
+            return EventNames.CONNECTION_ENDING.name
         except Exception as e:
-            return EventNames.CONNECTION_CLOSED.name
+            return EventNames.CONNECTION_ENDING.name

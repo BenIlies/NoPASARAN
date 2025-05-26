@@ -40,7 +40,7 @@ class HTTPSimpleClientPrimitives:
         try:
             if use_https == "1":
                 scheme = "HTTPS"
-                context = ssl.create_default_context()
+                context = ssl._create_unverified_context()
                 conn = http.client.HTTPSConnection(ip_address, 443, context=context, timeout=5)
             elif use_https == "0":
                 scheme = "HTTP"

@@ -76,13 +76,13 @@ class UDPDNSSocketServer:
             logging.warning(f"No handler for response_type: {response_type}")
             return query_record.reply()
 
-        reverse_qtype = {QTYPE[k]: k for k in QTYPE if isinstance(k, int)}
-        rtype = reverse_qtype.get(response_type)
-        if rtype is None:
-            logging.warning(f"Unsupported response_type: {response_type}")
-            return query_record.reply()
-
         try:
+            # Get the numeric type directly from the string using QTYPE
+            rtype = QTYPE.get(response_type)
+            if rtype is None:
+                logging.warning(f"Unsupported response_type: {response_type}")
+                return query_record.reply()
+
             logging.debug(f"Calling handler for type {response_type}")
             rdata = handler()
             logging.debug(f"Handler produced rdata: {rdata}")

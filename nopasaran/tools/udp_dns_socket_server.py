@@ -34,8 +34,7 @@ class UDPDNSSocketServer:
             logging.info("DNS response sent successfully.")
 
             return {
-                "received": parsed_query.toZone(),
-                "client_address": client_addr
+                "received": str(parsed_query.q)
             }, EventNames.REQUEST_RECEIVED.name
 
         except socket.timeout:

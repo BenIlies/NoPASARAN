@@ -13,7 +13,7 @@ class TCPDNSResponsePrimitives:
     @parsing_decorator(input_args=3, output_args=0)
     def start_tcp_dns_server(inputs, outputs, state_machine):
         server = state_machine.get_variable_value(inputs[0])
-        listening_ip = int(state_machine.get_variable_value(inputs[1]))
+        listening_ip = state_machine.get_variable_value(inputs[1])
         port = int(state_machine.get_variable_value(inputs[2]))
         server.start(listening_ip, port)
 

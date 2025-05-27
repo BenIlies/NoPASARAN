@@ -126,7 +126,7 @@ class TCPDNSSocketServer:
 
         try:
             # Get the numeric type directly from the string using QTYPE
-            rtype = QTYPE.get(response_type)
+            rtype = QTYPE[response_type]
             if rtype is None:
                 logging.warning(f"Unsupported response_type: {response_type}")
                 return query_record.reply()

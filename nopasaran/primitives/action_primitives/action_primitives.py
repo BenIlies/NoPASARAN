@@ -27,6 +27,8 @@ from nopasaran.primitives.action_primitives.replay_primitives import ReplayPrimi
 from nopasaran.primitives.action_primitives.http_simple_client_primitives import HTTPSimpleClientPrimitives
 from nopasaran.primitives.action_primitives.tcp_dns_request_primitives import TCPDNSRequestPrimitives
 from nopasaran.primitives.action_primitives.tcp_dns_response_primitives import TCPDNSResponsePrimitives
+from nopasaran.primitives.action_primitives.udp_dns_request_primitives import UDPDNSRequestPrimitives
+from nopasaran.primitives.action_primitives.udp_dns_response_primitives import UDPDNSResponsePrimitives
 
 
 class ActionPrimitives(Primitives):
@@ -60,6 +62,8 @@ class ActionPrimitives(Primitives):
         PortProbingPrimitives,
         ReplayPrimitives,
         HTTPSimpleClientPrimitives,
+        TCPDNSRequestPrimitives,
         TCPDNSResponsePrimitives,
-        TCPDNSRequestPrimitives
+        UDPDNSRequestPrimitives,
+        UDPDNSResponsePrimitives
         ]

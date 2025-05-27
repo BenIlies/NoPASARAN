@@ -36,3 +36,4 @@ class EventNames(Enum):
     RESET_RECEIVED = 25
     RECEIVED_FRAMES = 26
     RECEIVED_REQUESTS = 27
+    RESPONSE_SENT = 27

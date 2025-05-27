@@ -5,6 +5,7 @@ import socket
 import select
 import ssl
 import struct
+import logging
 from dnslib import DNSRecord, QTYPE
 
 
@@ -399,7 +400,7 @@ def group_ports(ports):
 def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
     dnsatypes = {
         1: "A", 2: "NS", 5: "CNAME", 6: "SOA", 12: "PTR", 15: "MX",
-        16: "TXT", 28: "AAAA", 33: "SRV",  43: "DS",
+        16: "TXT", 28: "AAAA", 33: "SRV", 43: "DS",
         46: "RRSIG", 47: "NSEC", 48: "DNSKEY", 255: "ANY"
     }
 
@@ -408,46 +409,43 @@ def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
     lookup_by_name = {v.upper(): k for k, v in dnsatypes.items()}
     query_type_str = str(query_type).strip().upper()
 
-    print(f"[Debug] Received query_type: {query_type_str}")
+    logging.debug(f"Received query_type: {query_type_str}")
 
-    # Validate query type
     if query_type_str.isdigit():
         qtype = int(query_type_str)
         if qtype not in dnsatypes:
             result["error"] = f"Unsupported numeric query type: {query_type}.\nSupported types are: {supported_types}"
-            print("[Error]", result["error"])
+            logging.error(result["error"])
             return result
     else:
         qtype = lookup_by_name.get(query_type_str)
         if qtype is None:
             result["error"] = f"Unsupported string query type: {query_type}.\nSupported types are: {supported_types}"
-            print("[Error]", result["error"])
+            logging.error(result["error"])
             return result
 
     try:
-        print(f"[Debug] Building DNS query for domain {domain} with type {query_type_str} ({qtype})")
-        dns_query = DNSRecord.question(domain, qtype=query_type_str)
+        logging.debug(f"Building DNS query for domain {domain} with type {query_type_str} ({qtype})")
+        dns_query = DNSRecord.question(domain, qtype=qtype)
         dns_query.header.id = random.randint(0, 65535)
         query_packet = dns_query.pack()
         result["query"] = dns_query.toZone()
 
-        print("[Debug] Opening socket")
+        logging.debug("Opening TCP socket")
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.bind(('', 0))
             sock.settimeout(2)
-
-            print(f"[Debug] Connecting to {server_ip}:{server_port}")
+            logging.debug(f"Connecting to {server_ip}:{server_port}")
             sock.connect((server_ip, server_port))
 
             length_prefix = struct.pack("!H", len(query_packet))
-            print("[Debug] Sending DNS query")
+            logging.debug("Sending DNS query")
             sock.sendall(length_prefix + query_packet)
 
-            print("[Debug] Waiting for response")
+            logging.debug("Waiting for response")
             length_data = sock.recv(2)
             if len(length_data) < 2:
                 result["error"] = "Incomplete length prefix"
-                print("[Error]", result["error"])
+                logging.error(result["error"])
                 return result
 
             expected_length = struct.unpack("!H", length_data)[0]
@@ -458,12 +456,65 @@ def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
                     break
                 response_data += chunk
 
-            print("[Debug] Received response data")
+            logging.debug("Received response data")
             parsed_response = DNSRecord.parse(response_data)
             result["response"] = parsed_response.to_dict()
             return result
 
     except Exception as e:
         result["error"] = f"Exception occurred: {str(e)}"
-        print("[Error]", result["error"])
+        logging.exception("An error occurred while sending the TCP DNS query")
+        return result
+
+def send_udp_dns_query(server_ip, server_port, domain, query_type="A"):
+    dnsatypes = {
+        1: "A", 2: "NS", 5: "CNAME", 6: "SOA", 12: "PTR", 15: "MX",
+        16: "TXT", 28: "AAAA", 33: "SRV", 43: "DS",
+        46: "RRSIG", 47: "NSEC", 48: "DNSKEY", 255: "ANY"
+    }
+
+    result = {"query": None, "response": None, "error": None}
+    supported_types = ', '.join([f"{v}({k})" for k, v in dnsatypes.items()])
+    lookup_by_name = {v.upper(): k for k, v in dnsatypes.items()}
+    query_type_str = str(query_type).strip().upper()
+
+    logging.debug(f"Received query_type: {query_type_str}")
+
+    if query_type_str.isdigit():
+        qtype = int(query_type_str)
+        if qtype not in dnsatypes:
+            result["error"] = f"Unsupported numeric query type: {query_type}.\nSupported types are: {supported_types}"
+            logging.error(result["error"])
+            return result
+    else:
+        qtype = lookup_by_name.get(query_type_str)
+        if qtype is None:
+            result["error"] = f"Unsupported string query type: {query_type}.\nSupported types are: {supported_types}"
+            logging.error(result["error"])
+            return result
+
+    try:
+        logging.debug(f"Building DNS query for domain {domain} with type {query_type_str} ({qtype})")
+        dns_query = DNSRecord.question(domain, qtype=qtype)
+        dns_query.header.id = random.randint(0, 65535)
+        query_packet = dns_query.pack()
+        result["query"] = dns_query.toZone()
+
+        logging.debug("Opening UDP socket")
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.settimeout(2)
+            logging.debug(f"Sending UDP DNS query to {server_ip}:{server_port}")
+            sock.sendto(query_packet, (server_ip, server_port))
+
+            logging.debug("Waiting for UDP response")
+            response_data, _ = sock.recvfrom(4096)
+
+            logging.debug("Received UDP response")
+            parsed_response = DNSRecord.parse(response_data)
+            result["response"] = parsed_response.to_dict()
+            return result
+
+    except Exception as e:
+        result["error"] = f"Exception occurred: {str(e)}"
+        logging.exception("An error occurred while sending the UDP DNS query")
         return result

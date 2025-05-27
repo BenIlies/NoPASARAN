@@ -458,7 +458,7 @@ def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
 
             logging.debug("Received response data")
             parsed_response = DNSRecord.parse(response_data)
-            result["response"] = str(parsed_response).replace("\n", "")
+            result["response"] = str(parsed_response).replace("\n", "").replace(";;", "")
             return result
 
     except Exception as e:
@@ -511,7 +511,7 @@ def send_udp_dns_query(server_ip, server_port, domain, query_type="A"):
 
             logging.debug("Received UDP response")
             parsed_response = DNSRecord.parse(response_data)
-            result["response"] = str(parsed_response).replace("\n", "")
+            result["response"] = str(parsed_response).replace("\n", "").replace(";;", "")
             return result
 
     except Exception as e:

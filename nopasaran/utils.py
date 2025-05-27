@@ -426,7 +426,7 @@ def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
 
     try:
         logging.debug(f"Building DNS query for domain {domain} with type {query_type_str} ({qtype})")
-        dns_query = DNSRecord.question(domain, qtype=qtype)
+        dns_query = DNSRecord.question(domain, qtype=dnsatypes[qtype])
         dns_query.header.id = random.randint(0, 65535)
         query_packet = dns_query.pack()
         result["query"] = dns_query.toZone()
@@ -463,7 +463,7 @@ def send_tcp_dns_query(server_ip, server_port, domain, query_type="A"):
 
     except Exception as e:
         result["error"] = f"Exception occurred: {str(e)}"
-        logging.exception("An error occurred while sending the TCP DNS query")
+        logging.error("An error occurred while sending the TCP DNS query")
         return result
 
 def send_udp_dns_query(server_ip, server_port, domain, query_type="A"):
@@ -495,7 +495,7 @@ def send_udp_dns_query(server_ip, server_port, domain, query_type="A"):
 
     try:
         logging.debug(f"Building DNS query for domain {domain} with type {query_type_str} ({qtype})")
-        dns_query = DNSRecord.question(domain, qtype=qtype)
+        dns_query = DNSRecord.question(domain, qtype=dnsatypes[qtype])
         dns_query.header.id = random.randint(0, 65535)
         query_packet = dns_query.pack()
         result["query"] = dns_query.toZone()
@@ -516,5 +516,5 @@ def send_udp_dns_query(server_ip, server_port, domain, query_type="A"):
 
     except Exception as e:
         result["error"] = f"Exception occurred: {str(e)}"
-        logging.exception("An error occurred while sending the UDP DNS query")
+        logging.error("An error occurred while sending the UDP DNS query")
         return result

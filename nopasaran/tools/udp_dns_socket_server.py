@@ -1,7 +1,4 @@
 import socket
-import struct
-import select
-import time
 from dnslib import DNSRecord, RR, QTYPE, A, CNAME, MX, TXT, NS, SOA, PTR, AAAA, SRV, DS, RRSIG, NSEC, DNSKEY
 from nopasaran.definitions.events import EventNames
 import logging
@@ -10,12 +7,12 @@ class UDPDNSSocketServer:
     def __init__(self):
         self.sock = None
 
-    def start(self, port):
+    def start(self, listening_ip, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind(('', port))
-        logging.info(f"UDP DNS server started on port {port}")
-        return EventNames.SERVER_STARTED.name, f"UDP DNS server started on port {port}"
+        self.sock.bind((listening_ip, port))
+        logging.info(f"UDP DNS server started on {listening_ip}:{port}")
+        return EventNames.SERVER_STARTED.name, f"UDP DNS server started on {listening_ip}:{port}"
 
     def wait_for_query(self, timeout, response_spec=None):
         self.sock.settimeout(timeout)

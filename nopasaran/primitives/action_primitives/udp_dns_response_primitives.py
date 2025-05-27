@@ -10,11 +10,12 @@ class UDPDNSResponsePrimitives:
         state_machine.set_variable_value(outputs[0], server)
 
     @staticmethod
-    @parsing_decorator(input_args=2, output_args=0)
+    @parsing_decorator(input_args=3, output_args=0)
     def start_udp_dns_server(inputs, outputs, state_machine):
         server = state_machine.get_variable_value(inputs[0])
-        port = int(state_machine.get_variable_value(inputs[1]))
-        server.start(port)
+        listening_ip = int(state_machine.get_variable_value(inputs[1]))
+        port = int(state_machine.get_variable_value(inputs[2]))
+        server.start(listening_ip, port)
 
     @staticmethod
     @parsing_decorator(input_args=4, output_args=1)

@@ -2,6 +2,7 @@ import socket
 from dnslib import DNSRecord, RR, QTYPE, A, CNAME, MX, TXT, NS, SOA, PTR, AAAA, SRV, DS, RRSIG, NSEC, DNSKEY
 from nopasaran.definitions.events import EventNames
 import logging
+import time
 
 class UDPDNSSocketServer:
     def __init__(self):
@@ -18,31 +19,46 @@ class UDPDNSSocketServer:
         self.sock.settimeout(timeout)
         logging.info(f"Waiting for UDP packets on port {self.sock.getsockname()[1]} with timeout {timeout} seconds")
 
-        try:
-            data, client_addr = self.sock.recvfrom(512)  # max size of a DNS UDP packet
-            logging.debug(f"Received {len(data)} bytes from {client_addr}")
+        start_time = time.time()
 
-            logging.debug("Parsing DNS query...")
-            parsed_query = DNSRecord.parse(data)
-            logging.info(f"Parsed query:\n{parsed_query.toZone()}")
+        while True:
+            try:
+                remaining_time = timeout - (time.time() - start_time)
+                if remaining_time <= 0:
+                    logging.warning("Timeout reached while waiting for a valid DNS query.")
+                    return {"received": None}, EventNames.TIMEOUT.name
 
-            logging.debug("Building DNS response...")
-            response = self.build_response(parsed_query, response_spec)
+                self.sock.settimeout(remaining_time)
+                data, client_addr = self.sock.recvfrom(512)  # max size of a DNS UDP packet
+                logging.debug(f"Received {len(data)} bytes from {client_addr}")
 
-            logging.debug("Sending DNS response...")
-            self.send_dns_response(client_addr, response)
-            logging.info("DNS response sent successfully.")
+                logging.debug("Parsing DNS query...")
+                parsed_query = DNSRecord.parse(data)
 
-            return {
-                "received": str(parsed_query.q)
-            }, EventNames.REQUEST_RECEIVED.name
+                # Check if query section is empty
+                if not parsed_query.questions:
+                    logging.debug("Received DNS packet with no query section. Continuing to wait...")
+                    continue
 
-        except socket.timeout:
-            logging.warning("Timeout reached with no packet received.")
-            return {"received": None}, EventNames.TIMEOUT.name
-        except Exception as e:
-            logging.error(f"Error while handling DNS query: {e}", exc_info=True)
-            return {"received": None}, EventNames.ERROR.name
+                logging.info(f"Parsed query:\n{parsed_query.toZone()}")
+
+                logging.debug("Building DNS response...")
+                response = self.build_response(parsed_query, response_spec)
+
+                logging.debug("Sending DNS response...")
+                self.send_dns_response(client_addr, response)
+                logging.info("DNS response sent successfully.")
+
+                return {
+                    "received": str(parsed_query.q)
+                }, EventNames.REQUEST_RECEIVED.name
+
+            except socket.timeout:
+                logging.warning("Timeout reached while waiting for a valid DNS query.")
+                return {"received": None}, EventNames.TIMEOUT.name
+            except Exception as e:
+                logging.error(f"Error while handling DNS query: {e}", exc_info=True)
+                return {"received": None}, EventNames.ERROR.name
 
     def build_response(self, query_record, response_spec=None):
         qname = str(query_record.q.qname)

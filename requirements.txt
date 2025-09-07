@@ -5,7 +5,7 @@ psutil
 
 # Primitives Dependencies
 scapy
-h2 # For http2 primitives
+h2==4.2.0
 overload
 dnspython
 dnslib

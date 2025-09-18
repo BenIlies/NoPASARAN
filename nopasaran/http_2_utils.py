@@ -1,6 +1,5 @@
 import overload
 import ssl
-import logging
 import socket
 from typing import Dict, Any, Optional, Tuple, List
 import h2
@@ -100,6 +99,13 @@ def create_ssl_context(is_client=False, use_embedded_certs=False):
         ssl_context.verify_mode = ssl.CERT_NONE  # Don't require client cert
     
     ssl_context.set_alpn_protocols(['h2'])
+
+    keylog_path = os.path.join(os.getcwd(), 'nopasaran_sslkeys.log')
+    try:
+        if hasattr(ssl_context, 'keylog_filename'):
+            ssl_context.keylog_filename = keylog_path
+    except Exception:
+        pass
     
     if not is_client:
         if use_embedded_certs:

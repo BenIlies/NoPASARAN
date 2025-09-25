@@ -93,7 +93,7 @@ class HTTP2SocketServer(HTTP2SocketBase):
                             break
                             
                 except socket.timeout:
-                    return EventNames.ERROR.name, f"Timeout occurred after 5s while waiting for initial client data at {self.host}:{self.port}."
+                    return EventNames.ERROR.name, f"Timeout occurred after {self.TIMEOUT}s while waiting for initial client data at {self.host}:{self.port}."
                 except Exception as e:
                     return EventNames.ERROR.name, f"Error occurred while handling initial client data at {self.host}:{self.port}: {str(e)}"
                 

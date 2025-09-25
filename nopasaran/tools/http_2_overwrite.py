@@ -559,10 +559,11 @@ def new_receive_naked_continuation(self, frame):
             self.decoder,
             b''.join(f.data for f in self._header_frames)
         )
+        # Preserve first before clearing
+        first = self._header_frames[0]
         self._header_frames = []
         
         # Process according to the type of the first frame.
-        first = self._header_frames[0]
         if isinstance(first, HeadersFrame):
             return self._receive_headers(first, headers)
         elif isinstance(first, PushPromiseFrame):

@@ -8,7 +8,7 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://app.gitter.im/#/room/#nopasaran:gitter.im)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-NoPASARAN is an advanced network tool designed to detect, fingerprint, and locate network middleboxes in a unified framework. Written in Python, NoPASARAN uses finite state machines to describe test cases and leverages Ansible for distributing and orchestrating these tests across a network of nodes.
+NoPASARAN is a distributed network tool designed to detect, fingerprint, and locate network middleboxes in a unified framework. Written in Python, NoPASARAN uses finite state machines to describe test cases.
 
 ## Table of Contents
 
@@ -29,7 +29,6 @@ NoPASARAN is an advanced network tool designed to detect, fingerprint, and locat
 
 - Detection, fingerprinting, and location of network middleboxes.
 - Utilization of finite state machines for test case description.
-- Network orchestration with Ansible.
 - Flexible roles for network nodes and proxies.
 - Support for JSON-based test files for state machine configurations.
 

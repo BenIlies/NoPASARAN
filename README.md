@@ -12,6 +12,7 @@ NoPASARAN is a distributed network tool designed to detect, fingerprint, and loc
 
 ## Table of Contents
 
+- [Framework Architecture](#-important-nopasaran-is-a-multi-repository-framework)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -24,6 +25,27 @@ NoPASARAN is a distributed network tool designed to detect, fingerprint, and loc
 - [Gitter](#gitter)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
+
+## 🚨 Important: NoPASARAN Is a Multi-Repository Framework
+
+This repository is **one component** of the broader **NoPASARAN distributed testing framework**.
+
+The full system is composed of **multiple tightly-coupled repositories**, each responsible for a critical part of test definition, orchestration, execution, and coordination. **Most users and contributors will need to reference these projects together.**
+
+👉 **Start here:**  
+📁 **[`framework-projects/`](framework-projects/README.md)** — canonical index of all NoPASARAN framework components.
+
+### Framework Components at a Glance
+
+| Component          | Purpose                                                  |
+| ------------------ | -------------------------------------------------------- |
+| 🧠 **Tests-Trees** | Decision trees defining conditional test execution logic |
+| 🧪 **Tests**       | Reusable, reviewed test definitions executed by workers  |
+| ⚙️ **Endpoint**    | Runtime node acting as master or worker                  |
+| 🌐 **Coordinator** | Control plane, certificate authority, and user interface |
+
+➡️ **If you are looking for tests, orchestration logic, or distributed execution details, you will not find them all in this repository alone.**  
+➡️ Always refer to **`framework-projects/README.md`** for the complete picture.
 
 ## Features
 

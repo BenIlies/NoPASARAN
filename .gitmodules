@@ -1,0 +1,12 @@
+[submodule "framework-projects/tests-trees"]
+	path = framework-projects/tests-trees
+	url = https://github.com/nopasaran-org/nopasaran-tests-trees
+[submodule "framework-projects/tests"]
+	path = framework-projects/tests
+	url = https://github.com/nopasaran-org/nopasaran-tests
+[submodule "framework-projects/endpoint"]
+	path = framework-projects/endpoint
+	url = https://github.com/nopasaran-org/nopasaran-endpoint
+[submodule "framework-projects/coordinator"]
+	path = framework-projects/coordinator
+	url = https://github.com/nopasaran-org/nopasaran-coordinator

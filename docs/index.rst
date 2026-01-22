@@ -37,6 +37,35 @@ You may cite this work as follows:
 
 Join the discussion on `Gitter <https://app.gitter.im/#/room/#nopasaran:gitter.im>`_.
 
+Important: NoPASARAN Is a Multi-Repository Framework
+----------------------------------------------------
+
+This repository is **one component** of the broader **NoPASARAN distributed testing framework**.
+
+The complete system is composed of **multiple tightly-coupled repositories**, each responsible for a critical aspect of test definition, orchestration, execution, and coordination. **Most users and contributors will need to reference these projects together.**
+
+**Start here:**  
+`framework-projects/ <https://github.com/BenIlies/NoPASARAN/tree/main/framework-projects>`_ — canonical index of all NoPASARAN framework components.
+
+Framework Components at a Glance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
++-------------------+------------------------------------------------------------+
+| Component         | Purpose                                                    |
++===================+============================================================+
+| 🧠 Tests-Trees    | Decision trees defining conditional test execution logic   |
++-------------------+------------------------------------------------------------+
+| 🧪 Tests          | Reusable, reviewed test definitions executed by workers    |
++-------------------+------------------------------------------------------------+
+| ⚙️ Endpoint       | Runtime node acting as master or worker                    |
++-------------------+------------------------------------------------------------+
+| 🌐 Coordinator    | Control plane, certificate authority, and user interface   |
++-------------------+------------------------------------------------------------+
+
+**If you are looking for tests, orchestration logic, or distributed execution details, you will not find them all in this repository alone.**  
+Always refer to the **framework-projects index** for the complete picture.
+
+
 Contents
 --------
 

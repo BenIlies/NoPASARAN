@@ -33,7 +33,7 @@ This repository is **one component** of the broader **NoPASARAN distributed test
 The full system is composed of **multiple tightly-coupled repositories**, each responsible for a critical part of test definition, orchestration, execution, and coordination. **Most users and contributors will need to reference these projects together.**
 
 👉 **Start here:**  
-📁 **[`framework-projects/`](framework-projects/README.md)** — canonical index of all NoPASARAN framework components.
+📁 **[`framework-projects/`](framework-projects)** — canonical index of all NoPASARAN framework components.
 
 ### Framework Components at a Glance
 

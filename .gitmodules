@@ -10,3 +10,6 @@
 [submodule "framework-projects/coordinator"]
 	path = framework-projects/coordinator
 	url = https://github.com/nopasaran-org/nopasaran-coordinator
+[submodule "nopasaran-tests"]
+	path = nopasaran-tests
+	url = https://github.com/nopasaran-org/nopasaran-tests
